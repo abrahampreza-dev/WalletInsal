@@ -49,6 +49,8 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   // Obtener datos reactivos del grupo
   const grupo = listaGrupos.find((g) => g.idGrupo === idGrupo) || listaGrupos[0];
 
+  if (!grupo) return null;
+
   const [pestanaActiva, setPestanaActiva] = useState('publicaciones'); // 'publicaciones', 'videoDrive', 'apoyos', 'ficha'
   const [modalSubirAbierto, setModalSubirAbierto] = useState(false);
   const [modalDriveAbierto, setModalDriveAbierto] = useState(false);
