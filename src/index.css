@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color-scheme: light;
+  
+  --color-insal-azul: #0A4D9C;
+  --color-insal-naranja: #E67A15;
+  --color-insal-rojo: #8B1E23;
+  --color-insal-dorado: #D19E37;
+  --color-insal-fondo: #F7F8FA;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body, #root {
+  background-color: #F7F8FA !important;
+  color: #1E293B !important;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ocultar la barra de scroll de las filas horizontales (historias, filtros) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Personalización de la barra de desplazamiento */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F8FA;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E67A15;
+}
+
+/* Degradados con los colores del sello INSAL */
+.degradado-sanluis {
+  background: linear-gradient(135deg, #0A4D9C 0%, #07366E 100%);
+}
+
+.degradado-acento {
+  background: linear-gradient(135deg, #E67A15 0%, #C8640C 100%);
+}
+
+.degradado-rojo {
+  background: linear-gradient(135deg, #8B1E23 0%, #681317 100%);
+}
+
+.degradado-tarjeta {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0;
+}
+
+/* ============================================================
+   TEMA INSTITUCIONAL INSAL — Recambio de color sobre el diseño
+   El diseño original no cambia; solo se resignan los colores.
+   (Azul #0A4D9C · Naranja #E67A15 · Granate #8B1E23 · Dorado #D19E37)
+   ============================================================ */
+
+/* Fondo institucional por defecto */
+:where(#root) {
+  background-color: #F7F8FA;
+  color: #1E293B;
+}
+
+/* Texto "blanco" heredado del tema oscuro: dentro de tarjetas claras pasa a texto principal */
+:is(.bg-white, .bg-\[\#FFFFFF\], .bg-slate-50, .bg-slate-100, .degradado-tarjeta) :where(.text-white),
+:is(.bg-white, .bg-\[\#FFFFFF\], .bg-slate-50, .bg-slate-100, .degradado-tarjeta) .hover\:text-white:hover,
+:is(.bg-white, .bg-\[\#FFFFFF\], .bg-slate-50, .bg-slate-100, .degradado-tarjeta).text-white,
+:is(.bg-white, .bg-\[\#FFFFFF\], .bg-slate-50, .bg-slate-100, .degradado-tarjeta).hover\:text-white:hover {
+  color: #1E293B;
+}
+
+/* Píldoras y tabs que se iluminan con fondo claro al pasar el cursor */
+:is(.hover\:bg-slate-100, .hover\:bg-slate-200).hover\:text-white:hover {
+  color: #1E293B;
+}
+
+/* Texto secundario: respetar la paleta institucional #64748B (más legible que slate-400) */
+.text-slate-400 { color: #64748B; }
+::placeholder { color: #94A3B8; }
+
+/* Resplandor decorativo dorado de la tarjeta de saldo */
+.resplandor-naranja::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 12% 88%, rgba(209, 158, 55, 0.35), transparent 55%);
+  pointer-events: none;
+}
+
+/* Superficie azul: conserva el texto blanco de las superficies oscuras originales */
+.superficie-azul :where(.text-white),
+.superficie-azul .hover\:text-white:hover,
+.superficie-azul.text-white,
+.bg-\[\#0A4D9C\] :where(.text-white),
+.bg-\[\#0A4D9C\].text-white,
+.bg-\[\#07366E\] :where(.text-white),
+.bg-\[\#07366E\].text-white,
+.bg-\[\#E67A15\].text-white,
+.bg-\[\#8B1E23\].text-white,
+.bg-\[\#D19E37\].text-white,
+.bg-black\/70 :where(.text-white),
+.bg-black\/75 :where(.text-white),
+.bg-black\/80 :where(.text-white),
+.bg-black\/85 :where(.text-white),
+.bg-black\/90 :where(.text-white),
+.bg-gradient-to-r.text-white,
+.bg-gradient-to-br.text-white,
+.bg-gradient-to-tl.text-white,
+.bg-gradient-to-tr.text-white,
+.degradado-sanluis :where(.text-white),
+.degradado-acento :where(.text-white),
+.degradado-rojo :where(.text-white) {
+  color: #FFFFFF;
+}
