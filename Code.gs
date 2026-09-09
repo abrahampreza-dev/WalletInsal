@@ -97,6 +97,10 @@ function doPost(e) {
       case "formatearVideoDrive":
         return formatearVideoDrive(datos);
 
+      case "iniciarTimerVideo":
+        return iniciarTimerVideo(datos);
+      case "verificarRetencionVideo":
+        return verificarRetencionVideo(datos);
       case "obtenerTodo":
         return obtenerTodo();
 
@@ -195,7 +199,7 @@ function transferirBitsSeguro(datos) {
       resultado = {exito:true,mensaje:"¡Transferencia de " + centavosAMonto(montoC).toFixed(2) + " SL-BITS enviada exitosamente a " + receptor.nombreCompleto + "!",nuevoSaldoEmisor:centavosAMonto(saldoEmisorC-montoC),nuevoSaldoReceptor:centavosAMonto(nuevoSaldoReceptorC),transaccion:txUsuario};
     }
 
-    if (requestId) patch["idempotencia/" + requestId] = {tipo:"transferencia",fecha:timestamp,resultado:resultado,resultado:resultado};
+    if (requestId) patch["idempotencia/" + requestId] = {tipo:"transferencia",fecha:timestamp,resultado:resultado};
     if (!actualizarEnFirebaseMultiRuta(patch)) throw new Error("Firebase rechazó la actualización atómica.");
     return crearRespuestaJson(resultado);
   } catch (err) {
@@ -213,6 +217,19 @@ function procesarDonacionSegura(datos) {
     datos=datos||{};
     var idUsuario=textoSeguro(datos.idUsuario), idGrupo=textoSeguro(datos.idGrupo), requestId=normalizarRequestId(datos.idTransaccion), montoC=parsearMontoCentavos(datos.monto);
     if(!idUsuario||!idGrupo||!montoValidoTransferencia(montoC)) return crearRespuestaJson({exito:false,codigo:"MONTO_INVALIDO",mensaje:"Datos de donación inválidos. El monto debe estar entre " + CONFIG.MONTO_MINIMO_TRANSFERENCIA.toFixed(2) + " y " + CONFIG.MONTO_MAXIMO_TRANSFERENCIA.toFixed(2) + " SL-BITS."});
+
+    // Verificar retención de video del lado del servidor
+    var timerId = idUsuario + "_" + idGrupo;
+    var timerRegistro = leerDeFirebase("timers_video/" + timerId);
+    if (timerRegistro) {
+      var ahora = new Date().getTime();
+      var tiempoTranscurridoSegundos = Math.floor((ahora - timerRegistro.inicioEnMs) / 1000);
+      var tiempoRequerido = timerRegistro.tiempoRequeridoSegundos || 15;
+      if (tiempoTranscurridoSegundos < tiempoRequerido && !timerRegistro.completado) {
+        return crearRespuestaJson({exito:false,codigo:"RETENCION_NO_CUMPLIDA",mensaje:"Debes ver el video por al menos " + tiempoRequerido + " segundos antes de donar. Llevas " + tiempoTranscurridoSegundos + "s."});
+      }
+    }
+
     if(requestId){var prev=obtenerIdempotencia(requestId);if(prev)return crearRespuestaJson(prev.resultado);}
     var usuario=leerDeFirebaseObligatorio("usuarios/"+idUsuario), grupo=leerDeFirebaseObligatorio("grupos/"+idGrupo);
     if(!usuario)return crearRespuestaJson({exito:false,mensaje:"Usuario no encontrado."});
@@ -253,6 +270,79 @@ function recargarSaldoAdminSeguro(datos) {
     return crearRespuestaJson(resultado);
   }catch(e){registrarError("recargarSaldoAdminSeguro",e);return crearRespuestaJson({exito:false,codigo:"RECARGA_ERROR",mensaje:"No fue posible completar la recarga."});}
   finally{if(locked)lock.releaseLock();}
+}
+
+
+// --------------------------------------------------------------------------
+// 2B. SISTEMA DE RETENCIÓN DE VIDEO CONTROLADO POR SERVIDOR
+// --------------------------------------------------------------------------
+
+
+function iniciarTimerVideo(datos) {
+  var idUsuario = textoSeguro(datos && datos.idUsuario);
+  var idGrupo = textoSeguro(datos && datos.idGrupo);
+  if (!idUsuario || !idGrupo) return crearRespuestaJson({ exito: false, mensaje: "Parámetros incompletos." });
+
+  var grupo = leerDeFirebase("grupos/" + idGrupo);
+  if (!grupo || !grupo.urlVideo) return crearRespuestaJson({ exito: false, mensaje: "Este estand no tiene video configurado." });
+
+  var duracionTotal = parseInt(grupo.duracionSegundos || 30, 10);
+  var tiempoRequerido = Math.max(15, Math.ceil(duracionTotal * 0.5));
+
+  var timerId = idUsuario + "_" + idGrupo;
+  var registro = {
+    idUsuario: idUsuario,
+    idGrupo: idGrupo,
+    inicioEnMs: new Date().getTime(),
+    tiempoRequeridoSegundos: tiempoRequerido,
+    duracionTotal: duracionTotal,
+    completado: false,
+    fechaInicio: new Date().toISOString()
+  };
+
+  var ok = escribirEnFirebase("timers_video/" + timerId, registro);
+  if (!ok) return crearRespuestaJson({ exito: false, mensaje: "No se pudo iniciar el temporizador." });
+
+  return crearRespuestaJson({
+    exito: true,
+    timerId: timerId,
+    tiempoRequeridoSegundos: tiempoRequerido,
+    duracionTotal: duracionTotal,
+    mensaje: "Temporizador iniciado. Mira el video por " + tiempoRequerido + " segundos."
+  });
+}
+
+
+function verificarRetencionVideo(datos) {
+  var idUsuario = textoSeguro(datos && datos.idUsuario);
+  var idGrupo = textoSeguro(datos && datos.idGrupo);
+  if (!idUsuario || !idGrupo) return crearRespuestaJson({ exito: false, retencionCumplida: false, mensaje: "Parámetros incompletos." });
+
+  var timerId = idUsuario + "_" + idGrupo;
+  var registro = leerDeFirebase("timers_video/" + timerId);
+  if (!registro) return crearRespuestaJson({ exito: true, retencionCumplida: false, mensaje: "No se encontró un temporizador activo." });
+
+  var ahora = new Date().getTime();
+  var tiempoTranscurridoMs = ahora - registro.inicioEnMs;
+  var tiempoTranscurridoSegundos = Math.floor(tiempoTranscurridoMs / 1000);
+  var tiempoRequerido = registro.tiempoRequeridoSegundos || 15;
+  var retencionCumplida = tiempoTranscurridoSegundos >= tiempoRequerido;
+
+  if (retencionCumplida && !registro.completado) {
+    registro.completado = true;
+    registro.fechaCompletado = new Date().toISOString();
+    registro.tiempoTotalSegundos = tiempoTranscurridoSegundos;
+    escribirEnFirebase("timers_video/" + timerId, registro);
+  }
+
+  return crearRespuestaJson({
+    exito: true,
+    retencionCumplida: retencionCumplida,
+    tiempoTranscurridoSegundos: tiempoTranscurridoSegundos,
+    tiempoRequeridoSegundos: tiempoRequerido,
+    porcentajeCompletado: Math.min(100, Math.round((tiempoTranscurridoSegundos / tiempoRequerido) * 100)),
+    segundosRestantes: Math.max(0, tiempoRequerido - tiempoTranscurridoSegundos)
+  });
 }
 
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ProveedorUsuario, usarUsuario } from './contexto/ContextoUsuario';
+import ErrorBoundary from './componentes/comun/ErrorBoundary';
 import SidebarNavegacion from './componentes/comun/SidebarNavegacion';
 import InicioPublico from './componentes/publico/InicioPublico';
 import DashboardPrincipal from './componentes/dashboard/DashboardPrincipal';
@@ -356,8 +357,10 @@ function ContenidoPrincipal() {
 
 export default function App() {
   return (
-    <ProveedorUsuario>
-      <ContenidoPrincipal />
-    </ProveedorUsuario>
+    <ErrorBoundary>
+      <ProveedorUsuario>
+        <ContenidoPrincipal />
+      </ProveedorUsuario>
+    </ErrorBoundary>
   );
 }

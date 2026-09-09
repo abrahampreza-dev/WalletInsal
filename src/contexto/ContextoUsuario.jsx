@@ -82,7 +82,7 @@ export function ProveedorUsuario({ children }) {
       const ahora = Date.now();
       if (ultimaActividad && (ahora - ultimaActividad) > TIEMPO_EXPIRACION) {
         cerrarSesion();
-        setMensajeAlerta('Tu sesión ha expirado por inactivity. Vuelve a iniciar sesión.');
+        setMensajeAlerta('Tu sesión ha expirado por inactividad. Vuelve a iniciar sesión.');
       }
     };
 
@@ -104,29 +104,33 @@ export function ProveedorUsuario({ children }) {
 
   // Persistencia local de la sesión y caché de lectura
   useEffect(() => {
-    if (usuarioActual) localStorage.setItem('usuario_sl_bits', JSON.stringify(usuarioActual));
-    else localStorage.removeItem('usuario_sl_bits');
+    try {
+      if (usuarioActual) localStorage.setItem('usuario_sl_bits', JSON.stringify(usuarioActual));
+      else localStorage.removeItem('usuario_sl_bits');
+    } catch {}
   }, [usuarioActual]);
 
   useEffect(() => {
-    if (grupoActual) localStorage.setItem('grupo_sl_bits', JSON.stringify(grupoActual));
-    else localStorage.removeItem('grupo_sl_bits');
+    try {
+      if (grupoActual) localStorage.setItem('grupo_sl_bits', JSON.stringify(grupoActual));
+      else localStorage.removeItem('grupo_sl_bits');
+    } catch {}
   }, [grupoActual]);
 
   useEffect(() => {
-    localStorage.setItem('grupos_sl_bits', JSON.stringify(listaGrupos));
+    try { localStorage.setItem('grupos_sl_bits', JSON.stringify(listaGrupos)); } catch {}
   }, [listaGrupos]);
 
   useEffect(() => {
-    localStorage.setItem('transacciones_sl_bits', JSON.stringify(listaTransacciones));
+    try { localStorage.setItem('transacciones_sl_bits', JSON.stringify(listaTransacciones)); } catch {}
   }, [listaTransacciones]);
 
   useEffect(() => {
-    localStorage.setItem('usuarios_sl_bits', JSON.stringify(listaUsuarios));
+    try { localStorage.setItem('usuarios_sl_bits', JSON.stringify(listaUsuarios)); } catch {}
   }, [listaUsuarios]);
 
   useEffect(() => {
-    localStorage.setItem('bitacoras_sl_bits', JSON.stringify(listaBitacoras));
+    try { localStorage.setItem('bitacoras_sl_bits', JSON.stringify(listaBitacoras)); } catch {}
   }, [listaBitacoras]);
 
   // Cargar los datos oficiales desde Firebase vía Apps Script al abrir la app.
@@ -365,7 +369,7 @@ export function ProveedorUsuario({ children }) {
     }
     if (montoNum < 0.01) return { exito: false, mensaje: "El monto mínimo es 0.01 SL-BITS." };
 
-    const idTransaccionUnico = "TX_DONAR_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+    const idTransaccionUnico = "TX_DONAR_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
 
     setCargando(true);
     try {
@@ -415,7 +419,9 @@ export function ProveedorUsuario({ children }) {
     if (montoNum < 0.01) return { exito: false, mensaje: "El monto mínimo de transferencia es 0.01 SL-BITS." };
     if (!destinatario || !destinatario.trim()) return { exito: false, mensaje: "Indique el destinatario de la transacción." };
 
-    const idTransaccionUnico = "TX_ENVIO_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+    if (!contrasenaUsuario) return { exito: false, mensaje: "Debes ingresar tu contraseña para confirmar la transferencia." };
+
+    const idTransaccionUnico = "TX_ENVIO_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
 
     setCargando(true);
     try {
@@ -424,7 +430,7 @@ export function ProveedorUsuario({ children }) {
         destinatario: destinatario.trim(),
         monto: montoNum,
         concepto: concepto || "Transferencia directa",
-        contrasena: contrasenaUsuario || usuarioActual.contrasena || "",
+        contrasena: contrasenaUsuario,
         idTransaccion: idTransaccionUnico
       });
 
@@ -688,6 +694,34 @@ export function ProveedorUsuario({ children }) {
     }
   };
 
+  // Iniciar temporizador de retención de video en el servidor
+  const iniciarTimerVideo = async (idGrupo) => {
+    if (!usuarioActual) return { exito: false, mensaje: "Debes iniciar sesión." };
+    try {
+      const respuesta = await enviarPeticion("iniciarTimerVideo", {
+        idUsuario: usuarioActual.idUsuario,
+        idGrupo
+      });
+      return respuesta || { exito: false, mensaje: "No se pudo iniciar el temporizador." };
+    } catch (error) {
+      return { exito: false, mensaje: 'Error al iniciar temporizador.' };
+    }
+  };
+
+  // Verificar retención de video en el servidor
+  const verificarRetencionVideo = async (idGrupo) => {
+    if (!usuarioActual) return { exito: false, retencionCumplida: false };
+    try {
+      const respuesta = await enviarPeticion("verificarRetencionVideo", {
+        idUsuario: usuarioActual.idUsuario,
+        idGrupo
+      });
+      return respuesta || { exito: false, retencionCumplida: false };
+    } catch (error) {
+      return { exito: false, retencionCumplida: false };
+    }
+  };
+
   const cerrarSesion = () => {
     setUsuarioActual(null);
     localStorage.removeItem('usuario_sl_bits');
@@ -733,6 +767,8 @@ export function ProveedorUsuario({ children }) {
         iniciarSesionAdmin,
         iniciarSesionVisitante,
         sincronizarConServidor,
+        iniciarTimerVideo,
+        verificarRetencionVideo,
         cerrarSesion
       }}
     >

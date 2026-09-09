@@ -77,7 +77,7 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
         
         {/* Botón Cerrar */}
         {!procesando && (
-          <button onClick={irAWallet} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors z-10">
+          <button onClick={irAWallet} className="absolute top-4 right-4 p-2 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors z-10">
             <X className="w-5 h-5" />
           </button>
         )}
@@ -90,8 +90,8 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
           <span className="text-xs font-bold uppercase tracking-wider text-[#0A4D9C]">
             Apoyar Proyecto Técnico
           </span>
-          <h3 className="text-xl font-black text-white">{estand.nombreGrupo}</h3>
-          <p className="text-xs text-slate-400 font-medium">{estand.especialidad}</p>
+          <h3 className="text-xl font-black text-slate-800">{estand.nombreGrupo}</h3>
+          <p className="text-xs text-slate-500 font-medium">{estand.especialidad}</p>
         </div>
 
         {/* MODAL DE ÉXITO - persistente */}
@@ -214,7 +214,7 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
                       onChange={(e) => setMontoPersonalizado(e.target.value)}
                       placeholder="Ej. 2.50"
                       disabled={procesando}
-                      className="w-full pl-4 pr-20 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                      className="w-full pl-4 pr-20 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono text-sm focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
                     />
                     <span className="absolute right-3.5 top-3 text-xs font-bold text-[#E67A15]">
                       SL - BITS

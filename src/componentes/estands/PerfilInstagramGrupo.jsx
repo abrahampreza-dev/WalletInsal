@@ -41,7 +41,9 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
     grupoActual,
     subirFotoGrupo, 
     actualizarVideoDrive, 
-    listaTransacciones 
+    listaTransacciones,
+    iniciarTimerVideo,
+    verificarRetencionVideo
   } = usarUsuario();
 
   // Obtener datos reactivos del grupo
@@ -68,6 +70,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   const [segundosRestantes, setSegundosRestantes] = useState(tiempoRequerido);
   const [reproduciendo, setReproduciendo] = useState(false);
   const [requisitoCumplido, setRequisitoCumplido] = useState(false);
+  const [timerIniciado, setTimerIniciado] = useState(false);
 
   useEffect(() => {
     if (!tieneVideo || pestanaActiva !== 'videoDrive') return;
@@ -87,6 +90,43 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
     }
     return () => clearInterval(intervalo);
   }, [reproduciendo, segundosRestantes, tieneVideo, pestanaActiva]);
+
+  // Sincronizar con servidor cada 10 segundos mientras se reproduce
+  useEffect(() => {
+    if (!tieneVideo || pestanaActiva !== 'videoDrive' || !reproduciendo || !timerIniciado || !usuarioActual) return;
+    const sincronizar = async () => {
+      try {
+        const resultado = await verificarRetencionVideo(idGrupo);
+        if (resultado && resultado.retencionCumplida) {
+          setRequisitoCumplido(true);
+          setSegundosRestantes(0);
+        } else if (resultado && resultado.segundosRestantes !== undefined) {
+          setSegundosRestantes(resultado.segundosRestantes);
+        }
+      } catch {}
+    };
+    const intervaloSync = setInterval(sincronizar, 10000);
+    return () => clearInterval(intervaloSync);
+  }, [tieneVideo, pestanaActiva, reproduciendo, timerIniciado, usuarioActual, idGrupo, verificarRetencionVideo]);
+
+  // Iniciar timer en servidor cuando se abre la pestaña de video
+  useEffect(() => {
+    if (pestanaActiva === 'videoDrive' && tieneVideo && usuarioActual && !timerIniciado && !requisitoCumplido) {
+      const iniciar = async () => {
+        try {
+          const resultado = await iniciarTimerVideo(idGrupo);
+          if (resultado && resultado.exito) {
+            setTimerIniciado(true);
+            setReproduciendo(true);
+            if (resultado.tiempoRequeridoSegundos) {
+              setSegundosRestantes(resultado.tiempoRequeridoSegundos);
+            }
+          }
+        } catch {}
+      };
+      iniciar();
+    }
+  }, [pestanaActiva, tieneVideo, usuarioActual, timerIniciado, requisitoCumplido, idGrupo, iniciarTimerVideo]);
 
   if (!grupo) return null;
 
@@ -128,7 +168,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
       <div className="flex items-center justify-between">
         <button
           onClick={alVolver}
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-white border border-slate-200 text-xs font-bold transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-800 border border-slate-200 text-xs font-bold transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver a la lista de Estands
@@ -144,7 +184,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
 
           <button
             onClick={() => setMostrarQRModal(true)}
-            className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-white border border-slate-200"
+            className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-800 border border-slate-200"
             title="Código QR del Estand"
           >
             <QrCode className="w-4 h-4" />
@@ -152,7 +192,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
 
           <button
             onClick={copiarEnlace}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-white border border-slate-200 text-xs font-bold transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-800 border border-slate-200 text-xs font-bold transition-colors"
           >
             {copiado ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
             {copiado ? '¡Enlace Copiado!' : 'Compartir'}

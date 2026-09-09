@@ -14,8 +14,10 @@ import {
   Video
 } from 'lucide-react';
 import CodigoQRGrupo from './CodigoQRGrupo';
+import { usarUsuario } from '../../contexto/ContextoUsuario';
 
 export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilInstagram }) {
+  const { usuarioActual, iniciarTimerVideo, verificarRetencionVideo } = usarUsuario();
   const tieneVideo = !!(estand.urlVideo && estand.urlVideo.trim());
   const duracionTotal = estand.duracionSegundos || 30;
   const tiempoRequeridoSegundos = Math.max(15, Math.ceil(duracionTotal * 0.5));
@@ -25,6 +27,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const [requisitoCumplido, setRequisitoCumplido] = useState(false);
   const [mostrarVideoModal, setMostrarVideoModal] = useState(false);
   const [mostrarQR, setMostrarQR] = useState(false);
+  const [timerIniciado, setTimerIniciado] = useState(false);
 
   useEffect(() => {
     if (!tieneVideo || !mostrarVideoModal) return;
@@ -45,14 +48,43 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
     return () => clearInterval(intervalo);
   }, [reproduciendo, segundosRestantes, tieneVideo, mostrarVideoModal]);
 
+  // Sincronizar con servidor cada 10 segundos mientras se reproduce
+  useEffect(() => {
+    if (!tieneVideo || !mostrarVideoModal || !reproduciendo || !timerIniciado || !usuarioActual) return;
+    const sincronizar = async () => {
+      try {
+        const resultado = await verificarRetencionVideo(estand.idGrupo);
+        if (resultado && resultado.retencionCumplida) {
+          setRequisitoCumplido(true);
+          setSegundosRestantes(0);
+        } else if (resultado && resultado.segundosRestantes !== undefined) {
+          setSegundosRestantes(resultado.segundosRestantes);
+        }
+      } catch {}
+    };
+    const intervaloSync = setInterval(sincronizar, 10000);
+    return () => clearInterval(intervaloSync);
+  }, [tieneVideo, mostrarVideoModal, reproduciendo, timerIniciado, usuarioActual, estand.idGrupo, verificarRetencionVideo]);
+
   const porcentajeProgreso = Math.min(
     100,
     Math.round(((tiempoRequeridoSegundos - segundosRestantes) / tiempoRequeridoSegundos) * 100)
   );
 
-  const iniciarReproduccion = () => {
+  const iniciarReproduccion = async () => {
     setReproduciendo(true);
     setMostrarVideoModal(true);
+    if (usuarioActual && !timerIniciado) {
+      try {
+        const resultado = await iniciarTimerVideo(estand.idGrupo);
+        if (resultado && resultado.exito) {
+          setTimerIniciado(true);
+          if (resultado.tiempoRequeridoSegundos) {
+            setSegundosRestantes(resultado.tiempoRequeridoSegundos);
+          }
+        }
+      } catch {}
+    }
   };
 
   const cantidadFotos = (estand.fotos || []).length;
@@ -127,7 +159,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
           {/* Handle de Instagram y Nombre */}
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-pink-400">
-              {estand.handle || `@${estand.idGrupo.toLowerCase()}`}
+              {estand.handle || `@${(estand.nombreGrupo || 'estand').toLowerCase().replace(/\s+/g, '.')}`}
             </span>
             <span className="text-[10px] text-slate-400 flex items-center gap-1">
               <Video className="w-3 h-3 text-[#0A4D9C]" />
