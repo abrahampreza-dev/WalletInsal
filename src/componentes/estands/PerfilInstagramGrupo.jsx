@@ -193,7 +193,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
             {/* Handle y Botones de Acción */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h2 className="text-xl sm:text-2xl font-black text-white">{grupo.handle || `@${grupo.idGrupo.toLowerCase()}`}</h2>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-800">{grupo.handle || `@${grupo.idGrupo.toLowerCase()}`}</h2>
                 <div className="w-5 h-5 rounded-full bg-[#0A4D9C] flex items-center justify-center text-slate-800 font-black text-[11px]" title="Proyecto Oficial Verificado">
                   ✓
                 </div>
@@ -230,11 +230,11 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
             {/* Estadísticas de Instagram */}
             <div className="flex items-center justify-center sm:justify-start gap-6 sm:gap-8 border-y border-slate-200 py-3 text-xs">
               <div>
-                <span className="font-extrabold text-white text-sm sm:text-base">{fotos.length}</span>
+                <span className="font-extrabold text-slate-800 text-sm sm:text-base">{fotos.length}</span>
                 <span className="text-slate-400 block sm:inline sm:ml-1 font-medium">publicaciones</span>
               </div>
 <div>
-                <span className="font-extrabold text-white text-sm sm:text-base">{apoyosUnicos}</span>
+                <span className="font-extrabold text-slate-800 text-sm sm:text-base">{apoyosUnicos}</span>
                 <span className="text-slate-400 block sm:inline sm:ml-1 font-medium">apoyos</span>
               </div>
               <div>
@@ -242,7 +242,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                 <span className="text-slate-400 block sm:inline sm:ml-1 font-medium">SL - BITS</span>
               </div>
 <div>
-                <span className="font-extrabold text-white text-sm sm:text-base">
+                <span className="font-extrabold text-slate-800 text-sm sm:text-base">
                   {grupo.integrantes?.split(',').length || 0}
                 </span>
                 <span className="text-slate-400 block sm:inline sm:ml-1 font-medium">integrantes</span>
@@ -251,7 +251,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
 
             {/* Biografía / Descripción del Proyecto */}
             <div className="space-y-1.5 text-xs">
-              <h1 className="text-sm sm:text-base font-black text-white">{grupo.nombreGrupo}</h1>
+              <h1 className="text-sm sm:text-base font-black text-slate-800">{grupo.nombreGrupo}</h1>
               
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A4D9C]/15 border border-[#0A4D9C]/50 text-[#0A4D9C] font-bold text-[11px]">
                 <Layers className="w-3.5 h-3.5" />
@@ -404,7 +404,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
           {fotos.length === 0 ? (
             <div className="text-center py-16 bg-slate-50 rounded-3xl border border-slate-200 p-8 space-y-3">
               <Grid className="w-12 h-12 text-slate-400 mx-auto" />
-              <h4 className="text-sm font-bold text-white">Aún no hay fotos en este perfil</h4>
+              <h4 className="text-sm font-bold text-slate-800">Aún no hay fotos en este perfil</h4>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
                 Sé el primero en subir fotos del prototipo y capturas de la Expotecnia.
               </p>
@@ -464,7 +464,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
 
       {/* 2. Reproductor de Video de Google Drive */}
       {pestanaActiva === 'videoDrive' && (
-        <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 shadow-2xl">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -472,7 +472,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                 <Video className="w-3.5 h-3.5" />
                 Video Demostrativo Oficial
               </div>
-              <h3 className="text-xl font-black text-slate-800 mt-1">Demostración Técnica del Estand</h3>
+              <h3 className="text-lg sm:text-xl font-black text-slate-800 mt-1">Demostración Técnica del Estand</h3>
               <p className="text-xs text-slate-400">
                 Visualiza el video demostrativo para validar tu apoyo y desbloquear la donación en SL - BITS.
               </p>
@@ -489,11 +489,11 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
 
 {/* Reproductor de Video Iframe de Google Drive */}
           {grupo.urlVideo ? (
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-2xl">
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-2xl" style={{ paddingBottom: '56.25%' }}>
               <iframe
                 src={grupo.urlVideo}
                 title={`Video de ${grupo.nombreGrupo}`}
-                className="w-full h-full"
+                className="absolute inset-0 w-full h-full"
                 allow="autoplay"
                 allowFullScreen
               />
@@ -523,7 +523,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                   <Play className={`w-6 h-6 fill-white ${reproduciendo ? 'animate-pulse' : 'ml-0.5'}`} />
                 </button>
                 <div>
-                  <span className="text-xs font-bold text-white block">
+                  <span className="text-xs font-bold text-slate-800 block">
                     {reproduciendo ? 'Temporizador de visualización activo' : 'Presiona para iniciar conteo de validación'}
                   </span>
                   <span className="text-[11px] text-slate-400">
@@ -587,7 +587,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
             <div className="flex items-center gap-3 text-slate-400">
               <Video className="w-5 h-5" />
               <div>
-                <span className="text-xs font-bold text-white block">Este estand aún no publica su video</span>
+                <span className="text-xs font-bold text-slate-800 block">Este estand aún no publica su video</span>
                 <span className="text-[11px] text-slate-400">La donación se habilitará cuando el equipo publique su demostración técnica.</span>
               </div>
             </div>
@@ -610,7 +610,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
           
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-black text-white">Comunidad de Apoyos y Donaciones</h3>
+              <h3 className="text-base font-black text-slate-800">Comunidad de Apoyos y Donaciones</h3>
               <p className="text-xs text-slate-400">Total recaudado: <strong className="text-[#E67A15]">{(grupo.totalRecaudado || 0).toFixed(2)} SL - BITS</strong></p>
             </div>
             
@@ -637,7 +637,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                       ⚡
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white">{tx.nombreEmisor || "Estudiante San Luis"}</p>
+                      <p className="text-xs font-bold text-slate-800">{tx.nombreEmisor || "Estudiante San Luis"}</p>
                       <p className="text-[10px] text-slate-400">
                         {new Date(tx.fecha).toLocaleString('es-SV', {
                           day: '2-digit',
@@ -664,7 +664,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
       {pestanaActiva === 'ficha' && (
         <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
           <div>
-            <h3 className="text-base font-black text-white">Ficha Técnica e Innovación</h3>
+            <h3 className="text-base font-black text-slate-800">Ficha Técnica e Innovación</h3>
             <p className="text-xs text-slate-400">Detalles del prototipo, tecnología empleada y estructura del equipo</p>
           </div>
 
@@ -678,7 +678,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A4D9C] block">
                   {spec.clave}
                 </span>
-                <span className="text-sm font-semibold text-white block">
+                <span className="text-sm font-semibold text-slate-800 block">
                   {spec.valor}
                 </span>
               </div>
@@ -686,7 +686,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <h4 className="text-xs font-bold text-white">Impacto y Relevancia Institucional:</h4>
+            <h4 className="text-xs font-bold text-slate-800">Impacto y Relevancia Institucional:</h4>
             <p className="text-xs text-slate-400 leading-relaxed">
               Proyecto calificado dentro de los estándares de excelencia académica del Instituto San Luis. Enfocado en resolver problemáticas del entorno comunitario con tecnología abierta y sustentabilidad.
             </p>

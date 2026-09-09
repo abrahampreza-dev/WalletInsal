@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Scan, Zap, CheckCircle2, Building2, User } from 'lucide-react';
+import { X, Scan } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 
 export default function ModalEscanearQR({ estaAbierto, alCerrar, alEscanearGrupo }) {
@@ -19,7 +19,7 @@ export default function ModalEscanearQR({ estaAbierto, alCerrar, alEscanearGrupo
               <Scan className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Escanear Código QR</h3>
+              <h3 className="text-base font-black text-slate-800">Escanear Código QR</h3>
               <p className="text-xs text-slate-400">Escanea el QR de un estand para donar o ver su perfil Explorar INSALSPACE</p>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function ModalEscanearQR({ estaAbierto, alCerrar, alEscanearGrupo
                       className="w-10 h-10 rounded-xl object-cover border border-slate-200"
                     />
                     <div>
-                      <p className="text-xs font-bold text-white group-hover:text-[#E67A15] transition-colors">
+                      <p className="text-xs font-bold text-slate-800 group-hover:text-[#E67A15] transition-colors">
                         {grupo.nombreGrupo}
                       </p>
                       <p className="text-[10px] text-slate-400">{grupo.especialidad}</p>

@@ -6,18 +6,8 @@ import {
   Trophy, 
   UserPlus, 
   Grid, 
-  Video, 
-  Play, 
   Zap, 
-  Heart, 
-  Layers, 
-  Users, 
-  CheckCircle2, 
-  Lock, 
-  ArrowRight,
-  Shield,
-  HelpCircle,
-  Clock
+  HelpCircle
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import TarjetaEstand from '../estands/TarjetaEstand';

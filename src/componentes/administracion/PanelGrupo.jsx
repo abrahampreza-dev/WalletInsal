@@ -4,14 +4,9 @@ import {
   Video, 
   Wallet, 
   Save, 
-  LogOut, 
   QrCode, 
-  Grid, 
   UploadCloud, 
   Sparkles, 
-  CheckCircle2, 
-  ExternalLink,
-  Users,
   Eye
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
@@ -63,7 +58,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
             <Sparkles className="w-3.5 h-3.5" />
             Panel de Control del Estand Oficial
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white mt-1">{grupoActual.nombreGrupo}</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 mt-1">{grupoActual.nombreGrupo}</h1>
           <p className="text-xs text-slate-400">{grupoActual.especialidad}</p>
         </div>
 
@@ -94,7 +89,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
         {/* Formulario de Contenido Multimedia */}
         <form onSubmit={guardar} className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl">
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <h2 className="text-base font-bold text-white">Configuración Multimedia</h2>
+            <h2 className="text-base font-bold text-slate-800">Configuración Multimedia</h2>
             <button
               type="button"
               onClick={() => setModalSubir(true)}
@@ -113,7 +108,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
             <input
               value={foto}
               onChange={(e) => setFoto(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
               placeholder="https://..."
             />
           </div>
@@ -135,7 +130,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
             <input
               value={video}
               onChange={(e) => setVideo(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#0A4D9C] font-mono"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#0A4D9C] font-mono"
               placeholder="https://drive.google.com/file/d/.../preview"
             />
           </div>
@@ -153,7 +148,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-white text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 transition-colors"
+            className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 transition-colors"
           >
             <Save className="w-4 h-4" />
             {guardado ? '¡Cambios Guardados!' : 'Guardar Cambios'}
@@ -169,7 +164,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
               </div>
               <div>
                 <p className="text-xs text-slate-400 font-bold uppercase">Total Recaudado</p>
-                <p className="text-3xl font-black text-white">
+                <p className="text-3xl font-black text-slate-800">
                   {Number(grupoActual.totalRecaudado || 0).toFixed(2)}{' '}
                   <span className="text-sm font-black text-[#E67A15]">SL - BITS</span>
                 </p>
@@ -178,7 +173,7 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
 
             {/* Muro de donaciones recibidas */}
             <div className="mt-4 space-y-3">
-              <span className="text-xs font-bold text-white block">Donaciones Recibidas ({movimientos.length})</span>
+              <span className="text-xs font-bold text-slate-800 block">Donaciones Recibidas ({movimientos.length})</span>
               
               {movimientos.length === 0 ? (
                 <p className="text-xs text-slate-400 py-6 text-center">

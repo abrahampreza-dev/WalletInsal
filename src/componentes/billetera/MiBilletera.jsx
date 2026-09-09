@@ -5,7 +5,6 @@ import MostrarQR from './MostrarQR';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
-  Sparkles, 
   History, 
   QrCode, 
   ShieldCheck, 
@@ -25,7 +24,7 @@ export default function MiBilletera({ alIrAEstands, alIrARecargar }) {
           <div className="w-16 h-16 rounded-2xl bg-[#E67A15]/15 border border-[#E67A15]/50 flex items-center justify-center mx-auto mb-4">
             <Zap className="w-8 h-8 text-[#E67A15]" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Sesión no iniciada</h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Sesión no iniciada</h2>
           <p className="text-sm text-slate-400 mb-6">
             Para consultar tu estado de cuenta y movimientos, ingresa con tu NIE o DUI registrado.
           </p>
@@ -67,7 +66,7 @@ export default function MiBilletera({ alIrAEstands, alIrARecargar }) {
             <QrCode className="w-6 h-6 text-[#0A4D9C]" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">Mostrar QR de Recarga</h4>
+            <h4 className="text-sm font-bold text-slate-800">Mostrar QR de Recarga</h4>
             <p className="text-xs text-slate-400">Para recargas en ventanilla</p>
           </div>
         </button>
@@ -80,7 +79,7 @@ export default function MiBilletera({ alIrAEstands, alIrARecargar }) {
             <Send className="w-6 h-6 text-[#E67A15]" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">Explorar y Apoyar Estands</h4>
+            <h4 className="text-sm font-bold text-slate-800">Explorar y Apoyar Estands</h4>
             <p className="text-xs text-slate-400">Ver videos y donar SL - BITS</p>
           </div>
         </button>
@@ -90,7 +89,7 @@ export default function MiBilletera({ alIrAEstands, alIrARecargar }) {
             <ShieldCheck className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">Resumen de Cuenta</h4>
+            <h4 className="text-sm font-bold text-slate-800">Resumen de Cuenta</h4>
             <p className="text-xs text-emerald-600 font-medium">Billetera Verificada</p>
           </div>
         </div>
@@ -104,7 +103,7 @@ export default function MiBilletera({ alIrAEstands, alIrARecargar }) {
               <History className="w-5 h-5 text-slate-400" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Historial de Transacciones</h3>
+              <h3 className="text-base font-bold text-slate-800">Historial de Transacciones</h3>
               <p className="text-xs text-slate-400">Historial completo de donaciones y recargas</p>
             </div>
           </div>
@@ -160,7 +159,7 @@ export default function MiBilletera({ alIrAEstands, alIrARecargar }) {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{etiqueta}</p>
+                      <p className="text-sm font-bold text-slate-800">{etiqueta}</p>
                       {tx.concepto && (
                         <p className="text-[11px] text-slate-400">{tx.concepto}</p>
                       )}

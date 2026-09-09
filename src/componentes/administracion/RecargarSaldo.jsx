@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import { 
-  CreditCard, 
-  Zap, 
   Search, 
   CheckCircle2, 
   AlertCircle, 
@@ -77,7 +75,7 @@ export default function RecargarSaldo() {
           <Banknote className="w-5 h-5 text-[#E67A15]" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-white">Módulo General de Caja y Recargas</h3>
+          <h3 className="text-base font-bold text-slate-800">Módulo General de Caja y Recargas</h3>
           <p className="text-xs text-slate-400">Acreditación de saldo en efectivo para los asistentes de la Expotecnia</p>
         </div>
       </div>
@@ -115,7 +113,7 @@ export default function RecargarSaldo() {
               onChange={(e) => setCriterioBusqueda(e.target.value)}
               placeholder="Ingresa NIE (solo números), DUI (con o sin guion) o ID..."
               disabled={procesando}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
             />
           </div>
         </div>
@@ -166,7 +164,7 @@ export default function RecargarSaldo() {
                   onChange={(e) => setMontoPersonalizado(e.target.value)}
                   placeholder="Ej. 20.00"
                   disabled={procesando}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono text-sm focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
                 />
               </div>
             )}
@@ -184,7 +182,7 @@ export default function RecargarSaldo() {
             onChange={(e) => setMotivo(e.target.value)}
             placeholder="Recarga en efectivo en caja"
             disabled={procesando}
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-white text-xs focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
           />
         </div>
 

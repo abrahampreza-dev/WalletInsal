@@ -86,7 +86,7 @@ export default function ModalEnviarBits({ estaAbierto, alCerrar }) {
               <Send className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Enviar SL - BITS</h3>
+              <h3 className="text-base font-black text-slate-800">Enviar SL - BITS</h3>
               <p className="text-xs text-slate-400">Transferencia entre usuarios</p>
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function ModalEnviarBits({ estaAbierto, alCerrar }) {
                     onChange={(e) => setDestinatario(e.target.value)}
                     placeholder="Ingresa NIE, DUI, @usuario o nombre del proyecto..."
                     disabled={enviando}
-                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -201,7 +201,7 @@ export default function ModalEnviarBits({ estaAbierto, alCerrar }) {
                     onChange={(e) => setMonto(e.target.value)}
                     placeholder="0.00"
                     disabled={enviando}
-                    className="w-full pl-4 pr-20 py-3 bg-slate-50 border border-slate-200 rounded-xl text-white text-sm font-bold placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                    className="w-full pl-4 pr-20 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-bold placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
                   />
                   <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-black text-[#E67A15] pointer-events-none">
                     SL - BITS
@@ -220,7 +220,7 @@ export default function ModalEnviarBits({ estaAbierto, alCerrar }) {
                   onChange={(e) => setConcepto(e.target.value)}
                   placeholder="Ej. Colaboración, felicitaciones por proyecto..."
                   disabled={enviando}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
                 />
               </div>
 
@@ -236,7 +236,7 @@ export default function ModalEnviarBits({ estaAbierto, alCerrar }) {
                   onChange={(e) => setContrasena(e.target.value)}
                   placeholder="Ingresa tu contraseña para confirmar"
                   disabled={enviando}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
                 />
               </div>
 

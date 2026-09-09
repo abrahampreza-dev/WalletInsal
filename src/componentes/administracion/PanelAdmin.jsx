@@ -73,7 +73,7 @@ export default function PanelAdmin() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl sm:text-3xl font-black text-white">
+            <span className="text-2xl sm:text-3xl font-black text-slate-800">
               {totalRecaudado.toFixed(2)}
             </span>
             <span className="text-sm font-extrabold text-[#E67A15] ml-1.5">SL-BITS</span>
@@ -92,7 +92,7 @@ export default function PanelAdmin() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl sm:text-3xl font-black text-white">
+            <span className="text-2xl sm:text-3xl font-black text-slate-800">
               {listaGrupos.length}
             </span>
             <span className="text-xs font-semibold text-slate-400 ml-1.5">proyectos inscritos</span>
@@ -111,7 +111,7 @@ export default function PanelAdmin() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl sm:text-3xl font-black text-white">
+            <span className="text-2xl sm:text-3xl font-black text-slate-800">
               {totalDonacionesCount}
             </span>
             <span className="text-xs font-semibold text-emerald-600 ml-1.5">donaciones emitidas</span>
@@ -130,7 +130,7 @@ export default function PanelAdmin() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl sm:text-3xl font-black text-white">
+            <span className="text-2xl sm:text-3xl font-black text-slate-800">
               {promedioPorEstand.toFixed(2)}
             </span>
             <span className="text-sm font-extrabold text-amber-600 ml-1.5">SL-BITS</span>

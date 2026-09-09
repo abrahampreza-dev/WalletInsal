@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Heart, MessageCircle, Send, Zap, Share2, MoreHorizontal, Bookmark } from 'lucide-react';
+import { X, Heart, MessageCircle, Zap, Share2 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 
 export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, alAbrirDonacion }) {

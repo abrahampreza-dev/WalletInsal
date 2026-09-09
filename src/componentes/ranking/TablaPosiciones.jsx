@@ -49,7 +49,7 @@ export default function TablaPosiciones() {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 Segundo Lugar
               </span>
-              <h3 className="text-lg font-black text-white mt-1 line-clamp-1">
+              <h3 className="text-lg font-black text-slate-800 mt-1 line-clamp-1">
                 {segundoLugar.nombreGrupo}
               </h3>
               <p className="text-xs text-[#0A4D9C] font-semibold mt-0.5">{segundoLugar.especialidad}</p>
@@ -73,7 +73,7 @@ export default function TablaPosiciones() {
               <span className="text-xs font-black text-amber-600 uppercase tracking-widest block">
                 ¡Líder del Certamen!
               </span>
-              <h3 className="text-xl font-black text-white mt-1">
+              <h3 className="text-xl font-black text-slate-800 mt-1">
                 {primerLugar.nombreGrupo}
               </h3>
               <p className="text-xs text-[#E67A15] font-bold mt-1">{primerLugar.especialidad}</p>
@@ -97,7 +97,7 @@ export default function TablaPosiciones() {
               <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">
                 Tercer Lugar
               </span>
-              <h3 className="text-lg font-black text-white mt-1 line-clamp-1">
+              <h3 className="text-lg font-black text-slate-800 mt-1 line-clamp-1">
                 {tercerLugar.nombreGrupo}
               </h3>
               <p className="text-xs text-[#0A4D9C] font-semibold mt-0.5">{tercerLugar.especialidad}</p>
@@ -123,7 +123,7 @@ export default function TablaPosiciones() {
               <TrendingUp className="w-5 h-5 text-[#E67A15]" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Clasificación General</h3>
+              <h3 className="text-base font-bold text-slate-800">Clasificación General</h3>
               <p className="text-xs text-slate-400">Total de proyectos: {listaGrupos.length}</p>
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function TablaPosiciones() {
                     </td>
 
                     {/* Nombre del Proyecto */}
-                    <td className="py-4 px-6 font-extrabold text-white">
+                    <td className="py-4 px-6 font-extrabold text-slate-800">
                       <div className="flex items-center gap-3">
                         {grupo.urlFoto && (
                           <img
@@ -182,7 +182,7 @@ export default function TablaPosiciones() {
                           />
                         )}
                         <div>
-                          <span className="block text-white font-bold">{grupo.nombreGrupo}</span>
+                          <span className="block text-slate-800 font-bold">{grupo.nombreGrupo}</span>
                           <span className="text-xs text-slate-400 font-normal line-clamp-1">
                             {grupo.descripcion || 'Expotecnia 2026'}
                           </span>

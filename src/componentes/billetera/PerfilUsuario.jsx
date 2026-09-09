@@ -32,6 +32,7 @@ export default function PerfilUsuario({ alIrABilletera, alIrAEstands, alConectar
   const [confirmarNueva, setConfirmarNueva] = useState('');
   const [mensajeContrasena, setMensajeContrasena] = useState('');
   const [errorContrasena, setErrorContrasena] = useState('');
+  const [cargandoContrasena, setCargandoContrasena] = useState(false);
 
   if (!usuarioActual) return null;
 
@@ -71,6 +72,7 @@ const copiarDoc = () => {
       return;
     }
 
+    setCargandoContrasena(true);
     try {
       const { enviarPeticion } = await import('../../servicios/conexionGas');
       const respuesta = await enviarPeticion('cambiarContrasena', {
@@ -91,6 +93,8 @@ const copiarDoc = () => {
       }
     } catch (err) {
       setErrorContrasena('Error de conexión con el servidor.');
+    } finally {
+      setCargandoContrasena(false);
     }
   };
 
@@ -140,7 +144,7 @@ const copiarDoc = () => {
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white">{usuarioActual.nombreCompleto}</h2>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-800">{usuarioActual.nombreCompleto}</h2>
                 <p className="text-xs text-[#0A4D9C] font-bold">{rolUsuario} • Instituto San Luis</p>
               </div>
 
@@ -174,7 +178,7 @@ const copiarDoc = () => {
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
             <div>
               <span className="text-[11px] text-slate-400 font-bold uppercase block">Saldo Disponible</span>
-              <span className="text-2xl font-black text-white">
+              <span className="text-2xl font-black text-slate-800">
                 {(usuarioActual.saldoActual || 0).toFixed(2)} <span className="text-[#E67A15] text-base">SL - BITS</span>
               </span>
             </div>
@@ -241,8 +245,9 @@ const copiarDoc = () => {
               <input type="password" value={contrasenaActual} onChange={(e) => setContrasenaActual(e.target.value)} placeholder="Contraseña actual" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]" />
               <input type="password" value={nuevaContrasena} onChange={(e) => setNuevaContrasena(e.target.value)} placeholder="Nueva contraseña (mín. 4 caracteres)" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]" />
               <input type="password" value={confirmarNueva} onChange={(e) => setConfirmarNueva(e.target.value)} placeholder="Confirmar nueva contraseña" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]" />
-              <button type="submit" className="w-full py-2.5 rounded-xl bg-[#E67A15] hover:bg-[#D19E37] text-white font-bold text-xs shadow-md shadow-orange-500/20">
-                Guardar Nueva Contraseña
+              <button type="submit" disabled={cargandoContrasena} className="w-full py-2.5 rounded-xl bg-[#E67A15] hover:bg-[#D19E37] text-white font-bold text-xs shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 disabled:opacity-50">
+                {cargandoContrasena ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Key className="w-4 h-4" />}
+                {cargandoContrasena ? 'Guardando...' : 'Guardar Nueva Contraseña'}
               </button>
             </form>
           </div>
@@ -253,7 +258,7 @@ const copiarDoc = () => {
       <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <div>
-            <h3 className="text-base font-black text-white">Mi Estand en Explorar INSALSPACE</h3>
+            <h3 className="text-base font-black text-slate-800">Mi Estand en Explorar INSALSPACE</h3>
             <p className="text-xs text-slate-400">Tu proyecto técnico y su muro SPACE dentro de este perfil</p>
           </div>
         </div>
@@ -262,14 +267,14 @@ const copiarDoc = () => {
           <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/45 text-xs text-emerald-600 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
             <span>
-              <strong className="text-white">{grupoConectado}</strong> está conectado a tu cuenta. El panel de tu estand se muestra aquí abajo.
+              <strong className="text-slate-800">{grupoConectado}</strong> está conectado a tu cuenta. El panel de tu estand se muestra aquí abajo.
             </span>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-xs text-slate-400 leading-relaxed">
               Conecta el estand de tu proyecto técnico para publicar fotos, videos y administrar tu muro en la red social{' '}
-              <strong className="text-white">Explorar INSALSPACE</strong>.
+              <strong className="text-slate-800">Explorar INSALSPACE</strong>.
             </p>
             <button
               onClick={alConectarEstand}
@@ -284,7 +289,7 @@ const copiarDoc = () => {
 
       {/* Insignias y Logros Académicos */}
       <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
-        <h3 className="text-base font-black text-white">Insignias y Méritos San Luis</h3>
+        <h3 className="text-base font-black text-slate-800">Insignias y Méritos San Luis</h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">

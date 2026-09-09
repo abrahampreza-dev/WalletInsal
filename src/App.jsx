@@ -17,7 +17,7 @@ import ModalRecibirBits from './componentes/billetera/ModalRecibirBits';
 import ModalRecompensas from './componentes/billetera/ModalRecompensas';
 import { Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.5.0';
 
 function ContenidoPrincipal() {
   const { usuarioActual, grupoActual, adminAutenticado } = usarUsuario();

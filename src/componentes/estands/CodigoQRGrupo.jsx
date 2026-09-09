@@ -31,7 +31,7 @@ export default function CodigoQRGrupo({ grupo, estaAbierto, alCerrar }) {
             <QrCode className="w-6 h-6 text-[#E67A15]" />
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-[#0A4D9C]">Recibir donaciones</p>
-          <h3 className="text-lg font-black text-white mt-1">{grupo.nombreGrupo}</h3>
+          <h3 className="text-lg font-black text-slate-800 mt-1">{grupo.nombreGrupo}</h3>
           <p className="text-xs text-slate-400 mt-1">Escanea este código para apoyar este proyecto</p>
         </div>
 
@@ -41,7 +41,7 @@ export default function CodigoQRGrupo({ grupo, estaAbierto, alCerrar }) {
 
         <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
           <p className="text-xs text-slate-400">Código del estand</p>
-          <p className="text-sm font-mono font-bold text-white">{grupo.idGrupo}</p>
+          <p className="text-sm font-mono font-bold text-slate-800">{grupo.idGrupo}</p>
           <div className="pt-2 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
             <ShieldCheck className="w-4 h-4" />
             Código oficial del proyecto

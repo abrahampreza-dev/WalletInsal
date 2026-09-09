@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, GraduationCap, Users, Trophy, Sparkles, CheckCircle2, Zap, Award } from 'lucide-react';
+import { X, GraduationCap, Users, Trophy, CheckCircle2, Award } from 'lucide-react';
 
 export default function ModalRecompensas({ estaAbierto, alCerrar }) {
   if (!estaAbierto) return null;
@@ -57,7 +57,7 @@ export default function ModalRecompensas({ estaAbierto, alCerrar }) {
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Programa Institucional de Incentivos y Recompensas</h3>
+              <h3 className="text-base font-black text-slate-800">Programa Institucional de Incentivos y Recompensas</h3>
               <p className="text-xs text-slate-400">Valores, logros y méritos del Instituto San Luis</p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function ModalRecompensas({ estaAbierto, alCerrar }) {
                       <Icono className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-black text-white">{cat.titulo}</h4>
+                      <h4 className="text-sm font-black text-slate-800">{cat.titulo}</h4>
                       <p className="text-xs text-slate-400">{cat.descripcion}</p>
                     </div>
                   </div>

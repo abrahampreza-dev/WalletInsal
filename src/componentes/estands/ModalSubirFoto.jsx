@@ -63,7 +63,7 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
               <ImageIcon className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Nueva Publicación en Explorar INSALSPACE</h3>
+              <h3 className="text-base font-black text-slate-800">Nueva Publicación en Explorar INSALSPACE</h3>
               <p className="text-xs text-slate-400">Comentar en el feed oficial de {nombreGrupo}</p>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
               />
               <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-[#E67A15] mx-auto mb-1.5 transition-colors" />
-              <p className="text-xs font-semibold text-white">
+              <p className="text-xs font-semibold text-slate-800">
                 {cargandoArchivo ? "Cargando imagen..." : "Haz clic para subir desde tu dispositivo"}
               </p>
               <p className="text-[11px] text-slate-400">JPG, PNG, WEBP</p>
@@ -109,7 +109,7 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
               value={urlImagen}
               onChange={(e) => manejarUrlDirecta(e.target.value)}
               placeholder="https://..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
             />
           </div>
 
@@ -133,7 +133,7 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
               value={pieDeFoto}
               onChange={(e) => setPieDeFoto(e.target.value)}
               placeholder="Escribe un pie de foto para tu publicación, novedades del prototipo, integrantes que participaron..."
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] resize-none"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] resize-none"
             />
           </div>
 

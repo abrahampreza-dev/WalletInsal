@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
-import { History, ShieldCheck, Heart, Banknote, Calendar, User, Search } from 'lucide-react';
+import { History, ShieldCheck, Heart, Search } from 'lucide-react';
 
 export default function HistorialBitacora() {
   const { listaTransacciones, listaBitacoras } = usarUsuario();
@@ -29,7 +29,7 @@ export default function HistorialBitacora() {
             <History className="w-5 h-5 text-[#0A4D9C]" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Bitácora y Auditoría de Movimientos</h3>
+            <h3 className="text-base font-bold text-slate-800">Bitácora y Auditoría de Movimientos</h3>
             <p className="text-xs text-slate-400">Monitoreo transparente de transferencias, apoyos y transacciones de caja</p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function HistorialBitacora() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="Filtrar por nombre, documento o identificador de transacción..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E67A15]"
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:border-[#E67A15]"
         />
       </div>
 

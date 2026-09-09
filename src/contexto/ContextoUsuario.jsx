@@ -138,62 +138,75 @@ export function ProveedorUsuario({ children }) {
   // Sincronizar datos globales (grupos, transacciones, usuarios y bitácoras) con el backend.
   const sincronizarConServidor = async () => {
     setCargando(true);
-    const respuesta = await enviarPeticion("obtenerTodo");
+    try {
+      const respuesta = await enviarPeticion("obtenerTodo");
 
-    if (respuesta && respuesta.exito && respuesta.datos) {
-      if (respuesta.datos.grupos && Object.keys(respuesta.datos.grupos).length > 0) {
-        const arregloGrupos = Object.values(respuesta.datos.grupos).map((grupo) =>
-          mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
-        );
-        setListaGrupos(arregloGrupos);
+      if (respuesta && respuesta.exito && respuesta.datos) {
+        if (respuesta.datos.grupos && Object.keys(respuesta.datos.grupos).length > 0) {
+          const arregloGrupos = Object.values(respuesta.datos.grupos).map((grupo) =>
+            mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
+          );
+          setListaGrupos(arregloGrupos);
+        }
+        if (respuesta.datos.transacciones && Object.keys(respuesta.datos.transacciones).length > 0) {
+          const arregloTx = Object.values(respuesta.datos.transacciones).reverse();
+          setListaTransacciones(arregloTx);
+        }
+        if (respuesta.datos.usuarios && Object.keys(respuesta.datos.usuarios).length > 0) {
+          const arregloUsuarios = Object.values(respuesta.datos.usuarios);
+          setListaUsuarios(arregloUsuarios);
+        }
+        if (respuesta.datos.bitacoras && Object.keys(respuesta.datos.bitacoras).length > 0) {
+          const arregloBitacoras = Object.values(respuesta.datos.bitacoras).reverse();
+          setListaBitacoras(arregloBitacoras);
+        }
       }
-      if (respuesta.datos.transacciones && Object.keys(respuesta.datos.transacciones).length > 0) {
-        const arregloTx = Object.values(respuesta.datos.transacciones).reverse();
-        setListaTransacciones(arregloTx);
-      }
-      if (respuesta.datos.usuarios && Object.keys(respuesta.datos.usuarios).length > 0) {
-        const arregloUsuarios = Object.values(respuesta.datos.usuarios);
-        setListaUsuarios(arregloUsuarios);
-      }
-      if (respuesta.datos.bitacoras && Object.keys(respuesta.datos.bitacoras).length > 0) {
-        const arregloBitacoras = Object.values(respuesta.datos.bitacoras).reverse();
-        setListaBitacoras(arregloBitacoras);
-      }
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-    setCargando(false);
   };
 
   // Subir una foto al feed del estand: se guarda en Firebase vía GAS.
   const subirFotoGrupo = async (idGrupo, datosFoto) => {
+    if (!usuarioActual) return { exito: false, mensaje: "Debes iniciar sesión para subir una foto." };
     setCargando(true);
-    const respuesta = await enviarPeticion("subirFotoGrupo", {
-      idGrupo,
-      foto: {
-        id: "post_" + Date.now(),
-        url: datosFoto.url,
-        pie: datosFoto.pie || "",
-        fecha: "Justo ahora",
-        likes: 0,
-        leGusta: false,
-        likesUsers: {},
-        comentarios: []
+    try {
+      const respuesta = await enviarPeticion("subirFotoGrupo", {
+        idGrupo,
+        foto: {
+          id: "post_" + Date.now(),
+          url: datosFoto.url,
+          pie: datosFoto.pie || "",
+          fecha: "Justo ahora",
+          likes: 0,
+          leGusta: false,
+          likesUsers: {},
+          comentarios: []
+        }
+      });
+
+      if (respuesta && respuesta.exito && respuesta.grupo) {
+        const grupoMapeado = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario);
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
+        );
+        if (grupoActual && grupoActual.idGrupo === idGrupo) setGrupoActual(grupoMapeado);
+        return { exito: true, mensaje: respuesta.mensaje || "¡Publicación subida con éxito al feed del estand!" };
       }
-    });
-    setCargando(false);
 
-    if (respuesta && respuesta.exito && respuesta.grupo) {
-      const grupoMapeado = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario);
-      setListaGrupos((prev) =>
-        prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
-      );
-      if (grupoActual && grupoActual.idGrupo === idGrupo) setGrupoActual(grupoMapeado);
-      return { exito: true, mensaje: respuesta.mensaje || "¡Publicación subida con éxito al feed del estand!" };
+      return {
+        exito: false,
+        mensaje: (respuesta && respuesta.mensaje) || "Ocurrió un error al intentar almacenar la imagen."
+      };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    return {
-      exito: false,
-      mensaje: (respuesta && respuesta.mensaje) || "Ocurrió un error al intentar almacenar la imagen."
-    };
   };
 
   // Dar/quitar like a una foto: se persiste en Firebase vía GAS.
@@ -204,63 +217,79 @@ export function ProveedorUsuario({ children }) {
     const foto = grupo?.fotos?.find((f) => f.id === idFoto);
     if (!foto) return { exito: false, mensaje: "La publicación consultada no se encuentra disponible." };
 
-    const quiereLike = !foto.leGusta;
-    const respuesta = await enviarPeticion("toggleLikeFoto", {
-      idGrupo,
-      idFoto,
-      idUsuario: usuarioActual.idUsuario,
-      nombreUsuario: usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario,
-      quiereLike
-    });
+    setCargando(true);
+    try {
+      const quiereLike = !foto.leGusta;
+      const respuesta = await enviarPeticion("toggleLikeFoto", {
+        idGrupo,
+        idFoto,
+        idUsuario: usuarioActual.idUsuario,
+        nombreUsuario: usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario,
+        quiereLike
+      });
 
-    if (respuesta && respuesta.exito) {
-      setListaGrupos((prev) =>
-        prev.map((g) => {
-          if (g.idGrupo !== idGrupo) return g;
-          const fotosActualizadas = (g.fotos || []).map((f) => {
-            if (f.id !== idFoto) return f;
-            const nuevosNombres = quiereLike
-              ? [...(f.nombresLikkes || []), usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario]
-              : (f.nombresLikkes || []).filter((n) => n !== (usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario));
-            return {
-              ...f,
-              leGusta: quiereLike,
-              likes: respuesta.likes !== undefined ? respuesta.likes : Math.max(0, f.likes + (quiereLike ? 1 : -1)),
-              nombresLikkes: nuevosNombres
-            };
-          });
-          return { ...g, fotos: fotosActualizadas };
-        })
-      );
-      return { exito: true };
+      if (respuesta && respuesta.exito) {
+        setListaGrupos((prev) =>
+          prev.map((g) => {
+            if (g.idGrupo !== idGrupo) return g;
+            const fotosActualizadas = (g.fotos || []).map((f) => {
+              if (f.id !== idFoto) return f;
+              const nuevosNombres = quiereLike
+                ? [...(f.nombresLikkes || []), usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario]
+                : (f.nombresLikkes || []).filter((n) => n !== (usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario));
+              return {
+                ...f,
+                leGusta: quiereLike,
+                likes: respuesta.likes !== undefined ? respuesta.likes : Math.max(0, f.likes + (quiereLike ? 1 : -1)),
+                nombresLikkes: nuevosNombres
+              };
+            });
+            return { ...g, fotos: fotosActualizadas };
+          })
+        );
+        return { exito: true };
+      }
+
+      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || 'No fue posible registrar tu interacción en este momento.' };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    return { exito: false, mensaje: (respuesta && respuesta.mensaje) || 'No fue posible registrar tu interacción en este momento.' };
   };
 
   // Agregar comentario a una foto: se persiste en Firebase vía GAS.
   const agregarComentarioFoto = async (idGrupo, idFoto, textoComentario) => {
     if (!textoComentario.trim() || !usuarioActual) return { exito: false };
 
-    const respuesta = await enviarPeticion("agregarComentarioFoto", {
-      idGrupo,
-      idFoto,
-      comentario: {
-        id: "com_" + Date.now(),
-        autor: usuarioActual.nombreCompleto,
-        texto: textoComentario.trim(),
-        hora: "Justo ahora"
-      }
-    });
+    setCargando(true);
+    try {
+      const respuesta = await enviarPeticion("agregarComentarioFoto", {
+        idGrupo,
+        idFoto,
+        comentario: {
+          id: "com_" + Date.now(),
+          autor: usuarioActual.nombreCompleto,
+          texto: textoComentario.trim(),
+          hora: "Justo ahora"
+        }
+      });
 
-    if (respuesta && respuesta.exito && respuesta.grupo) {
-      const grupoMapeado = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual.idUsuario);
-      setListaGrupos((prev) =>
-        prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
-      );
-      return { exito: true };
+      if (respuesta && respuesta.exito && respuesta.grupo) {
+        const grupoMapeado = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual.idUsuario);
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
+        );
+        return { exito: true };
+      }
+      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se pudo procesar tu comentario. Inténtalo nuevamente." };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-    return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se pudo procesar tu comentario. Inténtalo nuevamente." };
   };
 
   // Actualizar video de Google Drive y duración: se persiste vía GAS.
@@ -296,26 +325,32 @@ export function ProveedorUsuario({ children }) {
     }
 
     setCargando(true);
-    const respuesta = await enviarPeticion("actualizarGrupo", {
-      idGrupo: datos.idGrupo,
-      claveAcceso: grupoActual.claveAcceso,
-      urlFoto: datos.urlFoto ?? grupoActual.urlFoto ?? "",
-      urlVideo: datos.urlVideo ?? grupoActual.urlVideo ?? "",
-      duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10)
-    });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("actualizarGrupo", {
+        idGrupo: datos.idGrupo,
+        claveAcceso: grupoActual.claveAcceso,
+        urlFoto: datos.urlFoto ?? grupoActual.urlFoto ?? "",
+        urlVideo: datos.urlVideo ?? grupoActual.urlVideo ?? "",
+        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10)
+      });
 
-    if (respuesta && respuesta.exito && respuesta.grupo) {
-      const grupoMapeado = mapearGrupoDesdeServidor(
-        { ...respuesta.grupo, claveAcceso: grupoActual.claveAcceso },
-        usuarioActual?.idUsuario
-      );
-      setListaGrupos((prev) => prev.map((g) => (g.idGrupo === datos.idGrupo ? grupoMapeado : g)));
-      setGrupoActual(grupoMapeado);
-      return { exito: true, grupo: grupoMapeado };
+      if (respuesta && respuesta.exito && respuesta.grupo) {
+        const grupoMapeado = mapearGrupoDesdeServidor(
+          { ...respuesta.grupo, claveAcceso: grupoActual.claveAcceso },
+          usuarioActual?.idUsuario
+        );
+        setListaGrupos((prev) => prev.map((g) => (g.idGrupo === datos.idGrupo ? grupoMapeado : g)));
+        setGrupoActual(grupoMapeado);
+        return { exito: true, grupo: grupoMapeado };
+      }
+
+      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se pudo guardar la configuración." };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se pudo guardar la configuración." };
   };
 
   // Donación o voto a un estand: se valida y registra en Firebase vía GAS.
@@ -333,36 +368,42 @@ export function ProveedorUsuario({ children }) {
     const idTransaccionUnico = "TX_DONAR_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
 
     setCargando(true);
-    const respuestaServidor = await enviarPeticion("procesarDonacion", {
-      idUsuario: usuarioActual.idUsuario,
-      idGrupo,
-      monto: montoNum,
-      idTransaccion: idTransaccionUnico
-    });
-    setCargando(false);
+    try {
+      const respuestaServidor = await enviarPeticion("procesarDonacion", {
+        idUsuario: usuarioActual.idUsuario,
+        idGrupo,
+        monto: montoNum,
+        idTransaccion: idTransaccionUnico
+      });
 
-    if (!respuestaServidor || respuestaServidor.exito !== true) {
-      return {
-        exito: false,
-        mensaje: (respuestaServidor && respuestaServidor.mensaje) || "No se pudo procesar la donación."
-      };
+      if (!respuestaServidor || respuestaServidor.exito !== true) {
+        return {
+          exito: false,
+          mensaje: (respuestaServidor && respuestaServidor.mensaje) || "No se pudo procesar la donación."
+        };
+      }
+
+      if (respuestaServidor.transaccion) {
+        setListaTransacciones((prev) => [
+          { ...respuestaServidor.transaccion, categoria: "donacion" },
+          ...prev.filter((tx) => tx.idTransaccion !== respuestaServidor.transaccion.idTransaccion)
+        ]);
+      }
+
+      if (respuestaServidor.nuevoSaldoUsuario !== undefined) {
+        setUsuarioActual((prev) => ({ ...prev, saldoActual: respuestaServidor.nuevoSaldoUsuario }));
+      }
+
+      // Sincronizar para reflejar el nuevo total del grupo.
+      await sincronizarConServidor();
+
+      return { exito: true, mensaje: respuestaServidor.mensaje };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    if (respuestaServidor.transaccion) {
-      setListaTransacciones((prev) => [
-        { ...respuestaServidor.transaccion, categoria: "donacion" },
-        ...prev.filter((tx) => tx.idTransaccion !== respuestaServidor.transaccion.idTransaccion)
-      ]);
-    }
-
-    if (respuestaServidor.nuevoSaldoUsuario !== undefined) {
-      setUsuarioActual((prev) => ({ ...prev, saldoActual: respuestaServidor.nuevoSaldoUsuario }));
-    }
-
-    // Sincronizar para reflejar el nuevo total del grupo.
-    await sincronizarConServidor();
-
-    return { exito: true, mensaje: respuestaServidor.mensaje };
   };
 
   // Transferencia de SL-BITS a un compañero, comercio o estand: se valida en Firebase vía GAS.
@@ -377,36 +418,42 @@ export function ProveedorUsuario({ children }) {
     const idTransaccionUnico = "TX_ENVIO_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
 
     setCargando(true);
-    const respuesta = await enviarPeticion("transferirBits", {
-      idEmisor: usuarioActual.idUsuario,
-      destinatario: destinatario.trim(),
-      monto: montoNum,
-      concepto: concepto || "Transferencia directa",
-      contrasena: contrasenaUsuario || usuarioActual.contrasena || "",
-      idTransaccion: idTransaccionUnico
-    });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("transferirBits", {
+        idEmisor: usuarioActual.idUsuario,
+        destinatario: destinatario.trim(),
+        monto: montoNum,
+        concepto: concepto || "Transferencia directa",
+        contrasena: contrasenaUsuario || usuarioActual.contrasena || "",
+        idTransaccion: idTransaccionUnico
+      });
 
-    if (!respuesta || respuesta.exito !== true) {
-      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "Ocurrió un inconveniente al transferir los SL-BITS." };
-    }
+      if (!respuesta || respuesta.exito !== true) {
+        return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "Ocurrió un inconveniente al transferir los SL-BITS." };
+      }
 
-    if (respuesta.nuevoSaldoEmisor !== undefined) {
-      setUsuarioActual((prev) => ({ ...prev, saldoActual: respuesta.nuevoSaldoEmisor }));
-    }
-    if (respuesta.transaccion) {
-      setListaTransacciones((prev) => [
-        { ...respuesta.transaccion, categoria: "envio" },
-        ...prev.filter((tx) => tx.idTransaccion !== respuesta.transaccion.idTransaccion)
-      ]);
-    }
-    if (respuesta.nuevoTotalGrupo !== undefined && respuesta.esDonacionGrupo) {
-      setListaGrupos((prev) =>
-        prev.map((g) => (g.idGrupo === destinatario ? { ...g, totalRecaudado: respuesta.nuevoTotalGrupo } : g))
-      );
-    }
+      if (respuesta.nuevoSaldoEmisor !== undefined) {
+        setUsuarioActual((prev) => ({ ...prev, saldoActual: respuesta.nuevoSaldoEmisor }));
+      }
+      if (respuesta.transaccion) {
+        setListaTransacciones((prev) => [
+          { ...respuesta.transaccion, categoria: "envio" },
+          ...prev.filter((tx) => tx.idTransaccion !== respuesta.transaccion.idTransaccion)
+        ]);
+      }
+      if (respuesta.nuevoTotalGrupo !== undefined && respuesta.esDonacionGrupo) {
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === destinatario ? { ...g, totalRecaudado: respuesta.nuevoTotalGrupo } : g))
+        );
+      }
 
-    return { exito: true, mensaje: respuesta.mensaje };
+      return { exito: true, mensaje: respuesta.mensaje };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
+    }
   };
 
   const subirAvatar = async (imagenBase64, idUsuarioExplicito) => {
@@ -414,116 +461,140 @@ export function ProveedorUsuario({ children }) {
     if (!idAUsar) return { exito: false, mensaje: "No hay sesión activa." };
 
     setCargando(true);
-    const respuesta = await enviarPeticion("subirAvatar", {
-      idUsuario: idAUsar,
-      imagenBase64: imagenBase64
-    });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("subirAvatar", {
+        idUsuario: idAUsar,
+        imagenBase64: imagenBase64
+      });
 
-    if (respuesta && respuesta.exito && respuesta.urlAvatar) {
-      setUsuarioActual((prev) => prev ? { ...prev, avatar: respuesta.urlAvatar } : prev);
-      return { exito: true, urlAvatar: respuesta.urlAvatar };
+      if (respuesta && respuesta.exito && respuesta.urlAvatar) {
+        setUsuarioActual((prev) => prev ? { ...prev, avatar: respuesta.urlAvatar } : prev);
+        return { exito: true, urlAvatar: respuesta.urlAvatar };
+      }
+
+      return {
+        exito: false,
+        mensaje: (respuesta && respuesta.mensaje) || "No se pudo subir la foto de perfil."
+      };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    return {
-      exito: false,
-      mensaje: (respuesta && respuesta.mensaje) || "No se pudo subir la foto de perfil."
-    };
   };
 
   // Registro de visitante: se crea en Firebase vía GAS con bono real de 1.00 SL-BITS.
   const registrarNuevoVisitante = async (datosFormulario) => {
     setCargando(true);
-    const respuestaServidor = await enviarPeticion("registrarVisitante", {
-      nombreCompleto: datosFormulario.nombreCompleto,
-      correo: datosFormulario.correo,
-      tipoDocumento: datosFormulario.tipoDocumento,
-      numeroDocumento: datosFormulario.numeroDocumento,
-      contrasena: datosFormulario.contrasena || ""
-    });
-    setCargando(false);
+    try {
+      const respuestaServidor = await enviarPeticion("registrarVisitante", {
+        nombreCompleto: datosFormulario.nombreCompleto,
+        correo: datosFormulario.correo,
+        tipoDocumento: datosFormulario.tipoDocumento,
+        numeroDocumento: datosFormulario.numeroDocumento,
+        contrasena: datosFormulario.contrasena || ""
+      });
 
-    if (!respuestaServidor || respuestaServidor.exito !== true) {
-      return {
-        exito: false,
-        mensaje: (respuestaServidor && respuestaServidor.mensaje) || "Inconveniente al procesar la solicitud de registro."
+      if (!respuestaServidor || respuestaServidor.exito !== true) {
+        return {
+          exito: false,
+          mensaje: (respuestaServidor && respuestaServidor.mensaje) || "Inconveniente al procesar la solicitud de registro."
+        };
+      }
+
+      const nuevoUsuario = {
+        ...respuestaServidor.usuario,
+        avatar: "/logo.png"
       };
+      setUsuarioActual(nuevoUsuario);
+
+      // Bono de bienvenida registrado por el propio backend; lo reflejamos en el historial local.
+      if (respuestaServidor.usuario.idUsuario) {
+        const txBono = {
+          idTransaccion: "TX_BONO_" + Date.now(),
+          tipo: "bono_bienvenida",
+          idEmisor: "SISTEMA_INSTITUTO_SAN_LUIS",
+          nombreEmisor: "Asignación Inicial de Bienvenida",
+          idReceptor: nuevoUsuario.idUsuario,
+          nombreReceptor: nuevoUsuario.nombreCompleto,
+          monto: nuevoUsuario.saldoActual,
+          fecha: new Date().toISOString(),
+          categoria: "bono"
+        };
+        setListaTransacciones((prev) => [txBono, ...prev]);
+      }
+
+      setListaUsuarios((prev) => [nuevoUsuario, ...prev.filter((u) => u.idUsuario !== nuevoUsuario.idUsuario)]);
+      return { exito: true, mensaje: `¡Registro completado correctamente! Se han abonado ${nuevoUsuario.saldoActual.toFixed(2)} SL-BITS como bono inicial a tu billetera.`, usuario: nuevoUsuario };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    const nuevoUsuario = {
-      ...respuestaServidor.usuario,
-      avatar: "/logo.png"
-    };
-    setUsuarioActual(nuevoUsuario);
-
-    // Bono de bienvenida registrado por el propio backend; lo reflejamos en el historial local.
-    if (respuestaServidor.usuario.idUsuario) {
-      const txBono = {
-        idTransaccion: "TX_BONO_" + Date.now(),
-        tipo: "bono_bienvenida",
-        idEmisor: "SISTEMA_INSTITUTO_SAN_LUIS",
-        nombreEmisor: "Asignación Inicial de Bienvenida",
-        idReceptor: nuevoUsuario.idUsuario,
-        nombreReceptor: nuevoUsuario.nombreCompleto,
-        monto: nuevoUsuario.saldoActual,
-        fecha: new Date().toISOString(),
-        categoria: "bono"
-      };
-      setListaTransacciones((prev) => [txBono, ...prev]);
-    }
-
-    setListaUsuarios((prev) => [nuevoUsuario, ...prev.filter((u) => u.idUsuario !== nuevoUsuario.idUsuario)]);
-    return { exito: true, mensaje: `¡Registro completado correctamente! Se han abonado ${nuevoUsuario.saldoActual.toFixed(2)} SL-BITS como bono inicial a tu billetera.`, usuario: nuevoUsuario };
   };
 
   // Registro de estand/grupo: se crea en Firebase vía GAS.
   const registrarNuevoGrupo = async (datosGrupo) => {
     setCargando(true);
-    const respuestaServidor = await enviarPeticion("registrarGrupo", {
-      nombreGrupo: datosGrupo.nombreGrupo,
-      especialidad: datosGrupo.especialidad,
-      integrantes: datosGrupo.integrantes,
-      descripcion: datosGrupo.descripcion,
-      urlFoto: datosGrupo.urlFoto || "",
-      urlVideo: datosGrupo.urlVideo || "",
-      duracionSegundos: parseInt(datosGrupo.duracionSegundos || 30, 10),
-      claveAcceso: datosGrupo.claveAcceso || ""
-    });
-    setCargando(false);
+    try {
+      const respuestaServidor = await enviarPeticion("registrarGrupo", {
+        nombreGrupo: datosGrupo.nombreGrupo,
+        especialidad: datosGrupo.especialidad,
+        integrantes: datosGrupo.integrantes,
+        descripcion: datosGrupo.descripcion,
+        urlFoto: datosGrupo.urlFoto || "",
+        urlVideo: datosGrupo.urlVideo || "",
+        duracionSegundos: parseInt(datosGrupo.duracionSegundos || 30, 10),
+        claveAcceso: datosGrupo.claveAcceso || ""
+      });
 
-    if (!respuestaServidor || respuestaServidor.exito !== true) {
-      return {
-        exito: false,
-        mensaje: (respuestaServidor && respuestaServidor.mensaje) || "Ocurrió un error durante la inscripción del proyecto."
-      };
+      if (!respuestaServidor || respuestaServidor.exito !== true) {
+        return {
+          exito: false,
+          mensaje: (respuestaServidor && respuestaServidor.mensaje) || "Ocurrió un error durante la inscripción del proyecto."
+        };
+      }
+
+      // El grupo se conserva con su clave en la sesión del equipo (no se envía en los datos públicos).
+      const nuevoGrupo = mapearGrupoDesdeServidor(
+        { ...respuestaServidor.grupo, claveAcceso: datosGrupo.claveAcceso || "" },
+        null
+      );
+      nuevoGrupo.codigoQR = crearCodigoQRGrupo(nuevoGrupo.idGrupo, nuevoGrupo.nombreGrupo);
+
+      setListaGrupos((prev) => [...prev.filter((g) => g.idGrupo !== nuevoGrupo.idGrupo), nuevoGrupo]);
+      setGrupoActual(nuevoGrupo);
+      return { exito: true, mensaje: "¡Proyecto registrado y autenticado correctamente!", grupo: nuevoGrupo };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    // El grupo se conserva con su clave en la sesión del equipo (no se envía en los datos públicos).
-    const nuevoGrupo = mapearGrupoDesdeServidor(
-      { ...respuestaServidor.grupo, claveAcceso: datosGrupo.claveAcceso || "" },
-      null
-    );
-    nuevoGrupo.codigoQR = crearCodigoQRGrupo(nuevoGrupo.idGrupo, nuevoGrupo.nombreGrupo);
-
-    setListaGrupos((prev) => [...prev.filter((g) => g.idGrupo !== nuevoGrupo.idGrupo), nuevoGrupo]);
-    setGrupoActual(nuevoGrupo);
-    return { exito: true, mensaje: "¡Proyecto registrado y autenticado correctamente!", grupo: nuevoGrupo };
   };
 
   // Iniciar sesión de un equipo: verifica la clave en Firebase vía GAS.
   const iniciarSesionGrupo = async (idGrupo, claveAcceso) => {
     setCargando(true);
-    const respuesta = await enviarPeticion("iniciarSesionGrupo", { idGrupo, claveAcceso });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("iniciarSesionGrupo", { idGrupo, claveAcceso });
 
-    if (!respuesta || respuesta.exito !== true) {
-      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No fue posible autenticar las credenciales del equipo." };
+      if (!respuesta || respuesta.exito !== true) {
+        return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No fue posible autenticar las credenciales del equipo." };
+      }
+
+      const grupoSesion = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario);
+      grupoSesion.claveAcceso = claveAcceso;
+      setGrupoActual(grupoSesion);
+      return { exito: true, grupo: grupoSesion };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    const grupoSesion = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario);
-    grupoSesion.claveAcceso = claveAcceso;
-    setGrupoActual(grupoSesion);
-    return { exito: true, grupo: grupoSesion };
   };
 
   // Validar clave de acceso de un grupo (usado por los modales de equipo).
@@ -532,38 +603,50 @@ export function ProveedorUsuario({ children }) {
   // Iniciar sesión administrativa: valida con el backend (PropertiesService de Apps Script).
   const iniciarSesionAdmin = async (claveAdmin) => {
     setCargando(true);
-    const respuesta = await enviarPeticion("iniciarSesionAdmin", { claveAdmin });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("iniciarSesionAdmin", { claveAdmin });
 
-    if (!respuesta || respuesta.exito !== true) {
-      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "Clave de acceso no válida." };
+      if (!respuesta || respuesta.exito !== true) {
+        return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "Clave de acceso no válida." };
+      }
+
+      localStorage.setItem('admin_sl_bits', respuesta.token);
+      setAdminToken(respuesta.token);
+      return { exito: true };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    localStorage.setItem('admin_sl_bits', respuesta.token);
-    setAdminToken(respuesta.token);
-    return { exito: true };
   };
 
   // Inicio de sesión de visitante / alumno con NIE/DUI y contraseña
   const iniciarSesionVisitante = async (numeroDocumento, contrasena) => {
     setCargando(true);
-    const respuesta = await enviarPeticion("iniciarSesionVisitante", {
-      numeroDocumento: numeroDocumento.trim(),
-      contrasena: contrasena.trim()
-    });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("iniciarSesionVisitante", {
+        numeroDocumento: numeroDocumento.trim(),
+        contrasena: contrasena.trim()
+      });
 
-    if (!respuesta || respuesta.exito !== true) {
-      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "Error al iniciar sesión." };
+      if (!respuesta || respuesta.exito !== true) {
+        return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "Error al iniciar sesión." };
+      }
+
+      const usuarioSesion = {
+        ...respuesta.usuario,
+        avatar: respuesta.usuario.avatar || "/logo.png"
+      };
+      setUsuarioActual(usuarioSesion);
+      const needsPasswordChange = Boolean(respuesta.usuario.contrasenaTemporal);
+      return { exito: true, usuario: usuarioSesion, contrasenaTemporal: needsPasswordChange };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
-
-    const usuarioSesion = {
-      ...respuesta.usuario,
-      avatar: respuesta.usuario.avatar || "/logo.png"
-    };
-    setUsuarioActual(usuarioSesion);
-    const needsPasswordChange = Boolean(respuesta.usuario.contrasenaTemporal);
-    return { exito: true, usuario: usuarioSesion, contrasenaTemporal: needsPasswordChange };
   };
 
   // Recarga de saldo en efectivo desde caja: se valida y registra en Firebase vía GAS.
@@ -573,30 +656,36 @@ export function ProveedorUsuario({ children }) {
     }
 
     setCargando(true);
-    const respuesta = await enviarPeticion("recargarSaldoAdmin", {
-      criterioBusqueda: criterioBusqueda.trim(),
-      montoRecarga: parseFloat(monto),
-      motivo,
-      adminToken
-    });
-    setCargando(false);
+    try {
+      const respuesta = await enviarPeticion("recargarSaldoAdmin", {
+        criterioBusqueda: criterioBusqueda.trim(),
+        montoRecarga: parseFloat(monto),
+        motivo,
+        adminToken
+      });
 
-    if (!respuesta || respuesta.exito !== true) {
-      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se logró procesar la acreditación del saldo." };
-    }
-
-    if (respuesta.usuarioActualizado) {
-      const idActualizado = respuesta.usuarioActualizado.idUsuario;
-      setListaUsuarios((prev) =>
-        prev.map((u) => (u.idUsuario === idActualizado ? { ...u, saldoActual: respuesta.usuarioActualizado.saldoActual } : u))
-      );
-      if (usuarioActual && usuarioActual.idUsuario === idActualizado) {
-        setUsuarioActual((prev) => ({ ...prev, saldoActual: respuesta.usuarioActualizado.saldoActual }));
+      if (!respuesta || respuesta.exito !== true) {
+        return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se logró procesar la acreditación del saldo." };
       }
-    }
 
-    await sincronizarConServidor();
-    return { exito: true, mensaje: respuesta.mensaje, usuarioActualizado: respuesta.usuarioActualizado };
+      if (respuesta.usuarioActualizado) {
+        const idActualizado = respuesta.usuarioActualizado.idUsuario;
+        setListaUsuarios((prev) =>
+          prev.map((u) => (u.idUsuario === idActualizado ? { ...u, saldoActual: respuesta.usuarioActualizado.saldoActual } : u))
+        );
+        if (usuarioActual && usuarioActual.idUsuario === idActualizado) {
+          setUsuarioActual((prev) => ({ ...prev, saldoActual: respuesta.usuarioActualizado.saldoActual }));
+        }
+      }
+
+      await sincronizarConServidor();
+      return { exito: true, mensaje: respuesta.mensaje, usuarioActualizado: respuesta.usuarioActualizado };
+    } catch (error) {
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
+    }
   };
 
   const cerrarSesion = () => {

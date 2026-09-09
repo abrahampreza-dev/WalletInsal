@@ -32,7 +32,7 @@ export default function MostrarQR({ usuario, estaAbierto, alCerrar }) {
           <div className="w-12 h-12 mx-auto rounded-2xl bg-[#E67A15]/15 border border-[#E67A15]/50 flex items-center justify-center mb-2">
             <QrCode className="w-6 h-6 text-[#E67A15]" />
           </div>
-          <h3 className="text-lg font-black text-white">Mi Código QR de Pago</h3>
+          <h3 className="text-lg font-black text-slate-800">Mi Código QR de Pago</h3>
           <p className="text-xs text-slate-400">Presenta este código en caja para recargar saldo</p>
         </div>
 
@@ -56,7 +56,7 @@ export default function MostrarQR({ usuario, estaAbierto, alCerrar }) {
 
         {/* Datos del Usuario */}
         <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
-          <p className="text-sm font-bold text-white truncate">{usuario.nombreCompleto}</p>
+          <p className="text-sm font-bold text-slate-800 truncate">{usuario.nombreCompleto}</p>
           <p className="text-xs text-slate-400 font-mono">
             {usuario.tipoDocumento || 'DOC'}: {usuario.numeroDocumento}
           </p>

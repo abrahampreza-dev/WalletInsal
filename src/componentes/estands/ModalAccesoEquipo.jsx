@@ -8,6 +8,7 @@ export default function ModalAccesoEquipo({ estaAbierto, alCerrar, grupo, alAute
   const [verClave, setVerClave] = useState(false);
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
+  const [cargando, setCargando] = useState(false);
 
   if (!estaAbierto || !grupo) return null;
 
@@ -15,18 +16,23 @@ export default function ModalAccesoEquipo({ estaAbierto, alCerrar, grupo, alAute
     e.preventDefault();
     setError('');
     setExito('');
+    setCargando(true);
 
-    const res = await verificarClaveGrupo(grupo.idGrupo, clave.trim());
-    if (res.exito) {
-      setExito('Credencial confirmada. Módulo de edición activado.');
-      setTimeout(() => {
-        setClave('');
-        setExito('');
-        alCerrar();
-        if (alAutenticado) alAutenticado();
-      }, 700);
-    } else {
-      setError(res.mensaje || 'La contraseña ingresada no es válida.');
+    try {
+      const res = await verificarClaveGrupo(grupo.idGrupo, clave.trim());
+      if (res.exito) {
+        setExito('Credencial confirmada. Módulo de edición activado.');
+        setTimeout(() => {
+          setClave('');
+          setExito('');
+          alCerrar();
+          if (alAutenticado) alAutenticado();
+        }, 700);
+      } else {
+        setError(res.mensaje || 'La contraseña ingresada no es válida.');
+      }
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -41,7 +47,7 @@ export default function ModalAccesoEquipo({ estaAbierto, alCerrar, grupo, alAute
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Panel de Edición del Estand</h3>
+              <h3 className="text-base font-black text-slate-800">Panel de Edición del Estand</h3>
               <p className="text-xs text-slate-400 truncate max-w-[200px]">{grupo.nombreGrupo}</p>
             </div>
           </div>
@@ -89,7 +95,7 @@ export default function ModalAccesoEquipo({ estaAbierto, alCerrar, grupo, alAute
                 value={clave}
                 onChange={(e) => setClave(e.target.value)}
                 placeholder="Ingrese la contraseña asignada..."
-                className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
+                className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
               />
               <button
                 type="button"
@@ -105,10 +111,11 @@ export default function ModalAccesoEquipo({ estaAbierto, alCerrar, grupo, alAute
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#E67A15] hover:to-[#D19E37] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
+              disabled={cargando}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#E67A15] hover:to-[#D19E37] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4" />
-              Autenticar e Ingresar al Panel
+              {cargando ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Sparkles className="w-4 h-4" />}
+              {cargando ? 'Verificando...' : 'Autenticar e Ingresar al Panel'}
             </button>
           </div>
 

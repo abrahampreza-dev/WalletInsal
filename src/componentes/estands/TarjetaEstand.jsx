@@ -7,13 +7,10 @@ import {
   Lock, 
   Users, 
   Layers, 
-  Sparkles,
   Heart,
   QrCode,
   Grid,
-  Video,
-  ExternalLink,
-  MessageCircle
+  Video
 } from 'lucide-react';
 import CodigoQRGrupo from './CodigoQRGrupo';
 
@@ -139,7 +136,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
 
           <h3 
             onClick={() => alAbrirPerfilInstagram(estand.idGrupo)}
-            className="text-base font-black text-white group-hover:text-[#E67A15] transition-colors line-clamp-1 cursor-pointer mt-1"
+            className="text-base font-black text-slate-800 group-hover:text-[#E67A15] transition-colors line-clamp-1 cursor-pointer mt-1"
           >
             {estand.nombreGrupo}
           </h3>
@@ -199,7 +196,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             onClick={() => alAbrirPerfilInstagram(estand.idGrupo)}
-            className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
+            className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
           >
 <Grid className="w-3.5 h-3.5 text-pink-400" />
             Explorar INSALSPACE
@@ -232,13 +229,13 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
 
       {/* Modal Reproductor de Video de Google Drive */}
       {mostrarVideoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-3xl bg-[#FFFFFF] border border-slate-200 rounded-3xl overflow-hidden shadow-2xl space-y-4 p-4 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-3xl bg-[#FFFFFF] border border-slate-200 rounded-3xl overflow-hidden shadow-2xl space-y-3 sm:space-y-4 p-3 sm:p-6">
             
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-base font-black text-white">{estand.nombreGrupo}</h4>
-                <p className="text-xs text-slate-400">Demostración técnica en Google Drive</p>
+                <h4 className="text-sm sm:text-base font-black text-slate-800">{estand.nombreGrupo}</h4>
+                <p className="text-[10px] sm:text-xs text-slate-400">Demostración técnica en Google Drive</p>
               </div>
 
               <button
@@ -251,11 +248,11 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
 
 {/* Video Iframe Google Drive */}
             {estand.urlVideo ? (
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black border border-slate-200">
+              <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-slate-200" style={{ paddingBottom: '56.25%' }}>
                 <iframe
                   src={estand.urlVideo}
                   title={`Video de ${estand.nombreGrupo}`}
-                  className="w-full h-full"
+                  className="absolute inset-0 w-full h-full"
                   allow="autoplay"
                   allowFullScreen
                 />
@@ -272,7 +269,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[#E67A15]" />
                 <span className="text-xs text-slate-400">
-                  Mínimo para desbloquear donación: <strong className="text-white">{tiempoRequeridoSegundos}s</strong>
+                  Mínimo para desbloquear donación: <strong className="text-slate-800">{tiempoRequeridoSegundos}s</strong>
                 </span>
               </div>
               <span className={`text-xs font-bold ${requisitoCumplido ? 'text-emerald-600' : 'text-amber-600'}`}>

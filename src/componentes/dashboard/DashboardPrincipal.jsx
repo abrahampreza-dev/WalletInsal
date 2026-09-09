@@ -108,13 +108,13 @@ const {
             {mostrarNotificaciones && (
               <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#FFFFFF] border border-slate-200 rounded-3xl p-4 shadow-2xl z-50 space-y-3 max-w-[calc(100vw-2rem)]">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <span className="text-xs font-bold text-white">Notificaciones</span>
+                  <span className="text-xs font-bold text-slate-800">Notificaciones</span>
                   <span className="text-[10px] text-[#E67A15] font-bold">{notificaciones.length} nuevas</span>
                 </div>
                 <div className="space-y-2">
                   {notificaciones.map((n) => (
                     <div key={n.id} className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1">
-                      <p className="text-xs font-bold text-white">{n.titulo}</p>
+                      <p className="text-xs font-bold text-slate-800">{n.titulo}</p>
                       <p className="text-[11px] text-slate-400">{n.mensaje}</p>
                       <span className="text-[10px] text-slate-400 block">{n.tiempo}</span>
                     </div>
@@ -140,7 +140,7 @@ const {
                   className="w-full h-full object-cover"
                 />
               </div>
-<span className="text-xs font-bold text-white hidden sm:inline">
+<span className="text-xs font-bold text-slate-800 hidden sm:inline">
                 {usuarioActual?.nombreCompleto}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -150,7 +150,7 @@ const {
             {mostrarMenuUsuario && (
               <div className="absolute right-0 mt-2 w-56 bg-[#FFFFFF] border border-slate-200 rounded-3xl p-3 shadow-2xl z-50 space-y-1 max-w-[calc(100vw-2rem)]">
 <div className="p-2 border-b border-slate-200 mb-1">
-                  <p className="text-xs font-bold text-white truncate">{usuarioActual?.nombreCompleto}</p>
+                  <p className="text-xs font-bold text-slate-800 truncate">{usuarioActual?.nombreCompleto}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -227,7 +227,7 @@ Explorar Muro SPACE
           <div className="w-12 h-12 rounded-2xl bg-[#E67A15]/15 border border-[#E67A15]/50 flex items-center justify-center text-[#E67A15] group-hover:scale-110 transition-transform">
             <Send className="w-6 h-6" />
           </div>
-          <span className="text-sm font-black text-white">Enviar</span>
+          <span className="text-sm font-black text-slate-800">Enviar</span>
           <span className="text-[11px] text-slate-400">Envía SL - BITS</span>
         </button>
 
@@ -239,7 +239,7 @@ Explorar Muro SPACE
           <div className="w-12 h-12 rounded-2xl bg-[#0A4D9C]/15 border border-[#0A4D9C]/50 flex items-center justify-center text-[#0A4D9C] group-hover:scale-110 transition-transform">
             <Download className="w-6 h-6" />
           </div>
-          <span className="text-sm font-black text-white">Recibir</span>
+          <span className="text-sm font-black text-slate-800">Recibir</span>
           <span className="text-[11px] text-slate-400">Recibe SL - BITS</span>
         </button>
 
@@ -251,7 +251,7 @@ Explorar Muro SPACE
           <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
             <Scan className="w-6 h-6" />
           </div>
-          <span className="text-sm font-black text-white">Escanear</span>
+          <span className="text-sm font-black text-slate-800">Escanear</span>
           <span className="text-[11px] text-slate-400">Escanea QR</span>
         </button>
 
@@ -263,7 +263,7 @@ Explorar Muro SPACE
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/45 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
             <Clock className="w-6 h-6" />
           </div>
-          <span className="text-sm font-black text-white">Historial</span>
+          <span className="text-sm font-black text-slate-800">Historial</span>
           <span className="text-[11px] text-slate-400">Ver movimientos</span>
         </button>
 
@@ -276,7 +276,7 @@ Explorar Muro SPACE
         <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <h3 className="text-base font-black text-white">Actividad reciente</h3>
+              <h3 className="text-base font-black text-slate-800">Actividad reciente</h3>
               <button
                 onClick={alIrAHistorial}
                 className="text-xs font-bold text-[#E67A15] hover:underline"
@@ -313,7 +313,7 @@ Explorar Muro SPACE
                         <IconoTx className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">{tx.nombreReceptor || tx.nombreEmisor}</p>
+                        <p className="text-xs font-bold text-slate-800">{tx.nombreReceptor || tx.nombreEmisor}</p>
                         <p className="text-[10px] text-slate-400">
                           {new Date(tx.fecha).toLocaleString('es-SV', {
                             day: '2-digit',
@@ -348,7 +348,7 @@ Explorar Muro SPACE
 {/* Columna Central: Mi Estand Explorar INSALSPACE */}
         <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl flex flex-col justify-between">
           <div>
-            <h3 className="text-base font-black text-white border-b border-slate-200 pb-4">
+            <h3 className="text-base font-black text-slate-800 border-b border-slate-200 pb-4">
               Mi Estand Explorar INSALSPACE
             </h3>
 
@@ -356,7 +356,7 @@ Explorar Muro SPACE
               {grupoActual ? (
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Estand conectado</span>
-                  <p className="text-xs font-bold text-white">{grupoActual.nombreGrupo}</p>
+                  <p className="text-xs font-bold text-slate-800">{grupoActual.nombreGrupo}</p>
                   <p className="text-[11px] text-slate-400">
                     {grupoActual.especialidad}
                   </p>
@@ -367,7 +367,7 @@ Explorar Muro SPACE
                 </div>
               ) : (
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <span className="text-xs font-bold text-white block">Aún no tienes estand conectado</span>
+                  <span className="text-xs font-bold text-slate-800 block">Aún no tienes estand conectado</span>
                   <p className="text-[11px] text-slate-400 leading-relaxed">
                     Conecta o registra el estand de tu proyecto técnico para publicar fotos, videos y administrar tu muro en la red social Explorar INSALSPACE.
                   </p>
@@ -390,7 +390,7 @@ Explorar Muro SPACE
           
           {/* Card: Recibir Fondeo / SL-BITS con QR */}
           <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-6 shadow-2xl text-center space-y-4">
-            <h3 className="text-base font-black text-white text-left">Recibir Fondeo / SL-BITS</h3>
+            <h3 className="text-base font-black text-slate-800 text-left">Recibir Fondeo / SL-BITS</h3>
             <span className="text-[11px] text-slate-400 block font-medium">Tu código QR</span>
 
             {/* Código QR estilizado con ciervo */}

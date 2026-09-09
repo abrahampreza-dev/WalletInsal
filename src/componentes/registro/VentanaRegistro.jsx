@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Building2, LockKeyhole, Eye, EyeOff, LogIn, AlertCircle, Key } from 'lucide-react';
+import { X, Building2, LockKeyhole, Eye, EyeOff, LogIn, AlertCircle, Key } from 'lucide-react';
 import RegistroVisitante from './RegistroVisitante';
 import RegistroGrupo from './RegistroGrupo';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
@@ -32,6 +32,7 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
   const [claveGrupo, setClaveGrupo] = useState('');
   const [verClaveGrupo, setVerClaveGrupo] = useState(false);
   const [mensajeGrupo, setMensajeGrupo] = useState('');
+  const [cargandoGrupo, setCargandoGrupo] = useState(false);
 
   const accederVisitante = async (evento) => {
     evento.preventDefault();
@@ -92,8 +93,13 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
 
   const accederGrupo = async (evento) => {
     evento.preventDefault();
-    const resultado = await iniciarSesionGrupo(idGrupo.trim(), claveGrupo);
-    setMensajeGrupo(resultado.exito ? 'Acceso concedido. Ya puedes ver tu estand en Mi Perfil.' : resultado.mensaje);
+    setCargandoGrupo(true);
+    try {
+      const resultado = await iniciarSesionGrupo(idGrupo.trim(), claveGrupo);
+      setMensajeGrupo(resultado.exito ? 'Acceso concedido. Ya puedes ver tu estand en Mi Perfil.' : resultado.mensaje);
+    } finally {
+      setCargandoGrupo(false);
+    }
   };
 
   if (!estaAbierto) return null;
@@ -294,7 +300,10 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
 
               {mensajeGrupo && <p className={`text-xs rounded-xl p-3 ${mensajeGrupo.includes('concedido') ? 'text-emerald-600 bg-emerald-500/15 border border-emerald-500/45' : 'text-rose-600 bg-rose-500/10 border border-rose-500/30'}`}>{mensajeGrupo}</p>}
 
-              <button className="w-full py-3 rounded-xl bg-[#E67A15] hover:bg-[#D19E37] text-white font-bold text-sm shadow-md shadow-orange-500/20">Entrar a Mi Estand</button>
+              <button disabled={cargandoGrupo} className="w-full py-3 rounded-xl bg-[#E67A15] hover:bg-[#D19E37] text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-orange-500/20">
+                {cargandoGrupo ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <LockKeyhole className="w-4 h-4" />}
+                {cargandoGrupo ? 'Verificando...' : 'Entrar a Mi Estand'}
+              </button>
             </form>
           )}
 

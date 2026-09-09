@@ -171,7 +171,7 @@ export default function RegistroVisitante({ alCompletarRegistro }) {
             value={nombreCompleto}
             onChange={(e) => setNombreCompleto(e.target.value)}
             placeholder="Ej. Mario Alberto Henríquez"
-            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] focus:ring-1 focus:ring-[#E67A15] transition-colors"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] focus:ring-1 focus:ring-[#E67A15] transition-colors"
           />
         </div>
       </div>
@@ -191,7 +191,7 @@ export default function RegistroVisitante({ alCompletarRegistro }) {
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             placeholder="ejemplo@sanluis.edu.sv"
-            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] focus:ring-1 focus:ring-[#E67A15] transition-colors"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] focus:ring-1 focus:ring-[#E67A15] transition-colors"
           />
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function RegistroVisitante({ alCompletarRegistro }) {
             value={numeroDocumento}
             onChange={manejarCambioDocumento}
             placeholder={tipoDocumento === 'NIE' ? 'Ej. 7482910' : '00000000-0'}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-white font-mono placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] focus:ring-1 focus:ring-[#E67A15] transition-colors"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono placeholder-slate-400 text-sm focus:outline-none focus:border-[#E67A15] focus:ring-1 focus:ring-[#E67A15] transition-colors"
           />
         </div>
       </div>

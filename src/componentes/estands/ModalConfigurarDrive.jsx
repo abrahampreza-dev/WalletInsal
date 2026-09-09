@@ -6,6 +6,7 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
   const [duracion, setDuracion] = useState(duracionActual || 30);
   const [urlPrevia, setUrlPrevia] = useState(urlActual || '');
   const [probando, setProbando] = useState(false);
+  const [cargando, setCargando] = useState(false);
 
   if (!estaAbierto) return null;
 
@@ -29,11 +30,16 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
     setUrlPrevia(convertida);
   };
 
-  const manejarGuardar = (e) => {
+  const manejarGuardar = async (e) => {
     e.preventDefault();
-    const finalUrl = transformarUrlDrive(urlVideo);
-    alGuardar(finalUrl, Number(duracion) || 30);
-    alCerrar();
+    setCargando(true);
+    try {
+      const finalUrl = transformarUrlDrive(urlVideo);
+      await alGuardar(finalUrl, Number(duracion) || 30);
+      alCerrar();
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -47,7 +53,7 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
               <Video className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Configurar Video de Google Drive</h3>
+              <h3 className="text-base font-black text-slate-800">Configurar Video de Google Drive</h3>
               <p className="text-xs text-slate-400">Estand: {nombreGrupo}</p>
             </div>
           </div>
@@ -87,7 +93,7 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
               value={urlVideo}
               onChange={(e) => manejarCambioUrl(e.target.value)}
               placeholder="https://drive.google.com/file/d/1Bxi.../view?usp=sharing"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs placeholder-slate-400 focus:outline-none focus:border-[#0A4D9C] font-mono"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#0A4D9C] font-mono"
             />
           </div>
 
@@ -102,7 +108,7 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
               max="300"
               value={duracion}
               onChange={(e) => setDuracion(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-white text-xs focus:outline-none focus:border-[#0A4D9C] font-bold"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#0A4D9C] font-bold"
             />
             <p className="text-[10px] text-slate-400">
               Mínimo de retención requerido para votar: {Math.max(15, Math.ceil(duracion * 0.5))} segundos (50%).
@@ -141,10 +147,11 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white text-xs font-extrabold shadow-lg shadow-sky-500/25 flex items-center gap-2"
+              disabled={cargando}
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white text-xs font-extrabold shadow-lg shadow-sky-500/25 flex items-center gap-2 disabled:opacity-50"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              Guardar Video de Drive
+              {cargando ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <CheckCircle2 className="w-4 h-4" />}
+              {cargando ? 'Guardando...' : 'Guardar Video de Drive'}
             </button>
           </div>
 

@@ -73,7 +73,7 @@ export default function ListaEstands({ alAbrirRegistro, alAbrirPerfilInstagram }
             value={terminoBusqueda}
             onChange={(e) => setTerminoBusqueda(e.target.value)}
             placeholder="Busca por proyecto, @handle de Explorar INSALSPACE, integrante o palabra clave..."
-            className="w-full pl-10 pr-4 py-3 bg-[#FFFFFF] border border-slate-200 rounded-2xl text-white placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-[#E67A15]"
+            className="w-full pl-10 pr-4 py-3 bg-[#FFFFFF] border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-[#E67A15]"
           />
         </div>
 
@@ -100,7 +100,7 @@ export default function ListaEstands({ alAbrirRegistro, alAbrirPerfilInstagram }
       {gruposFiltrados.length === 0 ? (
 <div className="text-center py-16 bg-slate-50 rounded-3xl border border-slate-200 p-8 space-y-2">
           <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-          <h3 className="text-base font-bold text-white">¡Ups! No encontramos ese estand</h3>
+          <h3 className="text-base font-bold text-slate-800">¡Ups! No encontramos ese estand</h3>
           <p className="text-xs text-slate-400">
             Intenta con otro término de búsqueda o selecciona otra especialidad.
           </p>

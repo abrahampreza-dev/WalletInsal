@@ -30,7 +30,7 @@ export default function ModalRecibirBits({ estaAbierto, alCerrar }) {
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-white">
           <div className="text-left">
-            <h3 className="text-base font-black text-white">Recibir Fondeo / SL-BITS</h3>
+            <h3 className="text-base font-black text-slate-800">Recibir Fondeo / SL-BITS</h3>
             <p className="text-xs text-slate-400">Identificador digital para recibir transferencias</p>
           </div>
           <button
@@ -69,7 +69,7 @@ export default function ModalRecibirBits({ estaAbierto, alCerrar }) {
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
               <div className="text-left">
                 <span className="text-[10px] text-slate-400 font-bold uppercase block">Identificador Único de Billetera</span>
-                <span className="text-xs font-mono font-bold text-white">{codigoBilletera}</span>
+                <span className="text-xs font-mono font-bold text-slate-800">{codigoBilletera}</span>
               </div>
               <button
                 onClick={copiarCodigo}
