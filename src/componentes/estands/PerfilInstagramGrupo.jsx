@@ -70,7 +70,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   const [requisitoCumplido, setRequisitoCumplido] = useState(false);
 
   useEffect(() => {
-    if (!tieneVideo) return;
+    if (!tieneVideo || pestanaActiva !== 'videoDrive') return;
     let intervalo = null;
     if (reproduciendo && segundosRestantes > 0) {
       intervalo = setInterval(() => {
@@ -86,7 +86,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
       setRequisitoCumplido(true);
     }
     return () => clearInterval(intervalo);
-  }, [reproduciendo, segundosRestantes, tieneVideo]);
+  }, [reproduciendo, segundosRestantes, tieneVideo, pestanaActiva]);
 
   if (!grupo) return null;
 
@@ -332,7 +332,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
       {/* Pestañas de Navegación de Instagram */}
       <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl p-1.5 grid grid-cols-2 sm:grid-cols-4 gap-1">
         <button
-          onClick={() => setPestanaActiva('publicaciones')}
+          onClick={() => { setPestanaActiva('publicaciones'); setReproduciendo(false); }}
           className={`flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs transition-all ${
             pestanaActiva === 'publicaciones'
               ? 'bg-gradient-to-r from-[#E67A15] to-[#D19E37] text-white shadow-md'
@@ -356,7 +356,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
         </button>
 
         <button
-          onClick={() => setPestanaActiva('apoyos')}
+          onClick={() => { setPestanaActiva('apoyos'); setReproduciendo(false); }}
           className={`flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs transition-all ${
             pestanaActiva === 'apoyos'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
@@ -368,7 +368,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
         </button>
 
         <button
-          onClick={() => setPestanaActiva('ficha')}
+          onClick={() => { setPestanaActiva('ficha'); setReproduciendo(false); }}
           className={`flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs transition-all ${
             pestanaActiva === 'ficha'
               ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md'

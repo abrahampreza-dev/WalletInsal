@@ -1,0 +1,468 @@
+======================================================================
+SL - BITS WALLET • EXPOTECNIA 2026
+DOCUMENTO DE TEXTOS VISIBLES EN LA APP
+======================================================================
+Rol de este documento: aqui estan TODOS los textos que el publico ve en
+la app (titulos, descripciones, botones, mensajes, placeholders).
+
+COMO COLABORAR (para estudiantes):
+  1. Lee cada seccion y su "TEXTO ACTUAL".
+  2. Escribe tu propuesta justo debajo con el prefijo "  PROPUESTA > ".
+  3. Respeta el sentido del texto (es facil de leer y tecnicamente claro).
+  4. No borres la etiqueta "TEXTO ACTUAL" ni los numeros de los items.
+
+Formato de cada item:
+  [#] TIPO: descripcion  ->  TEXTO ACTUAL: "..."  ->  PROPUESTA > ...
+  TIPOS: TITULO | SUBTITULO | TEXTO | BOTON | PLACEHOLDER | ETIQUETA | MENSAJE | NOTA
+  Los valores entre {llaves} son dinamicos (nombre, saldo, monto, etc.),
+  NO se cambian; solo se redacta el texto fijo.
+
+======================================================================
+CONTENIDO
+======================================================================
+  01. Portada / Inicio publico
+  02. Muro SPACE (lista de estands)
+  03. Tarjeta de estand
+  04. Perfil del estand (INSALSPACE)
+  05. Donar / apoyar proyecto
+  06. Galeria / fotos / historia
+  07. Menus, en cabezado y pie
+  08. Tarjeta de saldo
+  09. Mi Wallet (dashboard)
+  10. Enviar SL - BITS
+  11. Recibir SL - BITS / QR
+  12. Mi Billetera (historial)
+  13. Perfil estudiantil
+  14. Recompensas
+  15. Ranking / tabla de posiciones
+  16. Registro (visitante / alumno)
+  17. Registro de estand (grupo)
+  18. Acceso privado de equipo
+  19. Configurar video de Drive
+  20. Administracion (panel, caja, auditoria)
+  21. Mensajes de exito / error (sistema)
+  22. Carreras tecnicas (opciones de especialidad)
+
+======================================================================
+01. PORTADA / INICIO PUBLICO  (InicioPublico)
+======================================================================
+[1] ETIQUETA: BADGE top  ->  TEXTO ACTUAL: "Expotecnia Institucional 2026 • Instituto San Luis"  ->  PROPUESTA > EXPOTECNIA 2026 • Instituto San Luis — ¡La innovación comienza aquí!
+[2] TITULO: TITULO hero  ->  TEXTO ACTUAL: "Descubre los Estands y Vota con SL - BITS"  ->  PROPUESTA > Explora, Apoya y Vota con SL - BITS
+[3] TEXTO: TEXTO hero  ->  TEXTO ACTUAL: "Explora los muros INSALSPACE de fotos y videos de cada equipo en Google Drive. ¡Mira las demostraciones y apoya a tu proyecto favorito en el podio!"  ->  PROPUESTA > Descubre proyectos increíbles, conoce el talento de nuestros estudiantes y explora sus fotos y videos en INSALSPACE. ¡Encuentra tu favorito, apóyalo con SL - BITS y haz que llegue al podio!
+[4] BOTON: BOTON (con sesion)  ->  TEXTO ACTUAL: "Ir a Mi Wallet ({saldo} SL - BITS)"  ->  PROPUESTA > Ir a Mi Wallet • {saldo} SL - BITS
+[5] BOTON: BOTON (sin sesion)  ->  TEXTO ACTUAL: "Registrarse / Reclamar 1.00 SL - BITS Gratis"  ->  PROPUESTA > ¡Únete ahora y reclama 1.00 SL - BITS gratis!
+[6] BOTON: BOTON (con sesion)  ->  TEXTO ACTUAL: "Ver Ranking en Vivo"  ->  PROPUESTA > Ver Ranking en Vivo 🚀
+[7] TITULO: TITULO historias  ->  TEXTO ACTUAL: "Historias y Muro INSALSPACE de la Expotecnia 2026"  ->  PROPUESTA > Conoce los proyectos que están haciendo historia en la Expotecnia 2026
+[8] NOTA: NOTA historias  ->  TEXTO ACTUAL: "Toca para ver avances"  ->  PROPUESTA > ¡Explora los avances y descubre nuevas ideas!
+[9] BOTON: BOTON aviso (sin sesion)  ->  TEXTO ACTUAL: "¿Como apoyar a los equipos? - Registrarse Ahora"  ->  PROPUESTA > ¿Quieres apoyar a un equipo? ¡Regístrate y empieza ahora!
+[10] TEXTO: TEXTO aviso  ->  TEXTO ACTUAL: "Puedes ver las fotos y videos de cada estand libremente. Si deseas donar SL - BITS y votar en el certamen oficial, solo necesitas registrarte con tu NIE/DUI."  ->  PROPUESTA > Explora libremente las fotos y videos de cada estand. Para donar SL - BITS y participar en la votación oficial, regístrate con tu NIE/DUI y apoya el proyecto que más te inspire.
+[11] PLACEHOLDER: PLACEHOLDER buscador  ->  TEXTO ACTUAL: "Buscar por proyecto, @handle de INSALSPACE, especialidad o integrante..."  ->  PROPUESTA > Busca un proyecto, @handle de INSALSPACE, especialidad o integrante...
+[12] ETIQUETA: FILTRO default  ->  TEXTO ACTUAL: "Todas"  ->  PROPUESTA > Todos los proyectos
+[13] TITULO: TITULO cuadricula  ->  TEXTO ACTUAL: "Estands de la Expotecnia 2026 ({n})"  ->  PROPUESTA > Estands de la Expotecnia 2026 • {n} proyectos por descubrir
+[14] NOTA: NOTA cuadricula  ->  TEXTO ACTUAL: "Toca en cualquier proyecto para ver su perfil INSALSPACE completo"  ->  PROPUESTA > ¡Elige un proyecto y entra a su perfil INSALSPACE para conocerlo a fondo!
+
+======================================================================
+02. MURO SPACE / LISTA DE ESTANDS  (ListaEstands)
+======================================================================
+[1] ETIQUETA: BADGE  ->  TEXTO ACTUAL: "Expotecnia Institucional 2026 • Instituto San Luis"  ->  PROPUESTA > EXPOTECNIA 2026 • Instituto San Luis — ¡Conoce el talento estudiantil!
+[2] TITULO: TITULO  ->  TEXTO ACTUAL: "Estands Tecnicos y Perfiles INSALSPACE"  ->  PROPUESTA > Explora los Estands Técnicos y descubre los perfiles INSALSPACE
+[3] TEXTO: TEXTO  ->  TEXTO ACTUAL: "Explora las publicaciones y fotos de cada equipo, visualiza sus videos demostrativos en Google Drive y apoyalos con tus SL - BITS."  ->  PROPUESTA > Conoce las ideas detrás de cada proyecto, mira sus publicaciones y demostraciones en Google Drive y decide cuál merece tu apoyo con SL - BITS.
+[4] PLACEHOLDER: PLACEHOLDER  ->  TEXTO ACTUAL: "Buscar por proyecto, @handle de INSALSPACE, integrantes o palabras clave..."  ->  PROPUESTA > Busca por proyecto, @handle de INSALSPACE, integrante o palabra clave...
+[5] TITULO: TITULO vacio  ->  TEXTO ACTUAL: "No se encontraron estands"  ->  PROPUESTA > ¡Ups! No encontramos ese estand
+[6] TEXTO: TEXTO vacio  ->  TEXTO ACTUAL: "Intenta con otro termino de busqueda o selecciona otra especialidad."  ->  PROPUESTA > Prueba con otro término de búsqueda o explora una especialidad diferente. ¡Seguro hay un proyecto esperando por ti!
+
+======================================================================
+03. TARJETA DE ESTAND  (TarjetaEstand)
+======================================================================
+[1] ETIQUETA: BADGE recaudado  ->  TEXTO ACTUAL: "{monto} SL - BITS"  ->  PROPUESTA > {monto} SL - BITS recaudados
+[2] ETIQUETA: BADGE fotos  ->  TEXTO ACTUAL: "{n} fotos • Ver INSALSPACE"  ->  PROPUESTA > {n} fotos • Explorar INSALSPACE
+[3] ETIQUETA: ETIQUETA video  ->  TEXTO ACTUAL: "Drive {duracion}s"  ->  PROPUESTA > Video • {duracion}s
+[4] TEXTO: TEXTO default  ->  TEXTO ACTUAL: "Sin descripcion disponible aun."  ->  PROPUESTA > Este proyecto todavía no tiene una descripción disponible. ¡Vuelve pronto para conocer sus novedades!
+[5] BOTON: BOTON  ->  TEXTO ACTUAL: "INSALSPACE"  ->  PROPUESTA > Explorar INSALSPACE
+[6] BOTON: BOTON (desbloqueado)  ->  TEXTO ACTUAL: "Donar Bits"  ->  PROPUESTA > Donar SL - BITS
+[7] ETIQUETA: Barra retencion (50%)  ->  TEXTO ACTUAL: "¡Apoyo Desbloqueado! / {n}s restantes"  ->  PROPUESTA > ¡Apoyo desbloqueado! • {n}s restantes
+[8] SUBTITULO: Modal video - SUBTITULO  ->  TEXTO ACTUAL: "Demostracion tecnica en Google Drive"  ->  PROPUESTA > Demostración técnica del proyecto en Google Drive
+[9] BOTON: Modal video - BOTON  ->  TEXTO ACTUAL: "Cerrar Video"  ->  PROPUESTA > Cerrar video
+[10] TEXTO: Modal video - sin video  ->  TEXTO ACTUAL: "Este estand aun no publica su video."  ->  PROPUESTA > Este estand todavía no ha publicado su video. ¡Pronto podrás conocer su demostración!
+[11] TEXTO: Modal video - TEXTO  ->  TEXTO ACTUAL: "Minimo para desbloquear donacion: {n}s / ¡Apoyo Desbloqueado! / {n}s restantes"  ->  PROPUESTA > Mira al menos {n}s para desbloquear tu apoyo. / ¡Apoyo desbloqueado! / {n}s restantes
+
+======================================================================
+04. PERFIL DEL ESTAND / INSALSPACE  (PerfilInstagramGrupo)
+======================================================================
+[1] BOTON: volver  ->  TEXTO ACTUAL: "Volver a Estands / Inicio"  ->  PROPUESTA > Volver a la lista de Estands
+[2] ETIQUETA: BADGE equipo  ->  TEXTO ACTUAL: "Modo Edicion del Equipo"  ->  PROPUESTA > Modo Edición de Equipo
+[3] BOTON: compartir  ->  TEXTO ACTUAL: "Compartir / ¡Enlace Copiado!"  ->  PROPUESTA > Compartir perfil / ¡Enlace copiado!
+[4] ETIQUETA: BADGE historia  ->  TEXTO ACTUAL: "HISTORIA"  ->  PROPUESTA > HISTORIA DEL EQUIPO
+[5] TITULO: verificacion  ->  TEXTO ACTUAL: "Estand Oficial Verificado"  ->  PROPUESTA > Proyecto Oficial Verificado
+[6] BOTON: BOTONES  ->  TEXTO ACTUAL: "Apoyar con SL - BITS | Subir Foto | Video Drive"  ->  PROPUESTA > Apoyar con SL - BITS | Publicar Foto | Ver Video en Drive
+[7] ETIQUETA: ESTADISTICAS  ->  TEXTO ACTUAL: "publicaciones | apoyos | SL - BITS | integrantes"  ->  PROPUESTA > publicaciones | apoyos recibidos | SL - BITS recaudados | integrantes
+[8] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Integrantes:"  ->  PROPUESTA > Equipo de trabajo:
+[9] BOTON: ENLACE  ->  TEXTO ACTUAL: "Carpeta de Documentacion en Google Drive"  ->  PROPUESTA > Ver Carpeta de Documentación en Google Drive
+[10] BOTON: BUBUJA subir  ->  TEXTO ACTUAL: "Subir Foto"  ->  PROPUESTA > Nueva Publicación
+[11] ETIQUETA: PESTANAS  ->  TEXTO ACTUAL: "PUBLICACIONES ({n}) | REEL / VIDEO DRIVE (REDES DE VIDEO) | DONACIONES ({n}) | FICHA TECNICA"  ->  PROPUESTA > PUBLICACIONES ({n}) | DEMOSTRACIÓN EN VIDEO | APOYOS RECIBIDOS ({n}) | FICHA TÉCNICA
+[12] TITULO: Galeria - TITULO  ->  TEXTO ACTUAL: "Galeria de Publicaciones"  ->  PROPUESTA > Galerías y Avances del Proyecto
+[13] SUBTITULO: Galeria - SUBTITULO  ->  TEXTO ACTUAL: "Fotos del prototipo, pruebas de laboratorio y avances del equipo"  ->  PROPUESTA > Explora fotografías del prototipo, pruebas técnicas y experiencias del equipo
+[14] BOTON: Galeria - BOTON  ->  TEXTO ACTUAL: "Subir Nueva Foto"  ->  PROPUESTA > Agregar Foto al Muro
+[15] TEXTO: Galeria - VACIO  ->  TEXTO ACTUAL: "Aun no hay fotos en este perfil / Se el primero en subir fotos del prototipo y capturas de la Expotecnia. / Subir primera foto"  ->  PROPUESTA > Aún no hay publicaciones en este muro. Sé el primero en compartir fotos del proyecto en la Expotecnia. / Subir primera publicación
+[16] ETIQUETA: Video Drive - BADGE  ->  TEXTO ACTUAL: "Video Oficial en Google Drive"  ->  PROPUESTA > Video Demostrativo Oficial
+[17] TITULO: Video Drive - TITULO  ->  TEXTO ACTUAL: "Demostracion Tecnica del Estand"  ->  PROPUESTA > Demostración Técnica y Funcionamiento
+[18] TEXTO: Video Drive - TEXTO  ->  TEXTO ACTUAL: "Visualiza el video demostrativo para validar tu apoyo y desbloquear la donacion en SL - BITS."  ->  PROPUESTA > Observa la explicación técnica de nuestro proyecto para desbloquear la opción de apoyar con SL - BITS.
+[19] BOTON: Video Drive - BOTON  ->  TEXTO ACTUAL: "Cambiar Enlace de Drive"  ->  PROPUESTA > Actualizar Video de Drive
+[20] TEXTO: Video Drive - SIN VIDEO  ->  TEXTO ACTUAL: "Este estand aun no publica su video de Google Drive / El equipo puede configurarlo desde el boton "Cambiar Enlace de Drive"."  ->  PROPUESTA > El equipo aún no ha publicado su video explicativo. Si perteneces a este estand, puedes enlazarlo desde las opciones de edición.
+[21] ETIQUETA: Video Drive - ESTADO  ->  TEXTO ACTUAL: "Temporizador de visualizacion activo / Presiona para iniciar conteo de validacion"  ->  PROPUESTA > Validación de tiempo activa • Presiona reproducir para iniciar la verificación de apoyo
+[22] TEXTO: Video Drive - TEXTO  ->  TEXTO ACTUAL: "Minimo requerido: {n}s (50% de la duracion del video)"  ->  PROPUESTA > Mínimo de tiempo requerido: {n}s (50% del video)
+[23] MENSAJE: Video Drive - CUMPLIDO  ->  TEXTO ACTUAL: "¡Visualizacion Cumplida! Voto Desbloqueado / {n} segundos restantes"  ->  PROPUESTA > ¡Tiempo de visualización completado! Apoyo desbloqueado. / {n}s para finalizar
+[24] BOTON: Video Drive - BOTON desbloqueado  ->  TEXTO ACTUAL: "¡Donar SL - BITS a este proyecto ahora!"  ->  PROPUESTA > ¡Apoyar a este proyecto con SL - BITS!
+[25] BOTON: Video Drive - BOTON bloqueado  ->  TEXTO ACTUAL: "Mira el video para desbloquear tu apoyo ({n}s)"  ->  PROPUESTA > Reproduce el video para desbloquear tu voto ({n}s)
+[26] TITULO: Donaciones - TITULO  ->  TEXTO ACTUAL: "Comunidad de Donadores"  ->  PROPUESTA > Comunidad de Apoyos y Donaciones
+[27] ETIQUETA: Donaciones - TOTAL  ->  TEXTO ACTUAL: "Total recaudado: {monto} SL - BITS"  ->  PROPUESTA > Total acumulado: {monto} SL - BITS
+[28] BOTON: Donaciones - BOTON  ->  TEXTO ACTUAL: "Donar SL - BITS"  ->  PROPUESTA > Realizar una Donación
+[29] TEXTO: Donaciones - VACIO  ->  TEXTO ACTUAL: "Aun no se registran donaciones en vivo / Se el primero en donar SL - BITS a este equipo estudiantil."  ->  PROPUESTA > Este proyecto aún no ha recibido donaciones. ¡Sé el primero en motivar a este equipo con tus SL - BITS!
+[30] ETIQUETA: Donaciones - MONTO  ->  TEXTO ACTUAL: "+{monto} SL - BITS"  ->  PROPUESTA > +{monto} SL - BITS
+[31] TITULO: Ficha - TITULO  ->  TEXTO ACTUAL: "Ficha Tecnica e Innovacion"  ->  PROPUESTA > Ficha Técnica e Innovación
+[32] SUBTITULO: Ficha - SUBTITULO  ->  TEXTO ACTUAL: "Especificaciones del prototipo y roles del equipo"  ->  PROPUESTA > Detalles del prototipo, tecnología empleada y estructura del equipo
+[33] ETIQUETA: Ficha - CLAVES  ->  TEXTO ACTUAL: "Especialidad | Equipo | Certamen: Expotecnia Institucional 2026"  ->  PROPUESTA > Especialidad técnica | Integrantes | Certamen: Expotecnia Institucional 2026
+[34] TEXTO: Ficha - IMPACTO  ->  TEXTO ACTUAL: "Impacto y Relevancia Institucional: Proyecto calificado dentro de los estandares de excelencia academica del Instituto San Luis. Enfocado en resolver problematicas del entorno comunitario con tecnologia abierta y sustentabilidad."  ->  PROPUESTA > Impacto Institucional: Proyecto evaluado bajo los estándares de innovación académica del Instituto San Luis, orientado a solventar necesidades del entorno mediante el uso sustentable de la tecnología.
+
+======================================================================
+05. DONAR / APOYAR PROYECTO  (VentanaDonar)
+======================================================================
+[1] ETIQUETA: encabezado  ->  TEXTO ACTUAL: "Apoyar Proyecto Tecnico"  ->  PROPUESTA > Apoya este proyecto
+[2] MENSAJE: (sin sesion)  ->  TEXTO ACTUAL: "Debes registrarte o iniciar sesion para poder realizar una donacion."  ->  PROPUESTA > ¡Casi listo! Regístrate o inicia sesión para realizar tu donación y apoyar al equipo.
+[3] MENSAJE: monto invalido  ->  TEXTO ACTUAL: "Por favor, selecciona o ingresa un monto valido."  ->  PROPUESTA > Elige o ingresa un monto válido para continuar con tu apoyo.
+[4] MENSAJE: saldo insuficiente  ->  TEXTO ACTUAL: "Saldo insuficiente. Tienes {saldo} SL - BITS."  ->  PROPUESTA > No tienes suficientes SL - BITS. Tu saldo actual es {saldo} SL - BITS.
+[5] TEXTO: (sin sesion)  ->  TEXTO ACTUAL: "Para donar necesitas registrarte con tu NIE o DUI y reclamar tu bono de 1.00 SL - BITS."  ->  PROPUESTA > Para transferir SL - BITS es necesario identificarte con tu NIE o DUI. ¡Recibirás un bono de bienvenida de 1.00 SL - BITS!
+[6] BOTON: (sin sesion)  ->  TEXTO ACTUAL: "Registrarse Ahora"  ->  PROPUESTA > Crear cuenta / Iniciar sesión
+[7] ETIQUETA: saldo  ->  TEXTO ACTUAL: "Tu Saldo Disponible: {saldo} SL - BITS"  ->  PROPUESTA > Saldo disponible: {saldo} SL - BITS
+[8] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Selecciona el Monto en SL - BITS"  ->  PROPUESTA > Selecciona o ingresa la cantidad a donar:
+[9] BOTON: MONTOS rapidos  ->  TEXTO ACTUAL: "0.25 | 0.50 | 1.00 (SL - BITS)"  ->  PROPUESTA > 0.25 SL - BITS | 0.50 SL - BITS | 1.00 SL - BITS
+[10] BOTON: ENLACE  ->  TEXTO ACTUAL: "Ingresar otro monto personalizado / Volver a montos sugeridos"  ->  PROPUESTA > Ingresar monto personalizado / Volver a montos predeterminados
+[11] PLACEHOLDER: PLACEHOLDER  ->  TEXTO ACTUAL: "Ej. 2.50"  ->  PROPUESTA > Ej. 2.50
+[12] BOTON: (cargando)  ->  TEXTO ACTUAL: "Transfiriendo SL - BITS..."  ->  PROPUESTA > Procesando tu apoyo…
+[13] BOTON: confirmar  ->  TEXTO ACTUAL: "Confirmar y Donar {monto} SL - BITS"  ->  PROPUESTA > ¡Confirmar y donar {monto} SL - BITS!
+
+======================================================================
+06. GALERIA / FOTOS / HISTORIA
+======================================================================
+  ModalFotoDetalle:
+[1] BOTON: BOTON  ->  TEXTO ACTUAL: "Donar"  ->  PROPUESTA > Apoyar Estand
+[2] TEXTO: VACIO comentarios  ->  TEXTO ACTUAL: "Aun no hay comentarios. ¡Se el primero en felicitar al equipo!"  ->  PROPUESTA > Todavía no hay comentarios en esta publicación. ¡Escribe un mensaje de ánimo al equipo!
+[3] BOTON: BOTON  ->  TEXTO ACTUAL: "Votar en Expotecnia"  ->  PROPUESTA > Votar por el Proyecto
+[4] ETIQUETA: CONTADOR  ->  TEXTO ACTUAL: "{n} Me gusta"  ->  PROPUESTA > {n} Me gusta
+[5] PLACEHOLDER: PLACEHOLDER comentario  ->  TEXTO ACTUAL: "Anade un comentario..."  ->  PROPUESTA > Escribe un comentario constructivo...
+[6] BOTON: BOTON  ->  TEXTO ACTUAL: "Publicar"  ->  PROPUESTA > Comentar
+
+  ModalSubirFoto:
+[7] TITULO: TITULO  ->  TEXTO ACTUAL: "Nueva Publicacion en INSALSPACE"  ->  PROPUESTA > Publicar Avance en INSALSPACE
+[8] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Publicar en el feed oficial de {nombreGrupo}"  ->  PROPUESTA > Compartir novedad en el perfil oficial de {nombreGrupo}
+[9] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "1. Selecciona o arrastra una foto"  ->  PROPUESTA > Paso 1: Selecciona o arrastra tu imagen
+[10] TEXTO: TEXTO zona  ->  TEXTO ACTUAL: "Cargando imagen... / Haz clic para subir desde tu dispositivo / JPG, PNG, WEBP"  ->  PROPUESTA > Procesando imagen... / Presiona aquí para cargar un archivo desde tu dispositivo / Formatos permitidos: JPG, PNG, WEBP
+[11] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "O ingresa la URL de la imagen:  (placeholder https://...)"  ->  PROPUESTA > O enlaza una imagen mediante URL externa: (https://...)
+[12] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Vista Previa de la Publicacion"  ->  PROPUESTA > Previsualización de la publicación
+[13] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "2. Pie de foto / Descripcion"  ->  PROPUESTA > Paso 2: Descripción de la publicación
+[14] PLACEHOLDER: PLACEHOLDER pie  ->  TEXTO ACTUAL: "Escribe un pie de foto para tu publicacion, novedades del prototipo, integrantes que participaron..."  ->  PROPUESTA > Redacta un pie de foto destacando las novedades del prototipo o a los alumnos involucrados...
+[15] BOTON: BOTONES  ->  TEXTO ACTUAL: "Cancelar | Publicar en INSALSPACE"  ->  PROPUESTA > Cancelar | Publicar en INSALSPACE
+[16] TEXTO: PIE default  ->  TEXTO ACTUAL: "Proyecto {nombre} ⚡ #Expotecnia2026  #SanLuis"  ->  PROPUESTA > Proyecto {nombre} ⚡ #Expotecnia2026 #InstitutoSanLuis
+
+  ModalHistoria:
+[17] TITULO: HISTORIA default  ->  TEXTO ACTUAL: "Estand San Luis"  ->  PROPUESTA > Avances del Estand San Luis
+[18] TEXTO: PIE  ->  TEXTO ACTUAL: "Expotecnia Institucional 2026 / {n} de {total}"  ->  PROPUESTA > Expotecnia Institucional 2026 • Imagen {n} de {total}
+
+======================================================================
+07. MENUS, ENCABEZADO Y PIE
+======================================================================
+  SidebarNavegacion (menu lateral):
+[1] ETIQUETA: MARCA  ->  TEXTO ACTUAL: "INSTITUTO SAN LUIS"  ->  PROPUESTA > INSTITUTO SAN LUIS
+[2] TEXTO: LEMA  ->  TEXTO ACTUAL: "Formamos valores, construimos futuro."  ->  PROPUESTA > Formando valores, construimos futuro.
+[3] ETIQUETA: GRUPOS de menu  ->  TEXTO ACTUAL: "Navegacion | Mi Wallet | Administracion"  ->  PROPUESTA > Menú Principal | Mi Billetera Digital | Gestión Administrativa
+[4] BOTON: ITEMS  ->  TEXTO ACTUAL: "Inicio | Muro SPACE | Mi Wallet | Enviar | Recibir | Historial | Ranking | Mi Perfil | Panel Administrativo | Recompensas"  ->  PROPUESTA > Inicio | Muro INSALSPACE | Mi Wallet | Enviar SL-BITS | Recibir / Mostrar QR | Historial de Movimientos | Ranking Oficial | Mi Perfil | Panel de Control | Recompensas Institucionales
+[5] ETIQUETA: BADGE  ->  TEXTO ACTUAL: "Acceso"  ->  PROPUESTA > Estado del Usuario
+[6] TEXTO: PIE (con sesion)  ->  TEXTO ACTUAL: "Billetera Activa | {saldo} ⚡ | Acceso administrativo | Cerrar sesion"  ->  PROPUESTA > Cuenta Verificada | Saldo: {saldo} SL-BITS | Panel Administrativo | Cerrar Sesión
+[7] TEXTO: PIE (sin sesion)  ->  TEXTO ACTUAL: "Acceso de invitado / Registrate para donar SL - BITS y votar | Iniciar Sesion / Registro"  ->  PROPUESTA > Modo Visitante • Identifícate para interactuar y donar SL-BITS | Iniciar Sesión / Registrarse
+
+  Encabezado movil (App.jsx):
+[8] ETIQUETA: MARCA  ->  TEXTO ACTUAL: "SAN LUIS WALLET | Expotecnia 2026"  ->  PROPUESTA > SL-BITS WALLET • Expotecnia 2026
+[9] BOTON: BOTON (sin sesion)  ->  TEXTO ACTUAL: "Entrar / Registro"  ->  PROPUESTA > Acceder / Registrarse
+[10] ETIQUETA: SALDO  ->  TEXTO ACTUAL: "{saldo} SL - BITS"  ->  PROPUESTA > {saldo} SL-BITS
+
+  Pie institucional (App.jsx footer):
+[11] ETIQUETA: MARCA  ->  TEXTO ACTUAL: "SL - BITS Wallet • Instituto San Luis"  ->  PROPUESTA > Billetera Digital SL-BITS • Instituto San Luis
+[12] TEXTO: LEMA  ->  TEXTO ACTUAL: "Expotecnia Institucional 2026 • Formamos valores, construimos futuro."  ->  PROPUESTA > Expotecnia Institucional 2026 — Formando valores, construimos futuro.
+[13] TEXTO: UBICACION  ->  TEXTO ACTUAL: "San Luis • El Salvador"  ->  PROPUESTA > San Luis, El Salvador
+
+======================================================================
+08. TARJETA DE SALDO  (TarjetaSaldo)
+======================================================================
+[1] TITULO: TITULO (sin usuario)  ->  TEXTO ACTUAL: "¡Obtén tu Billetera Digital SL - BITS!"  ->  PROPUESTA > ¡Activa tu Billetera Digital SL-BITS!
+[2] TEXTO: TEXTO (sin usuario)  ->  TEXTO ACTUAL: "Registrate con tu NIE o DUI para recibir gratis tu bono de bienvenida de 1.00 ⚡ SL - BITS y apoyar a tus estands favoritos."  ->  PROPUESTA > Completa tu registro con tu NIE o DUI para recibir automáticamente tu bono inicial de 1.00 SL-BITS y apoyar los proyectos de la Expotecnia.
+[3] ETIQUETA: MARCA  ->  TEXTO ACTUAL: "Instituto San Luis / SL - BITS WALLET | BADGE: Activa"  ->  PROPUESTA > Instituto San Luis • Billetera SL-BITS | Estado: Activa
+[4] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Saldo Disponible {saldo} ⚡ SL - BITS"  ->  PROPUESTA > Saldo disponible: {saldo} SL-BITS
+[5] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Moneda Oficial de la Expotecnia 2026"  ->  PROPUESTA > Sistema Oficial de Votación y Donaciones • Expotecnia 2026
+[6] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Titular {nombre} {tipoDoc}: {numero}"  ->  PROPUESTA > Titular: {nombre} | {tipoDoc}: {numero}
+[7] BOTON: BOTONES  ->  TEXTO ACTUAL: "Mi QR | Recargar"  ->  PROPUESTA > Mostrar Mi Código QR | Recargar Saldo
+
+======================================================================
+09. MI WALLET (DASHBOARD)  (DashboardPrincipal)
+======================================================================
+[1] TITULO: SALUDO  ->  TEXTO ACTUAL: "¡Hola, {nombre}!"  ->  PROPUESTA > ¡Hola, {nombre}!
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Bienvenido a tu wallet oficial del Instituto San Luis."  ->  PROPUESTA > Te damos la bienvenida al panel principal de tu billetera digital.
+[3] BOTON: DROPDOWN  ->  TEXTO ACTUAL: "Notificaciones / {n} nuevas"  ->  PROPUESTA > Center de Avisos • {n} no leídas
+[4] BOTON: MENU usuario  ->  TEXTO ACTUAL: "Explorar Muro INSALSPACE | Cerrar sesion"  ->  PROPUESTA > Ir al Muro INSALSPACE | Salir de la cuenta
+[5] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Saldo disponible {saldo} SL - BITS"  ->  PROPUESTA > Saldo actual: {saldo} SL-BITS
+[6] TEXTO: TEXTO tarjeta  ->  TEXTO ACTUAL: "Moneda oficial del Instituto San Luis. Apoya a los proyectos de la Expotecnia 2026 y canjea tus recompensas academicas."  ->  PROPUESTA > Moneda digital institucional del Instituto San Luis. Utiliza tus SL-BITS para apoyar las iniciativas de la Expotecnia 2026 y canjear reconocimientos académicos.
+[7] BOTON: ACCIONES rapidas  ->  TEXTO ACTUAL: "Enviar / Envia SL - BITS | Recibir / Recibe SL - BITS | Escanear / Escanea QR | Historial / Ver movimientos"  ->  PROPUESTA > Enviar SL-BITS | Recibir / Mi QR | Escanear Código QR | Historial de Transacciones
+[8] TITULO: TITULO  ->  TEXTO ACTUAL: "Actividad reciente | Ver todo | Ver todo el historial"  ->  PROPUESTA > Movimientos Recientes | Ver historial completo
+[9] SUBTITULO: TITULO  ->  TEXTO ACTUAL: "Mi Estand INSALSPACE - Conectado: Estand conectado | {nombre} | {especialidad} | Recaudado: {monto} SL - BITS - Sin conectar: Aun no tienes estand conectado / Conecta o registra el estand de tu proyecto tecnico para publicar fotos, videos y administrar tu muro en la red social INSALSPACE. - BOTON: Administrar mi estand"  ->  PROPUESTA > Mi Proyecto en INSALSPACE • Estado: Vinculado | {nombre} ({especialidad}) | Fondos recaudados: {monto} SL-BITS • Estado: Sin vincular | Aún no has conectado un proyecto. Registra tu estand técnico para comenzar a publicar material y recibir apoyos. • Botón: Gestionar mi Estand
+[10] TITULO: TITULO  ->  TEXTO ACTUAL: "Recibir SL - BITS / Tu codigo QR"  ->  PROPUESTA > Recibir SL-BITS mediante Código QR
+[11] TEXTO: TEXTO  ->  TEXTO ACTUAL: "Comparte tu codigo para recibir SL - BITS"  ->  PROPUESTA > Muestra tu código personal para recibir transferencias de otros usuarios o recargas.
+[12] BOTON: BOTONES  ->  TEXTO ACTUAL: "Compartir codigo | Copiar codigo | ¡Codigo Copiado!"  ->  PROPUESTA > Compartir Código | Copiar Identificador | ¡Identificador copiado!
+[13] TEXTO: TITULO / TEXTO  ->  TEXTO ACTUAL: "SL - BITS | Mas que una moneda, son los valores que nos impulsan."  ->  PROPUESTA > SL-BITS • Más que una divisa digital, el reflejo del esfuerzo y mérito estudiantil.
+[14] ETIQUETA: BADGES  ->  TEXTO ACTUAL: "🛡️ Valores | 🎓 Educacion | 🏆 Logro | 🤝 Amistad"  ->  PROPUESTA > 🛡️ Compromiso | 🎓 Excelencia | 🏆 Innovación | 🤝 Trabajo en Equipo
+[15] TEXTO: COMPARTIR  ->  TEXTO ACTUAL: "Mi Codigo SL - BITS - Instituto San Luis / Transfereme SL - BITS usando mi codigo estudiantil: {documento}"  ->  PROPUESTA > Mi Billetera SL-BITS • Instituto San Luis: Realízame un envío ingresando mi número de documento: {documento}
+[16] TEXTO: BANNER  ->  TEXTO ACTUAL: "SL - BITS es la moneda oficial del Instituto San Luis. / Usela, gana y crece con ella. Expotecnia 2026."  ->  PROPUESTA > SL-BITS es la plataforma oficial de intercambio institucional. Participa, apoya el talento local y sé parte de la Expotecnia 2026.
+
+======================================================================
+10. ENVIAR SL - BITS  (ModalEnviarBits)
+======================================================================
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Enviar SL - BITS"  ->  PROPUESTA > Enviar SL - BITS
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Transferencia instantanea del Instituto San Luis"  ->  PROPUESTA > Envía SL - BITS de forma rápida y segura dentro del Instituto San Luis
+[3] ETIQUETA: ETIQUETA saldo  ->  TEXTO ACTUAL: "Tu saldo disponible: {saldo} SL - BITS"  ->  PROPUESTA > Tu saldo: {saldo} SL - BITS
+[4] MENSAJE: MENSAJE monto invalido  ->  TEXTO ACTUAL: "Por favor ingresa un monto valido mayor a 0."  ->  PROPUESTA > Por favor, ingresa una cantidad válida superior a 0.00 SL-BITS.
+[5] MENSAJE: MENSAJE saldo insuficiente  ->  TEXTO ACTUAL: "Saldo insuficiente en tu billetera. Tienes {saldo} SL - BITS."  ->  PROPUESTA > Fondeo insuficiente. El saldo en tu cuenta es de {saldo} SL-BITS.
+[6] ETIQUETA: ETIQUETA destinatario  ->  TEXTO ACTUAL: "Destinatario (NIE, DUI, Estand o Compañero)"  ->  PROPUESTA > ¿A quién quieres enviar? (NIE, DUI, estand o compañero)
+[7] PLACEHOLDER: PLACEHOLDER destinatario  ->  TEXTO ACTUAL: "Ej: 7482910, @robotica o nombre del estand"  ->  PROPUESTA > Ingresa NIE, DUI, @usuario o nombre del proyecto...
+[8] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Sugerencias rapidas:"  ->  PROPUESTA > Contactos o estands frecuentes:
+[9] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Monto en SL - BITS (placeholder 0.00, sufijo SL - BITS)"  ->  PROPUESTA > Cantidad a transferir (0.00 SL-BITS)
+[10] ETIQUETA: ETIQUETA concepto  ->  TEXTO ACTUAL: "Motivo o Concepto (Opcional)"  ->  PROPUESTA > Motivo del envío (opcional)
+[11] PLACEHOLDER: PLACEHOLDER concepto  ->  TEXTO ACTUAL: "Ej: Pago almuerzo, apoyo a proyecto..."  ->  PROPUESTA > Ej. Colaboración, felicitaciones por proyecto...
+[12] TEXTO: CONCEPTO default  ->  TEXTO ACTUAL: "Transferencia directa de SL - BITS"  ->  PROPUESTA > Transferencia entre usuarios
+[13] BOTON: BOTON enviar  ->  TEXTO ACTUAL: "Confirmar y Enviar SL - BITS"  ->  PROPUESTA > Confirmar y enviar SL - BITS
+
+======================================================================
+11. RECIBIR SL - BITS / QR
+======================================================================
+  ModalRecibirBits:
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Recibir SL - BITS"  ->  PROPUESTA > Recibir Fondeo / SL-BITS
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Tu credencial de cobro del Instituto San Luis"  ->  PROPUESTA > Identificador digital para recibir transferencias
+[3] TEXTO: TEXTO  ->  TEXTO ACTUAL: "Muestra este codigo para recibir transferencias de SL - BITS de compañeros, recargas en caja o bonos academicos."  ->  PROPUESTA > Presenta este código QR para solicitar transferencias entre alumnos, recargar saldo en caja autorizada o recibir asignaciones académicas.
+[4] ETIQUETA: ETIQUETA / BOTONES  ->  TEXTO ACTUAL: "ID de Billetera | BOTONES: Copiar / ¡Copiado! | Compartir mi Codigo"  ->  PROPUESTA > Identificador Único de Billetera | Copiar ID | ¡Copiado! | Compartir Ficha QR
+
+  MostrarQR:
+[5] TITULO: TITULO  ->  TEXTO ACTUAL: "Mi Codigo QR de Pago"  ->  PROPUESTA > Código QR Personal
+[6] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Presenta este codigo en caja para recargar saldo"  ->  PROPUESTA > Presenta esta acreditación en el módulo de caja para recargar tu billetera
+[7] ETIQUETA: BADGE  ->  TEXTO ACTUAL: "Billetera Oficial Verificada"  ->  PROPUESTA > Credencial Digital Verificada
+[8] BOTON: BOTONES  ->  TEXTO ACTUAL: "Imprimir Credencial | Listo"  ->  PROPUESTA > Guardar / Imprimir Credencial | Entendido
+
+  CodigoQRGrupo (QR de estand):
+[9] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Recibir donaciones {estand} / Escanea este codigo para apoyar este proyecto"  ->  PROPUESTA > Módulo de Recaudación: {estand} • Escanea este código para realizar una donación a nuestro proyecto
+[10] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Codigo del estand {id}"  ->  PROPUESTA > Identificador de Estand: {id}
+[11] ETIQUETA: BADGE  ->  TEXTO ACTUAL: "Codigo oficial del proyecto"  ->  PROPUESTA > QR Oficial de Competencia
+[12] BOTON: BOTONES  ->  TEXTO ACTUAL: "Copiar codigo / Copiado | Imprimir"  ->  PROPUESTA > Copiar enlace de apoyo | ¡Enlace copiado! | Imprimir QR de Estand
+
+  ModalEscanearQR:
+[13] TITULO: TITULO  ->  TEXTO ACTUAL: "Escanear Codigo QR"  ->  PROPUESTA > Lector de Código QR
+[14] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Escanea el QR de un estand para donar o ver su perfil INSALSPACE"  ->  PROPUESTA > Enfoque la cámara hacia el código QR de un estand para ingresar a su perfil o enviarle SL-BITS
+[15] TEXTO: TEXTO visor  ->  TEXTO ACTUAL: "Apunta la camara al codigo QR del estand"  ->  PROPUESTA > Mantén la cámara centrada sobre el código QR...
+[16] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "O selecciona un estand detectado en el aula:"  ->  PROPUESTA > O selecciona directamente un proyecto detectado cercanamente:
+[17] BOTON: BOTON  ->  TEXTO ACTUAL: "Abrir Perfil →"  ->  PROPUESTA > Ir al Perfil del Proyecto →
+
+======================================================================
+12. MI BILLETERA / HISTORIAL  (MiBilletera)
+======================================================================
+[1] TITULO: TITULO (sin sesion)  ->  TEXTO ACTUAL: "No hay una sesion activa"  ->  PROPUESTA > Sesión no iniciada
+[2] TEXTO: TEXTO (sin sesion)  ->  TEXTO ACTUAL: "Por favor, registrate como visitante con tu NIE o DUI para visualizar tu billetera y administrar tus fondos en ⚡ SL - BITS."  ->  PROPUESTA > Para consultar tu estado de cuenta y movimientos, ingresa con tu NIE o DUI registrado.
+[3] TITULO: TITULO  ->  TEXTO ACTUAL: "Mi Billetera SL - BITS"  ->  PROPUESTA > Estado de Cuenta y Movimientos
+[4] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Consulta tu saldo, transacciones y credencial de votacion para la Expotecnia 2026."  ->  PROPUESTA > Revisa el desglose de tus transacciones, saldo disponible y acreditación para votar en la Expotecnia 2026.
+[5] BOTON: ACCESOS rapidos  ->  TEXTO ACTUAL: "- Credencial QR / Para recargas en ventanilla - Apoyar Estands / Ver videos y donar SL - BITS - Estado de Cuenta / Billetera Verificada"  ->  PROPUESTA > Mostrar QR de Recarga | Explorar y Apoyar Estands | Resumen de Cuenta
+[6] TITULO: TITULO historial  ->  TEXTO ACTUAL: "Mis Movimientos | Historial completo de donaciones y recargas | {n} registros"  ->  PROPUESTA > Historial de Transacciones • {n} registros en total
+[7] TEXTO: VACIO  ->  TEXTO ACTUAL: "Aun no has realizado ninguna donacion. / Explorar proyectos de la Expotecnia →"  ->  PROPUESTA > Todavía no registra transacciones en su cuenta. / Ver proyectos disponibles →
+[8] TEXTO: MOVIMIENTOS dinamicos  ->  TEXTO ACTUAL: "Apoyaste a: {receptor} | Bono de Bienvenida Expotecnia | Recarga en caja | Recibiste de: {emisor} | Enviaste a: {receptor} | Movimiento: {nombre}"  ->  PROPUESTA > Donación otorgada a: {receptor} | Asignación Inicial de Bienvenida | Abono en Punto de Caja | Transferencia de: {emisor} | Transferencia hacia: {receptor} | Operación: {nombre}
+[9] ETIQUETA: MONTOS  ->  TEXTO ACTUAL: "+{monto} ⚡ / -{monto} ⚡ (SL - BITS)"  ->  PROPUESTA > +{monto} SL-BITS / -{monto} SL-BITS
+
+======================================================================
+13. PERFIL ESTUDIANTIL  (PerfilUsuario)
+======================================================================
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Perfil Estudiantil ISL"  ->  PROPUESTA > Credencial Digital Estudiantil
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Credenciales digitales oficiales y estado de cuenta en el Instituto San Luis."  ->  PROPUESTA > Datos de identificación institucional y balance del estudiante.
+[3] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Estudiante Oficial • Instituto San Luis"  ->  PROPUESTA > Alumno Verificado • Instituto San Luis
+[4] ETIQUETA: BADGE  ->  TEXTO ACTUAL: "Wallet Verificada"  ->  PROPUESTA > Billetera Verificada
+[5] TEXTO: DATOS  ->  TEXTO ACTUAL: "{tipoDoc}: {numero} (Sin documento) | Correo no registrado | Ciclo Lectivo 2026"  ->  PROPUESTA > Documento: {tipoDoc} {numero} | Correo: Pendiente de registro | Periodo Académico 2026
+[6] ETIQUETA: ETIQUETA / BOTON  ->  TEXTO ACTUAL: "Saldo Disponible {saldo} SL - BITS | BOTON: Ver Wallet"  ->  PROPUESTA > Fondos actuales: {saldo} SL-BITS | Ir a mi Billetera
+[7] ETIQUETA: ETIQUETA / BOTON  ->  TEXTO ACTUAL: "Codigo QR Personal | Para recargas en ventanilla | BOTON: Ver QR"  ->  PROPUESTA > Código Único de Identificación | Utilízalo para recargas en ventanilla autorizada | Ver Ficha QR
+[8] TITULO: TITULO estand  ->  TEXTO ACTUAL: "Mi Estand en INSALSPACE"  ->  PROPUESTA > Proyecto Asociado en INSALSPACE
+[9] SUBTITULO: SUBTITULO estand  ->  TEXTO ACTUAL: "Tu proyecto tecnico y su muro SPACE dentro de este perfil"  ->  PROPUESTA > Administra el material multimedia y avances de tu equipo
+[10] TEXTO: (conectado)  ->  TEXTO ACTUAL: "{grupo} esta conectado a tu cuenta. El panel de tu estand se muestra aqui abajo."  ->  PROPUESTA > Tu cuenta está vinculada al proyecto {grupo}. A continuación puedes gestionar tu muro.
+[11] TEXTO: (sin conectar)  ->  TEXTO ACTUAL: "Conecta el estand de tu proyecto tecnico para publicar fotos, videos y administrar tu muro en la red social INSALSPACE."  ->  PROPUESTA > No posees un proyecto vinculado. Conecta tu estand para compartir publicaciones y recibir interacciones.
+[12] BOTON: BOTON  ->  TEXTO ACTUAL: "Conectar / Registrar mi estand"  ->  PROPUESTA > Vincular o Registrar Proyecto
+[13] TITULO: TITULO insignias  ->  TEXTO ACTUAL: "Insignias y Meritos San Luis"  ->  PROPUESTA > Reconocimientos y Méritos Académicos
+[14] TEXTO: INSIGNIAS  ->  TEXTO ACTUAL: "- 🥇 Excelencia Tecnica / Promedio superior en materias practicas de especialidad. - ⚡ Votante Activo Expotecnia / Participacion en la votacion de proyectos con SL - BITS. - 🛡️ Valores San Luis / Reconocimiento por conducta y compañerismo solidario."  ->  PROPUESTA > 🥇 Mención a la Excelencia Técnica: Destacado rendimiento en proyectos prácticos. | ⚡ Participación Ciudadana: Colaboración activa mediante votaciones en la Expotecnia. | 🛡️ Mérito Honorífico San Luis: Demostración ejemplar de compañerismo y valores institucionales.
+
+======================================================================
+14. RECOMPENSAS  (ModalRecompensas)
+======================================================================
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Sistema Oficial de Recompensas SL - BITS"  ->  PROPUESTA > Programa Institucional de Incentivos y Recompensas
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Valores, logros y meritos del Instituto San Luis"  ->  PROPUESTA > Reconocimiento al compromiso, esfuerzo académico y valores estudiantiles
+[3] TEXTO: TEXTO intro  ->  TEXTO ACTUAL: "Los SL - BITS son la moneda digital oficial: representan el reconocimiento a tu dedicacion academica, compañerismo y creatividad en la Expotecnia 2026."  ->  PROPUESTA > Los SL-BITS premian la dedicación académica, la innovación técnica y la ética dentro de nuestra comunidad durante la Expotecnia 2026.
+[4] TEXTO: CATEGORIA Educativa  ->  TEXTO ACTUAL: "Fomenta el aprendizaje, el rendimiento academico y el esfuerzo en las areas tecnicas. MISIONES: Promedio destacado en periodo tecnico (+25.00) | Participacion en Expotecnia 2026 (+15.00) | Asistencia perfecta a talleres y laboratorios (+10.00)"  ->  PROPUESTA > Área de Desempeño Académico: Premia el rendimiento sobresaliente en las especialidades técnicas. • Objetivos: Promedio relevante en asignaturas técnicas (+25.00 SL-BITS) | Presentación de proyecto en Expotecnia (+15.00 SL-BITS) | Asistencia constante a prácticas de taller (+10.00 SL-BITS)
+[5] TEXTO: CATEGORIA Comunitaria  ->  TEXTO ACTUAL: "Fortalece la union, el trabajo en equipo y el respeto entre toda la comunidad San Luis. MISIONES: Apoyo a compañeros en asesorias estudiantiles (+20.00) | Campaña de reciclaje y sustentabilidad verde (+10.00) | Voluntariado en eventos institucionales (+15.00)"  ->  PROPUESTA > Área de Integración Comunitaria: Promueve el trabajo colaborativo, la empatía y la convivencia armónica. • Objetivos: Tutoría entre compañeros (+20.00 SL-BITS) | Participación en programas ecológicos (+10.00 SL-BITS) | Apoyo logístico en actividades institucionales (+15.00 SL-BITS)
+[6] TEXTO: CATEGORIA Inspiradora  ->  TEXTO ACTUAL: "Reconoce los proyectos mas creativos e innovadores que impulsan a los demas a seguir creciendo. MISIONES: Primer lugar en prototipado con IA y Robotica (+50.00) | Premio del publico por video de Google Drive (+30.00) | Mencion de honor de docentes evaluadores (+25.00)"  ->  PROPUESTA > Área de Innovación y Creatividad: Destaca las soluciones tecnológicas con alto impacto y originalidad. • Objetivos: Primer lugar en proyectos tecnológicos (+50.00 SL-BITS) | Proyecto más destacado en medios audiovisuales (+30.00 SL-BITS) | Reconocimiento por el jurado evaluador (+25.00 SL-BITS)
+
+======================================================================
+15. RANKING / TABLA DE POSICIONES  (TablaPosiciones)
+======================================================================
+[1] ETIQUETA: BADGE  ->  TEXTO ACTUAL: "Ranking en Vivo Expotecnia 2026"  ->  PROPUESTA > Tabla de Posiciones en Tiempo Real • Expotecnia 2026
+[2] TITULO: TITULO  ->  TEXTO ACTUAL: "Tabla de Posiciones Oficial"  ->  PROPUESTA > Clasificación Oficial de Proyectos
+[3] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Resultados en tiempo real calculados a partir de los votos y donaciones recibidas en ⚡ SL - BITS."  ->  PROPUESTA > Métricas actualizadas según las donaciones y votos registrados en SL-BITS por los visitantes.
+[4] ETIQUETA: PODIO  ->  TEXTO ACTUAL: "Segundo Lugar 🥈 | ¡Lider del Certamen! 🥇 (primero) | Tercer Lugar 🥉"  ->  PROPUESTA > 🥈 Segundo Lugar | 🥇 Primer Lugar - Líder de Competencia | 🥉 Tercer Lugar
+[5] ETIQUETA: ETIQUETAS  ->  TEXTO ACTUAL: "Recaudado | Total Acumulado | SL - BITS"  ->  PROPUESTA > Total Recaudado | Fondos Acumulados | SL-BITS
+[6] TITULO: TITULO  ->  TEXTO ACTUAL: "Clasificacion General | Total de proyectos: {n}"  ->  PROPUESTA > Listado General de Competencia • {n} proyectos en evaluación
+[7] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Total Recaudado en el Evento {monto} ⚡ SL - BITS"  ->  PROPUESTA > Recaudación Global del Evento: {monto} SL-BITS
+[8] ETIQUETA: TABLA  ->  TEXTO ACTUAL: "Posicion | Proyecto / Estand | Especialidad | Integrantes | Total Recaudado"  ->  PROPUESTA > Posición | Proyecto / Estand | Especialidad Técnica | Integrantes | Apoyo Recibido
+[9] TEXTO: FILA default  ->  TEXTO ACTUAL: "Expotecnia 2026 | {monto} ⚡ SL - BITS"  ->  PROPUESTA > Expotecnia 2026 • {monto} SL-BITS
+
+======================================================================
+16. REGISTRO VISITANTE / ALUMNO  (VentanaRegistro + RegistroVisitante)
+======================================================================
+[1] TITULO: TITULO modal  ->  TEXTO ACTUAL: "Registro Expotecnia 2026"  ->  PROPUESTA > Acceso al Sistema • Expotecnia 2026
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Plataforma de Billetera Digital SL - BITS"  ->  PROPUESTA > Gestión de Billetera Digital y Votación
+[3] BOTON: PESTANAS  ->  TEXTO ACTUAL: "Visitante / Alumno | Acceso grupo | Estand / Grupo"  ->  PROPUESTA > Registro Asistente | Acceso de Equipos | Registrar Nuevo Estand
+[4] TEXTO: PESTANA Acceso Grupo  ->  TEXTO ACTUAL: "- ETIQUETA: Codigo del grupo | PLACEHOLDER: Selecciona tu estand - ETIQUETA: Clave privada - MENSAJE exito: Acceso concedido. Ya puedes ver tu estand en Mi Perfil. - BOTON: Entrar a Mi Estand"  ->  PROPUESTA > Código de Estand | Selecciona el nombre de tu proyecto... | Contraseña del Equipo | Autenticación correcta. Redirigiendo a tu perfil. | Ingresar a Mi Estand
+[5] ETIQUETA: BANNER  ->  TEXTO ACTUAL: "¡Bono de Bienvenida Automatico!"  ->  PROPUESTA > ¡Bono de Bienvenida Incluido!
+[6] TEXTO: TEXTO banner  ->  TEXTO ACTUAL: "Al registrar tu NIE o DUI recibirás 1.00 ⚡ SL - BITS de saldo inicial para apoyar los proyectos de la Expotecnia 2026."  ->  PROPUESTA > Al ingresar tu documento de identificación (NIE o DUI), el sistema te acreditará un saldo inicial de 1.00 SL-BITS para participar en las votaciones.
+[7] MENSAJE: MENSAJES validacion  ->  TEXTO ACTUAL: "- Por favor, ingresa tu nombre completo. - Ingresa un correo electronico valido. - El NIE debe contener al menos 5 digitos numericos. - El DUI debe contener 9 digitos (formato: 00000000-0)."  ->  PROPUESTA > Es obligatorio ingresar tu nombre completo. | Proporciona una dirección de correo válida. | El NIE debe poseer un mínimo de 5 dígitos numéricos. | El número de DUI debe tener 9 dígitos con el formato 00000000-0.
+[8] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Nombre Completo | placeholder: Ej. Mario Alberto Henriquez"  ->  PROPUESTA > Nombre Completo | Ej. Carlos Alberto Henriquez
+[9] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Correo Electronico | placeholder: ejemplo@sanluis.edu.sv"  ->  PROPUESTA > Correo Electrónico | usuario@sanluis.edu.sv
+[10] ETIQUETA: ETIQUETA / opciones  ->  TEXTO ACTUAL: "Tipo de Asistente | opciones: Estudiante (NIE) | Docente / Adulto (DUI)"  ->  PROPUESTA > Tipo de Registro | Estudiante Institucional (NIE) | Docente / Visitante (DUI)
+[11] ETIQUETA: ETIQUETAS dinamicas  ->  TEXTO ACTUAL: "Numero de NIE (Solo numeros) | Numero de DUI (Formato con guion)"  ->  PROPUESTA > Número de NIE (únicamente dígitos) | Número de DUI (incluyendo guion)
+[12] PLACEHOLDER: PLACEHOLDERS  ->  TEXTO ACTUAL: "Ej. 7482910 | 00000000-0"  ->  PROPUESTA > Ej. 1234567 | 00000000-0
+[13] BOTON: BOTON (cargando)  ->  TEXTO ACTUAL: "Validando y creando billetera..."  ->  PROPUESTA > Verificando datos y creando billetera...
+[14] BOTON: BOTON  ->  TEXTO ACTUAL: "Reclamar Bono y Crear Billetera"  ->  PROPUESTA > Registrarse y Reclamar Bono
+[15] MENSAJE: MENSAJE exito  ->  TEXTO ACTUAL: "¡Registro exitoso! Se te han otorgado {saldo} SL-BITS de bienvenida."  ->  PROPUESTA > ¡Registro completado! Has recibido {saldo} SL-BITS como bono de bienvenida.
+
+======================================================================
+17. REGISTRO DE ESTAND / GRUPO  (RegistroGrupo)
+======================================================================
+[1] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Nombre del Proyecto / Estand | placeholder: Ej. Sistema IoT de Riego Automatizado"  ->  PROPUESTA > Nombre del Proyecto o Estand | Ej. Sistema de Monitoreo Automatizado mediante IoT
+[2] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Especialidad Tecnica (opciones en seccion 22)"  ->  PROPUESTA > Especialidad Técnica Académica
+[3] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Integrantes del Equipo | placeholder: Ej. Juan Perez, Karla Gomez, David Martinez"  ->  PROPUESTA > Miembros del Equipo de Trabajo | Ej. Juan Pérez, Karla Gómez, David Martínez
+[4] ETIQUETA: ETIQUETA / placeholder / nota  ->  TEXTO ACTUAL: "Clave privada del grupo | placeholder: Minimo 6 caracteres | nota: Se usara para entrar al espacio privado del estand."  ->  PROPUESTA > Contraseña del Equipo | Mínimo 6 caracteres | Nota: Esta clave será necesaria para modificar información o subir publicaciones del estand.
+[5] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Descripcion del Proyecto | placeholder: Explica brevemente el objetivo y funcionamiento tecnico de tu proyecto..."  ->  PROPUESTA > Resumen del Proyecto | Sintetice el objetivo, funcionamiento e innovación del prototipo...
+[6] ETIQUETA: ETIQUETA / boton  ->  TEXTO ACTUAL: "Fotografia de Portada del Estand | boton: Subir Imagen (ImgBB) / Subiendo a ImgBB..."  ->  PROPUESTA > Imagen Principal del Proyecto | Cargar Imagen (ImgBB) / Subiendo archivo a ImgBB...
+[7] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Enlace de Video (Google Drive) | placeholder: https://drive.google.com/file/d/..."  ->  PROPUESTA > Enlace del Video Demostrativo (Google Drive) | https://drive.google.com/file/d/...
+[8] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Duracion (seg)"  ->  PROPUESTA > Duración total del video (en segundos)
+[9] BOTON: BOTON (cargando)  ->  TEXTO ACTUAL: "Registrando estand tecnico..."  ->  PROPUESTA > Guardando datos del proyecto...
+[10] BOTON: BOTON  ->  TEXTO ACTUAL: "Publicar Estand en Expotecnia 2026"  ->  PROPUESTA > Registrar Proyecto en la Expotecnia 2026
+[11] MENSAJE: MENSAJES validacion  ->  TEXTO ACTUAL: "- Ingresa el nombre del proyecto o estand. - Detalla los nombres de los integrantes del equipo. - La clave del grupo debe tener al menos 6 caracteres. - La imagen no debe superar los 5 MB. - Error al leer el archivo de imagen."  ->  PROPUESTA > Debe ingresar el nombre oficial del proyecto. | Por favor especifique los integrantes del grupo. | La clave de acceso debe contar con un mínimo de 6 caracteres. | El archivo de imagen no debe ser superior a 5 MB. | Ocurrió un inconveniente al procesar el archivo seleccionado.
+[12] MENSAJE: MENSAJES exito  ->  TEXTO ACTUAL: "¡Imagen subida exitosamente a ImgBB! | Imagen cargada localmente. | ¡Estand registrado exitosamente!"  ->  PROPUESTA > ¡Imagen almacenada con éxito! | Imagen asignada localmente. | ¡Proyecto registrado de manera correcta!
+
+======================================================================
+18. ACCESO PRIVADO DE EQUIPO  (ModalAccesoEquipo)
+======================================================================
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Acceso Privado de Equipo"  ->  PROPUESTA > Panel de Edición del Estand
+[2] TEXTO: TEXTO  ->  TEXTO ACTUAL: "Cualquier visitante puede ver todas las fotos y videos libremente. Para subir publicaciones o editar el video de Google Drive, ingresa la clave de tu equipo."  ->  PROPUESTA > El público general puede visualizar el contenido. Para gestionar publicaciones o modificar el video explicativo, ingrese la credencial del grupo.
+[3] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Clave de Acceso del Estand | placeholder: Ingresa la clave de tu grupo..."  ->  PROPUESTA > Credencial de Acceso | Ingrese la contraseña asignada...
+[4] MENSAJE: MENSAJE exito  ->  TEXTO ACTUAL: "¡Acceso concedido! Ya puedes editar tu estand."  ->  PROPUESTA > Credencial confirmada. Módulo de edición activado.
+[5] MENSAJE: MENSAJE error  ->  TEXTO ACTUAL: "Clave de acceso incorrecta."  ->  PROPUESTA > La contraseña ingresada no es válida.
+[6] BOTON: BOTON  ->  TEXTO ACTUAL: "Validar Clave y Editar Estand"  ->  PROPUESTA > Autenticar e Ingresar al Panel
+
+======================================================================
+19. CONFIGURAR VIDEO DE DRIVE  (ModalConfigurarDrive)
+======================================================================
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Configurar Video de Google Drive | Estand: {nombreGrupo}"  ->  PROPUESTA > Vincular Video de Google Drive • {nombreGrupo}
+[2] SUBTITULO: ENCABEZADO  ->  TEXTO ACTUAL: "¿Como obtener el enlace de Google Drive?"  ->  PROPUESTA > Instrucciones para obtener la URL en Google Drive:
+[3] TEXTO: PASOS  ->  TEXTO ACTUAL: "1. Sube tu video a tu Google Drive. 2. Haz clic derecho en el video > Compartir. 3. Cambia el acceso a: "Cualquier persona con el enlace". 4. Copia y pega el enlace aqui. ¡El sistema lo adaptara automaticamente!"  ->  PROPUESTA > 1. Cargue el archivo de video en su unidad de Google Drive. | 2. Presione clic derecho sobre el video y seleccione "Compartir". | 3. Modifique los permisos a: "Cualquier persona con el enlace". | 4. Copie y pegue la dirección URL en el campo inferior; la plataforma ajustará el reproductor automáticamente.
+[4] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Enlace de Video (Google Drive) | placeholder: https://drive.google.com/file/d/1Bxi.../view?usp=sharing"  ->  PROPUESTA > Dirección URL del video en Google Drive | https://drive.google.com/file/d/...
+[5] ETIQUETA: ETIQUETA  ->  TEXTO ACTUAL: "Duracion del Video (segundos)"  ->  PROPUESTA > Duración exacta de la pieza de video (segundos)
+[6] NOTA: NOTA  ->  TEXTO ACTUAL: "Minimo de retencion requerido para votar: {n} segundos (50%)."  ->  PROPUESTA > Requisito de reproducción para habilitar donaciones: {n} segundos (50% del total).
+[7] ETIQUETA: PREVISUALIZACION  ->  TEXTO ACTUAL: "Previsualizacion del Reproductor Drive: | Enlace validado"  ->  PROPUESTA > Muestra del Reproductor de Video | Enlace correcto
+[8] BOTON: BOTONES  ->  TEXTO ACTUAL: "Cancelar | Guardar Video de Drive"  ->  PROPUESTA > Cancelar | Guardar Configuración de Video
+
+======================================================================
+20. ADMINISTRACION
+======================================================================
+  AccesoAdmin:
+[1] TITULO: TITULO  ->  TEXTO ACTUAL: "Acceso administrativo"  ->  PROPUESTA > Acceso Administrativo
+[2] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Area exclusiva para la institucion"  ->  PROPUESTA > Portal exclusivo para personal docente y técnico autorizado
+[3] PLACEHOLDER: PLACEHOLDER  ->  TEXTO ACTUAL: "Contraseña administrativa"  ->  PROPUESTA > Clave de seguridad administrativa
+[4] BOTON: BOTON  ->  TEXTO ACTUAL: "Entrar al panel"  ->  PROPUESTA > Autenticar e Ingresar
+[5] MENSAJE: MENSAJE error  ->  TEXTO ACTUAL: "Clave administrativa incorrecta."  ->  PROPUESTA > Clave de acceso no válida.
+
+  PanelAdmin:
+[6] ETIQUETA: BADGE / TITULO  ->  TEXTO ACTUAL: "Panel de Control Oficial | TITULO: Administracion Wallet"  ->  PROPUESTA > Panel Institucional • Gestión General de Billetera SL-BITS
+[7] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Monitoreo en tiempo real, control de caja y auditoria del sistema SL - BITS Wallet."  ->  PROPUESTA > Panel de supervisión en tiempo real, control de flujo en caja y registro general del sistema.
+[8] BOTON: BOTON  ->  TEXTO ACTUAL: "Sincronizar Servidor"  ->  PROPUESTA > Sincronizar Datos
+[9] ETIQUETA: METRICAS  ->  TEXTO ACTUAL: "- Total Circulante {monto} ⚡ SL - BITS / Recaudacion global en estands - Estands Activos {n} proyectos / Registrados en competencia - Votos / Donaciones {n} apoyos / Emitidos por visitantes - Promedio por Grupo {monto} ⚡ / Promedio recaudado"  ->  PROPUESTA > Circulante Global: {monto} SL-BITS (Recaudación general) | Estands Participantes: {n} proyectos inscritos | Interacciones Registradas: {n} donaciones emitidas | Promedio por Proyecto: {monto} SL-BITS
+  PanelGrupo:
+[10] ETIQUETA: BADGE / BOTONES  ->  TEXTO ACTUAL: "Panel de Control del Estand Oficial | BOTONES: Ver en INSALSPACE | QR de Donaciones"  ->  PROPUESTA > Panel de Control del Proyecto | Ver Perfil en INSALSPACE | Generar QR de Donación
+[11] TITULO: TITULO / enlace  ->  TEXTO ACTUAL: "Configuracion Multimedia | enlace: + Subir Foto"  ->  PROPUESTA > Gestión del Material Multimedia | + Agregar Imagen
+[12] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "URL de Foto de Portada / Perfil | placeholder: https://..."  ->  PROPUESTA > Enlace URL para Portada del Proyecto | https://...
+[13] ETIQUETA: ETIQUETA / enlace / placeholder  ->  TEXTO ACTUAL: "URL de Video en Google Drive | enlace: Configurar con asistente | placeholder: https://drive.google.com/file/d/.../preview"  ->  PROPUESTA > Enlace URL de Video en Google Drive | Configurar mediante asistente | https://drive.google.com/file/d/...
+[14] BOTON: BOTON  ->  TEXTO ACTUAL: "Guardar Cambios / ¡Cambios Guardados!"  ->  PROPUESTA > Guardar Modificaciones | ¡Modificaciones guardadas!
+[15] TITULO: TITULO  ->  TEXTO ACTUAL: "Total Recaudado {monto} SL - BITS | Donaciones Recibidas ({n})"  ->  PROPUESTA > Recaudación Total: {monto} SL-BITS | Historial de Apoyos ({n})
+[16] TEXTO: VACIO donaciones  ->  TEXTO ACTUAL: "Aun no se registran donaciones. Comparte tu codigo QR con los visitantes."  ->  PROPUESTA > No hay registro de donaciones hasta el momento. Muestra el código QR del estand a los visitantes.
+[17] BOTON: BOTON  ->  TEXTO ACTUAL: "Publicar Foto en Feed de INSALSPACE"  ->  PROPUESTA > Publicar Imagen en el Muro
+
+  RecargarSaldo (caja):
+[18] TITULO: TITULO  ->  TEXTO ACTUAL: "Modulo de Caja y Recargas"  ->  PROPUESTA > Módulo General de Caja y Recargas
+[19] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Abona saldo en efectivo a los visitantes de la Expotecnia"  ->  PROPUESTA > Acreditación de saldo en efectivo para los asistentes de la Expotecnia
+[20] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "NIE, DUI o Identificador del Usuario | placeholder: Ingresa NIE (solo numeros), DUI (con o sin guion) o ID..."  ->  PROPUESTA > Documento del Usuario (NIE o DUI) | Ingrese número de NIE o DUI del beneficiario...
+[21] ETIQUETA: ETIQUETA / rapidos  ->  TEXTO ACTUAL: "Monto a Recargar (⚡ SL - BITS) | rapidos: +1.00 | +5.00 | +10.00"  ->  PROPUESTA > Cantidad a abonar (SL-BITS) | Montos rápidos: +1.00 | +5.00 | +10.00
+[22] BOTON: ENLACE / placeholder  ->  TEXTO ACTUAL: "Ingresar otro monto en efectivo / Usar montos rapidos | placeholder: Ej. 20.00"  ->  PROPUESTA > Definir otro monto | Seleccionar montos estándar | Ej. 20.00
+[23] ETIQUETA: ETIQUETA / placeholder  ->  TEXTO ACTUAL: "Observacion / Motivo | placeholder: Recarga en efectivo en caja"  ->  PROPUESTA > Detalle o Nota de Operación | Recarga en efectivo realizada en ventanilla
+[24] BOTON: BOTON (cargando)  ->  TEXTO ACTUAL: "Procesando abono en cuenta..."  ->  PROPUESTA > Aplicando abono a la cuenta...
+[25] BOTON: BOTON  ->  TEXTO ACTUAL: "Abonar +{monto} ⚡ SL - BITS"  ->  PROPUESTA > Abonar +{monto} SL-BITS
+[26] MENSAJE: MENSAJES  ->  TEXTO ACTUAL: "Por favor ingresa el NIE, DUI o ID del usuario a recargar. / Ingresa un monto de recarga valido mayor a 0. / ¡Recarga aplicada con exito!"  ->  PROPUESTA > Especifique el documento o identificador del usuario. | Ingrese una cantidad a recargar superior a 0.00 SL-BITS. | ¡Abono procesado correctamente!
+
+  HistorialBitacora (auditoria):
+[27] TITULO: TITULO  ->  TEXTO ACTUAL: "Auditoria en Tiempo Real"  ->  PROPUESTA > Bitácora y Auditoría de Movimientos
+[28] SUBTITULO: SUBTITULO  ->  TEXTO ACTUAL: "Control transparente de transacciones y recargas de caja"  ->  PROPUESTA > Monitoreo transparente de transferencias, apoyos y transacciones de caja
+[29] BOTON: PESTANAS  ->  TEXTO ACTUAL: "Donaciones ({n}) | Bitacora de Caja ({n})"  ->  PROPUESTA > Registro de Donaciones ({n}) | Movimientos de Caja ({n})
+[30] PLACEHOLDER: PLACEHOLDER  ->  TEXTO ACTUAL: "Filtrar por nombre, documento o identificador de transaccion..."  ->  PROPUESTA > Filtrar por usuario, número de documento o código de transacción...
+[31] ETIQUETA: TABLA donaciones  ->  TEXTO ACTUAL: "Fecha y Hora | Tipo | Emisor (Donante) | Receptor (Estand) | Monto | Tipos: Donacion / Bono Bienvenida / Recarga"  ->  PROPUESTA > Hora y Fecha | Tipo de Operación | Usuario Origen | Proyecto Destino | Cantidad | Clasificación: Donación / Bono Inicial / Recarga
+[32] TEXTO: VACIO donaciones  ->  TEXTO ACTUAL: "No se registran transacciones bajo este criterio."  ->  PROPUESTA > No se hallaron registros bajo los parámetros ingresados.
+[33] ETIQUETA: TABLA bitacora  ->  TEXTO ACTUAL: "Fecha | Usuario Beneficiario | Documento | Abono | Autorizado Por | Motivo"  ->  PROPUESTA > Fecha | Beneficiario | Documento de Identidad | Monto Abonado | Encargado de Autorización | Concepto
+[34] TEXTO: VACIO bitacora  ->  TEXTO ACTUAL: "No se han registrado recargas manuales en caja."  ->  PROPUESTA > No se presentan operaciones de caja en el historial.
+[35] ETIQUETA: ABONO  ->  TEXTO ACTUAL: "+{monto} ⚡"  ->  PROPUESTA > +{monto} SL-BITS
+
+======================================================================
+21. MENSAJES DE EXITO / ERROR (SISTEMA)  (ContextoUsuario)
+======================================================================
+[1] MENSAJE: Subir foto OK  ->  TEXTO ACTUAL: "¡Publicacion subida con exito al feed del estand!"  ->  PROPUESTA > ¡Fotografía publicada con éxito en el muro del proyecto!
+[2] MENSAJE: Subir foto ERROR  ->  TEXTO ACTUAL: "No se pudo guardar la foto en el servidor."  ->  PROPUESTA > Ocurrió un error al intentar almacenar la imagen.
+[3] MENSAJE: Like sin sesion  ->  TEXTO ACTUAL: "Debes iniciar sesion para dar "Me gusta"."  ->  PROPUESTA > Inicia sesión con tu cuenta para indicar que te gusta esta publicación.
+[4] MENSAJE: Foto no encontrada  ->  TEXTO ACTUAL: "Foto no encontrada."  ->  PROPUESTA > La publicación consultada no se encuentra disponible.
+[5] MENSAJE: Like ERROR  ->  TEXTO ACTUAL: "No se pudo actualizar el "Me gusta"."  ->  PROPUESTA > No fue posible registrar tu interacción en este momento.
+[6] MENSAJE: Comentario ERROR  ->  TEXTO ACTUAL: "No se pudo guardar el comentario."  ->  PROPUESTA > No se pudo procesar tu comentario. Inténtalo nuevamente.
+[7] MENSAJE: Editar estand sin autorizacion  ->  TEXTO ACTUAL: "No tienes una sesion de equipo autorizada para editar este estand."  ->  PROPUESTA > No cuentas con los permisos necesarios para realizar modificaciones en este proyecto.
+[8] MENSAJE: Guardar config ERROR  ->  TEXTO ACTUAL: "No se pudo guardar la configuracion."  ->  PROPUESTA > Inconveniente al actualizar los ajustes.
+[9] MENSAJE: Donar sin sesion  ->  TEXTO ACTUAL: "Debes identificarte o registrarte para apoyar."  ->  PROPUESTA > Por favor, ingresa a tu cuenta para realizar un apoyo con SL-BITS.
+[10] MENSAJE: Donacion monto invalido  ->  TEXTO ACTUAL: "Ingresa un monto valido mayor a 0."  ->  PROPUESTA > Ingrese un valor válido superior a 0.00 SL-BITS.
+[11] MENSAJE: Donacion ERROR  ->  TEXTO ACTUAL: "No se pudo procesar la donacion."  ->  PROPUESTA > No se logró completar la transferencia de donación.
+[12] MENSAJE: Enviar sin sesion  ->  TEXTO ACTUAL: "No hay sesion activa."  ->  PROPUESTA > Es necesario contar con una sesión activa para realizar esta acción.
+[13] MENSAJE: Enviar monto invalido  ->  TEXTO ACTUAL: "El monto debe ser mayor a 0."  ->  PROPUESTA > La cantidad transferida debe ser mayor a 0.00 SL-BITS.
+[14] MENSAJE: Enviar sin destinatario  ->  TEXTO ACTUAL: "Ingresa el destinatario."  ->  PROPUESTA > Indique el destinatario de la transacción.
+[15] MENSAJE: Transferencia ERROR  ->  TEXTO ACTUAL: "No se pudo realizar la transferencia."  ->  PROPUESTA > Ocurrió un inconveniente al transferir los SL-BITS.
+[16] MENSAJE: Registro visitante OK  ->  TEXTO ACTUAL: "¡Registro exitoso! Se te han otorgado {saldo} SL-BITS de bienvenida."  ->  PROPUESTA > ¡Registro completado correctamente! Se han abonado {saldo} SL-BITS como bono inicial a tu billetera.
+[17] MENSAJE: Registro visitante ERROR  ->  TEXTO ACTUAL: "No se pudo completar el registro."  ->  PROPUESTA > Inconveniente al procesar la solicitud de registro.
+[18] MENSAJE: Registro estand ERROR  ->  TEXTO ACTUAL: "No se pudo registrar el estand."  ->  PROPUESTA > Ocurrió un error durante la inscripción del proyecto.
+[19] MENSAJE: Registro grupo OK  ->  TEXTO ACTUAL: "¡Estand registrado y autenticado exitosamente!"  ->  PROPUESTA > ¡Proyecto registrado y autenticado correctamente!
+[20] MENSAJE: Autenticar equipo ERROR  ->  TEXTO ACTUAL: "No se pudo autenticar el equipo."  ->  PROPUESTA > No fue posible autenticar las credenciales del equipo.
+[21] MENSAJE: Clave admin ERROR  ->  TEXTO ACTUAL: "Clave administrativa incorrecta."  ->  PROPUESTA > Contraseña administrativa no válida.
+[22] MENSAJE: Recarga datos invalidos  ->  TEXTO ACTUAL: "Ingresa un identificador de usuario y un monto valido."  ->  PROPUESTA > Proporcione un documento de usuario válido y un monto superior a 0.
+[23] MENSAJE: Recarga ERROR  ->  TEXTO ACTUAL: "No se pudo aplicar la recarga."  ->  PROPUESTA > No se logró procesar la acreditación del saldo.
+[24] TEXTO: CONCEPTOS default  ->  TEXTO ACTUAL: "Transferencia directa | Bono de Bienvenida Expotecnia 2026 | Recarga en efectivo en caja"  ->  PROPUESTA > Transferencia directa entre usuarios | Bono Inicial Expotecnia 2026 | Recarga de saldo realizada en ventanilla
+
+======================================================================
+22. CARRERAS / ESPECIALIDADES TECNICAS  (datos/carreras.js)
+======================================================================
+[1] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato General"  ->  PROPUESTA > Bachillerato General
+[2] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato Tecnico Vocacional en Desarrollo de Software"  ->  PROPUESTA > Bachillerato Técnico Vocacional en Desarrollo de Software
+[3] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato Tecnico Vocacional en Diseño Grafico"  ->  PROPUESTA > Bachillerato Técnico Vocacional en Diseño Gráfico
+[4] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato Tecnico Vocacional Administrativo Contable"  ->  PROPUESTA > Bachillerato Técnico Vocacional Administrativo Contable
+[5] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato Tecnico Productivo en Salud y Bienestar Social"  ->  PROPUESTA > Bachillerato Técnico Vocacional en Salud y Bienestar Social
+[6] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato Tecnico Productivo en Sistemas Electricos y Energias Renovables"  ->  PROPUESTA > Bachillerato Técnico Vocacional en Sistemas Eléctricos y Energías Renovables
+[7] ETIQUETA: Opcion  ->  TEXTO ACTUAL: "Bachillerato Tecnico Productivo en Logistica Comercial y Global"  ->  PROPUESTA > Bachillerato Técnico Vocacional en Logística Comercial y Global
+
+======================================================================
+FIN DEL DOCUMENTO
+======================================================================

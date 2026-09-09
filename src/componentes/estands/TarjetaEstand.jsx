@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Zap, 
   Play, 
+  Pause,
   Clock, 
   CheckCircle2, 
   Lock, 
@@ -26,7 +27,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const [mostrarQR, setMostrarQR] = useState(false);
 
   useEffect(() => {
-    if (!tieneVideo) return;
+    if (!tieneVideo || !mostrarVideoModal) return;
     let intervalo = null;
     if (reproduciendo && segundosRestantes > 0) {
       intervalo = setInterval(() => {
@@ -42,7 +43,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
       setRequisitoCumplido(true);
     }
     return () => clearInterval(intervalo);
-  }, [reproduciendo, segundosRestantes, tieneVideo]);
+  }, [reproduciendo, segundosRestantes, tieneVideo, mostrarVideoModal]);
 
   const porcentajeProgreso = Math.min(
     100,
@@ -239,7 +240,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
               </div>
 
               <button
-                onClick={() => setMostrarVideoModal(false)}
+                onClick={() => { setMostrarVideoModal(false); setReproduciendo(false); }}
                 className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
               >
                 Cerrar Video
@@ -265,16 +266,50 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
             )}
 
             {/* Estado del temporizador dentro del modal */}
-            <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#E67A15]" />
-                <span className="text-xs text-slate-400">
-                  Mínimo para desbloquear donación: <strong className="text-slate-800">{tiempoRequeridoSegundos}s</strong>
+            <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#E67A15]" />
+                  <span className="text-xs text-slate-400">
+                    Mínimo para desbloquear: <strong className="text-slate-800">{tiempoRequeridoSegundos}s</strong>
+                  </span>
+                </div>
+                <span className={`text-xs font-bold ${requisitoCumplido ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {requisitoCumplido ? '¡Desbloqueado!' : `${segundosRestantes}s restantes`}
                 </span>
               </div>
-              <span className={`text-xs font-bold ${requisitoCumplido ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {requisitoCumplido ? '¡Apoyo Desbloqueado!' : `${segundosRestantes}s restantes`}
-              </span>
+
+              {/* Barra de progreso */}
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${requisitoCumplido ? 'bg-emerald-400' : 'bg-[#E67A15]'}`}
+                  style={{ width: `${porcentajeProgreso}%` }}
+                />
+              </div>
+
+              {/* Botón pausa/play */}
+              {!requisitoCumplido && (
+                <button
+                  onClick={() => setReproduciendo(!reproduciendo)}
+                  className={`w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    reproduciendo
+                      ? 'bg-amber-500/15 text-amber-600 border border-amber-500/40'
+                      : 'bg-[#E67A15]/15 text-[#E67A15] border border-[#E67A15]/40'
+                  }`}
+                >
+                  {reproduciendo ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5" />
+                      Pausar conteo
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-[#E67A15]" />
+                      Reanudar conteo
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
           </div>
