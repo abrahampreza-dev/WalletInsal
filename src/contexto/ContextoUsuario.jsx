@@ -358,7 +358,7 @@ export function ProveedorUsuario({ children }) {
   };
 
   // Donación o voto a un estand: se valida y registra en Firebase vía GAS.
-  const realizarDonacion = async (idGrupo, monto) => {
+  const realizarDonacion = async (idGrupo, monto, contrasenaUsuario) => {
     if (!usuarioActual) {
       return { exito: false, mensaje: "Por favor, ingresa a tu cuenta para realizar un apoyo con SL-BITS." };
     }
@@ -368,6 +368,7 @@ export function ProveedorUsuario({ children }) {
       return { exito: false, mensaje: "Ingresa un monto válido mayor a 0." };
     }
     if (montoNum < 0.01) return { exito: false, mensaje: "El monto mínimo es 0.01 SL-BITS." };
+    if (!contrasenaUsuario) return { exito: false, mensaje: "Debes ingresar tu contraseña para confirmar la donación." };
 
     const idTransaccionUnico = "TX_DONAR_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
 
@@ -377,7 +378,8 @@ export function ProveedorUsuario({ children }) {
         idUsuario: usuarioActual.idUsuario,
         idGrupo,
         monto: montoNum,
-        idTransaccion: idTransaccionUnico
+        idTransaccion: idTransaccionUnico,
+        contrasena: contrasenaUsuario
       });
 
       if (!respuestaServidor || respuestaServidor.exito !== true) {
@@ -661,13 +663,16 @@ export function ProveedorUsuario({ children }) {
       return { exito: false, mensaje: "Ingresa un identificador de usuario y un monto válido." };
     }
 
+    const requestId = "RECARGA_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
+
     setCargando(true);
     try {
       const respuesta = await enviarPeticion("recargarSaldoAdmin", {
         criterioBusqueda: criterioBusqueda.trim(),
         montoRecarga: parseFloat(monto),
         motivo,
-        adminToken
+        adminToken,
+        requestId
       });
 
       if (!respuesta || respuesta.exito !== true) {

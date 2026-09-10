@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import { 
-  Zap, Heart, X, CheckCircle2, AlertCircle, Loader2, Wallet, Sparkles, ArrowRight
+  Zap, Heart, X, CheckCircle2, AlertCircle, Loader2, Wallet, Sparkles, ArrowRight, Lock
 } from 'lucide-react';
 
 const MONTOS_RAPIDOS = [0.01, 0.25, 0.50, 1.00];
@@ -15,6 +15,7 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
   const [procesando, setProcesando] = useState(false);
+  const [contrasena, setContrasena] = useState('');
 
   if (!estaAbierto || !estand) return null;
 
@@ -49,10 +50,15 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
       return;
     }
 
+    if (!contrasena || !contrasena.trim()) {
+      setMensajeError('Ingresa tu contraseña para confirmar la donación.');
+      return;
+    }
+
     setProcesando(true);
 
     try {
-      const resultado = await realizarDonacion(estand.idGrupo, montoFinal);
+      const resultado = await realizarDonacion(estand.idGrupo, montoFinal, contrasena.trim());
       if (resultado.exito) {
         setMensajeExito(resultado.mensaje || '¡Donación de SL - BITS registrada con éxito!');
       } else {
@@ -68,6 +74,7 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
   const irAWallet = () => {
     setMensajeExito('');
     setMontoPersonalizado('');
+    setContrasena('');
     alCerrar();
   };
 
@@ -221,6 +228,22 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
                     </span>
                   </div>
                 )}
+              </div>
+
+              {/* Contraseña de seguridad */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock className="w-3 h-3" /> Contraseña de seguridad
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
+                  placeholder="Ingresa tu contraseña para confirmar"
+                  disabled={procesando}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15] disabled:opacity-50"
+                />
               </div>
 
               {/* Botón Confirmar */}
