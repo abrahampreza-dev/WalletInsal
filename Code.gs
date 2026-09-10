@@ -1416,9 +1416,19 @@ function registrarGrupo(datos) {
   var esp = (datos.especialidad || "").trim();
   var integ = (datos.integrantes || "").trim();
   var clave = (datos.claveAcceso || "").trim();
+  var urlVideo = (datos.urlVideo || "").trim();
+  var duracion = parseInt(datos.duracionSegundos, 10) || 0;
 
   if (!nombre || !esp || !integ || !clave) {
     return crearRespuestaJson({ exito: false, mensaje: "Todos los datos del grupo son obligatorios." });
+  }
+
+  if (!urlVideo) {
+    return crearRespuestaJson({ exito: false, mensaje: "El video de presentación es obligatorio para inscribir el estand." });
+  }
+
+  if (duracion < 180) {
+    return crearRespuestaJson({ exito: false, mensaje: "El video debe tener al menos 180 segundos (3 minutos)." });
   }
 
   var idGrupo = "GRP_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);

@@ -108,6 +108,16 @@ export default function RegistroGrupo({ alCompletarRegistro }) {
       return;
     }
 
+    if (!urlVideo.trim()) {
+      setMensajeError('El video de presentación es obligatorio para inscribir el estand.');
+      return;
+    }
+
+    if (parseInt(duracionSegundos, 10) < 180) {
+      setMensajeError('El video debe tener al menos 3 minutos (180 segundos) para cumplir el requisito de visibilidad.');
+      return;
+    }
+
     const datos = {
       nombreGrupo: nombreGrupo.trim(),
       especialidad: especialidad,
@@ -115,8 +125,8 @@ export default function RegistroGrupo({ alCompletarRegistro }) {
       descripcion: descripcion.trim(),
       urlFoto: urlFoto.trim(),
       urlVideo: urlVideo.trim(),
-      duracionSegundos: parseInt(duracionSegundos || 30, 10)
-      , claveAcceso: claveAcceso
+      duracionSegundos: parseInt(duracionSegundos, 10),
+      claveAcceso: claveAcceso
     };
 
     const resultado = await registrarNuevoGrupo(datos);
@@ -327,10 +337,11 @@ export default function RegistroGrupo({ alCompletarRegistro }) {
             </div>
             <input
               type="number"
-              min="15"
-              max="300"
+              min="180"
+              max="600"
               value={duracionSegundos}
               onChange={(e) => setDuracionSegundos(e.target.value)}
+              placeholder="Mínimo 180 seg (3 min)"
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono text-xs focus:outline-none focus:border-[#E67A15]"
             />
           </div>
