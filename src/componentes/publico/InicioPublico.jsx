@@ -60,7 +60,7 @@ export default function InicioPublico({
           <div className="space-y-4 max-w-2xl text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D19E37]/15 border border-[#D19E37]/40 text-[#D19E37] text-xs font-black uppercase tracking-wider">
               <Sparkles className="w-4 h-4" />
-              EXPOTECNIA 2026 • Instituto  Nacional San Luis — ¡La innovación comienza aquí!
+              EXPOTECNIA 2026 • Instituto  Nacional San Luís — ¡La innovación comienza aquí!
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">

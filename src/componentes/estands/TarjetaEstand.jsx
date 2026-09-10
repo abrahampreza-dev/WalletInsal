@@ -13,6 +13,7 @@ import {
   Grid,
   Video,
   Maximize,
+  Minimize,
   X
 } from 'lucide-react';
 import CodigoQRGrupo from './CodigoQRGrupo';
@@ -26,11 +27,25 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
 
   const [segundosRestantes, setSegundosRestantes] = useState(tiempoRequeridoSegundos);
   const [reproduciendo, setReproduciendo] = useState(false);
+  const [yaInicio, setYaInicio] = useState(false);
   const [requisitoCumplido, setRequisitoCumplido] = useState(false);
   const [mostrarVideoModal, setMostrarVideoModal] = useState(false);
   const [mostrarQR, setMostrarQR] = useState(false);
   const [timerIniciado, setTimerIniciado] = useState(false);
   const contenedorVideoRef = useRef(null);
+  const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
+
+  useEffect(() => {
+    const manejarCambio = () => {
+      setEnPantallaCompleta(Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', manejarCambio);
+    document.addEventListener('webkitfullscreenchange', manejarCambio);
+    return () => {
+      document.removeEventListener('fullscreenchange', manejarCambio);
+      document.removeEventListener('webkitfullscreenchange', manejarCambio);
+    };
+  }, []);
 
   const activarPantallaCompleta = useCallback(() => {
     const el = contenedorVideoRef.current;
@@ -38,6 +53,12 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
     if (el.requestFullscreen) el.requestFullscreen();
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  }, []);
+
+  const salirPantallaCompleta = useCallback(() => {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.msExitFullscreen) document.msExitFullscreen();
   }, []);
 
   useEffect(() => {
@@ -281,11 +302,11 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-slate-800">{estand.nombreGrupo}</h4>
-                  <p className="text-[10px] text-slate-400">Demostración técnica • Google Drive</p>
+                  <p className="text-[10px] text-slate-400">Demostración técnica • Video Grupal</p>
                 </div>
               </div>
               <button
-                onClick={() => { setMostrarVideoModal(false); setReproduciendo(false); }}
+                onClick={() => { setMostrarVideoModal(false); setReproduciendo(false); setYaInicio(false); }}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -308,12 +329,13 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
                     allowFullScreen
                   />
 
-                  {/* Overlay de play cuando no está reproduciendo */}
-                  {!reproduciendo && !requisitoCumplido && (
+                  {/* Overlay de play — solo antes del primer play */}
+                  {yaInicio === false && !requisitoCumplido && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <button
                         onClick={() => {
                           setReproduciendo(true);
+                          setYaInicio(true);
                           if (usuarioActual && !timerIniciado) {
                             iniciarTimerVideo(estand.idGrupo).then((r) => {
                               if (r && r.exito) {
@@ -339,13 +361,13 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
                     </div>
                   )}
 
-                  {/* Botón pantalla completa */}
+                  {/* Botón pantalla completa / salir */}
                   <button
-                    onClick={activarPantallaCompleta}
+                    onClick={enPantallaCompleta ? salirPantallaCompleta : activarPantallaCompleta}
                     className="absolute top-3 right-3 p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-colors"
-                    title="Pantalla completa"
+                    title={enPantallaCompleta ? 'Salir de pantalla completa' : 'Pantalla completa'}
                   >
-                    <Maximize className="w-4 h-4" />
+                    {enPantallaCompleta ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                   </button>
                 </div>
 

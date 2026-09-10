@@ -96,7 +96,7 @@ export default function SidebarNavegacion({
           </div>
           <div>
             <span className="text-sm font-black text-white uppercase tracking-tight block leading-tight">
-              INSTITUTO <span className="text-[#D19E37]">SAN LUIS</span>
+              INSTITUTO NACIONAL <span className="text-[#D19E37]">SAN LUÍS</span>
             </span>
             <p className="text-[10px] text-white/75 font-medium leading-tight mt-0.5">
               Formando valores, construimos futuro.

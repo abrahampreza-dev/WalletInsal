@@ -62,7 +62,7 @@ const {
   const compartirCodigo = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'Mi Código SL - BITS - Instituto San Luis',
+        title: 'Mi Código SL - BITS - Instituto Nacional San Luís',
         text: `Transfiéreme SL - BITS usando mi código estudiantil: ${usuarioActual?.numeroDocumento || ""}`
       }).catch(() => {});
     } else {
@@ -471,7 +471,7 @@ Explorar Muro SPACE
         <div className="flex items-center gap-2 text-slate-400">
           <Shield className="w-4 h-4 text-[#E67A15]" />
           <span>
-            <strong className="text-slate-800">SL - BITS</strong> es la moneda oficial del Instituto San Luis.
+            <strong className="text-slate-800">SL - BITS</strong> es la moneda oficial del Instituto Nacional San Luís.
           </span>
         </div>
         <span className="text-[11px] text-slate-400">

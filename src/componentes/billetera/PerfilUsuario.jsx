@@ -145,7 +145,7 @@ const copiarDoc = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800">{usuarioActual.nombreCompleto}</h2>
-                <p className="text-xs text-[#0A4D9C] font-bold">{rolUsuario} • Instituto San Luis</p>
+                <p className="text-xs text-[#0A4D9C] font-bold">{rolUsuario} • Instituto Nacional San Luís</p>
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/45 text-emerald-600 text-xs font-bold self-center sm:self-auto">

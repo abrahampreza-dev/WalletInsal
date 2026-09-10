@@ -56,7 +56,7 @@ export default function BarraNavegacion({
                   2026
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Instituto San Luis • Expotecnia</p>
+              <p className="text-xs text-slate-400 font-medium">Instituto Nacional San Luís • Expotecnia</p>
             </div>
           </div>
 

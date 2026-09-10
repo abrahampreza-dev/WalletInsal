@@ -40,7 +40,7 @@ export default function ModalRecompensas({ estaAbierto, alCerrar }) {
       descripcion: "Reconoce los proyectos más creativos e innovadores que impulsan a los demás a seguir creciendo.",
       misiones: [
         { nombre: "Primer lugar en prototipado con IA y Robótica", premio: "+50.00 SL - BITS", completado: false },
-        { nombre: "Premio del público por video de Google Drive", premio: "+30.00 SL - BITS", completado: false },
+        { nombre: "Premio del público por video del equipo", premio: "+30.00 SL - BITS", completado: false },
         { nombre: "Mención de honor de docentes evaluadores", premio: "+25.00 SL - BITS", completado: false }
       ]
     }
@@ -58,7 +58,7 @@ export default function ModalRecompensas({ estaAbierto, alCerrar }) {
             </div>
             <div>
               <h3 className="text-base font-black text-slate-800">Programa Institucional de Incentivos y Recompensas</h3>
-              <p className="text-xs text-slate-400">Valores, logros y méritos del Instituto San Luis</p>
+              <p className="text-xs text-slate-400">Valores, logros y méritos del Instituto Nacional San Luís</p>
             </div>
           </div>
           <button

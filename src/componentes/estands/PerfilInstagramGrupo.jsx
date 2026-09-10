@@ -25,7 +25,8 @@ import {
   FileText,
   KeyRound,
   ShieldCheck,
-  Maximize
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import ModalSubirFoto from './ModalSubirFoto';
@@ -73,9 +74,24 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   const tiempoRequerido = Math.max(15, Math.ceil(duracionTotal * 0.5));
   const [segundosRestantes, setSegundosRestantes] = useState(tiempoRequerido);
   const [reproduciendo, setReproduciendo] = useState(false);
+  const [yaInicio, setYaInicio] = useState(false);
   const [requisitoCumplido, setRequisitoCumplido] = useState(false);
   const [timerIniciado, setTimerIniciado] = useState(false);
   const contenedorVideoRef = useRef(null);
+  const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
+
+  // Detectar cambio de fullscreen
+  useEffect(() => {
+    const manejarCambio = () => {
+      setEnPantallaCompleta(Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', manejarCambio);
+    document.addEventListener('webkitfullscreenchange', manejarCambio);
+    return () => {
+      document.removeEventListener('fullscreenchange', manejarCambio);
+      document.removeEventListener('webkitfullscreenchange', manejarCambio);
+    };
+  }, []);
 
   const activarPantallaCompleta = useCallback(() => {
     const el = contenedorVideoRef.current;
@@ -83,6 +99,12 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
     if (el.requestFullscreen) el.requestFullscreen();
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  }, []);
+
+  const salirPantallaCompleta = useCallback(() => {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.msExitFullscreen) document.msExitFullscreen();
   }, []);
 
   useEffect(() => {
@@ -553,11 +575,11 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                   allowFullScreen
                 />
 
-                {/* Overlay con controles superpuestos */}
-                {!reproduciendo && !requisitoCumplido && (
+                {/* Overlay con controles superpuestos — solo antes del primer play */}
+                {yaInicio === false && !requisitoCumplido && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                     <button
-                      onClick={() => setReproduciendo(true)}
+                      onClick={() => { setReproduciendo(true); setYaInicio(true); }}
                       className="w-20 h-20 rounded-full bg-[#E67A15] hover:bg-[#C8640C] text-white flex items-center justify-center shadow-2xl shadow-orange-500/40 transition-all hover:scale-105"
                     >
                       <Play className="w-10 h-10 fill-white ml-1" />
@@ -574,13 +596,13 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                   </div>
                 )}
 
-                {/* Botón pantalla completa */}
+                {/* Botón pantalla completa / salir */}
                 <button
-                  onClick={activarPantallaCompleta}
+                  onClick={enPantallaCompleta ? salirPantallaCompleta : activarPantallaCompleta}
                   className="absolute top-3 right-3 p-2.5 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-colors"
-                  title="Pantalla completa"
+                  title={enPantallaCompleta ? 'Salir de pantalla completa' : 'Pantalla completa'}
                 >
-                  <Maximize className="w-4 h-4" />
+                  {enPantallaCompleta ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                 </button>
               </div>
 
