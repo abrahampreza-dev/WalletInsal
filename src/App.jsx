@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ProveedorUsuario, usarUsuario } from './contexto/ContextoUsuario';
 import ErrorBoundary from './componentes/comun/ErrorBoundary';
 import SidebarNavegacion from './componentes/comun/SidebarNavegacion';
@@ -84,6 +84,33 @@ function ContenidoPrincipal() {
     return () => { document.body.style.overflow = ''; };
   }, [drawerMovilAbierto]);
 
+  // --- NAVEGACIÓN CON HISTORY API ---
+  const ignorePopState = useRef(false);
+
+  // Al montar: pushear estado inicial para que "atrás" no salga del sitio
+  useEffect(() => {
+    const estadoInicial = { seccion: seccionActiva, grupo: grupoInstagramSeleccionado };
+    window.history.replaceState(estadoInicial, '', window.location.pathname);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escuchar botón "atrás" del navegador
+  useEffect(() => {
+    const manejarPopState = (e) => {
+      if (ignorePopState.current) return;
+      const estado = e.state;
+      if (estado && estado.seccion) {
+        setSeccionActiva(estado.seccion);
+        setGrupoInstagramSeleccionado(estado.grupo || null);
+      } else {
+        // Sin estado → ir a inicio (no cerrar la app)
+        setSeccionActiva('inicio_publico');
+        setGrupoInstagramSeleccionado(null);
+      }
+    };
+    window.addEventListener('popstate', manejarPopState);
+    return () => window.removeEventListener('popstate', manejarPopState);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const abrirRegistro = (pestana = 'visitante') => {
     setPestanaRegistroInicial(pestana);
     setModalRegistroAbierto(true);
@@ -93,12 +120,14 @@ function ContenidoPrincipal() {
   const abrirPerfilInstagramGrupo = (idGrupo) => {
     setGrupoInstagramSeleccionado(idGrupo);
     setSeccionActiva('instagram_perfil');
+    window.history.pushState({ seccion: 'instagram_perfil', grupo: idGrupo }, '', window.location.pathname);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cambiarSeccion = (idSeccion) => {
     setSeccionActiva(idSeccion);
     setDrawerMovilAbierto(false);
+    window.history.pushState({ seccion: idSeccion, grupo: null }, '', window.location.pathname);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
