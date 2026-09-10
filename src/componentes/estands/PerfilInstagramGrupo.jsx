@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Heart, 
   MessageCircle, 
@@ -21,9 +21,11 @@ import {
   PlusCircle, 
   Award,
   Play,
+  Pause,
   FileText,
   KeyRound,
-  ShieldCheck
+  ShieldCheck,
+  Maximize
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import ModalSubirFoto from './ModalSubirFoto';
@@ -73,6 +75,15 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   const [reproduciendo, setReproduciendo] = useState(false);
   const [requisitoCumplido, setRequisitoCumplido] = useState(false);
   const [timerIniciado, setTimerIniciado] = useState(false);
+  const contenedorVideoRef = useRef(null);
+
+  const activarPantallaCompleta = useCallback(() => {
+    const el = contenedorVideoRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  }, []);
 
   useEffect(() => {
     if (!tieneVideo || pestanaActiva !== 'videoDrive') return;
@@ -111,7 +122,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
     return () => clearInterval(intervaloSync);
   }, [tieneVideo, pestanaActiva, reproduciendo, timerIniciado, usuarioActual, idGrupo, verificarRetencionVideo]);
 
-  // Iniciar timer en servidor cuando se abre la pestaña de video
+  // Iniciar timer en servidor cuando se abre la pestaña de video (sin auto-reproducir)
   useEffect(() => {
     if (pestanaActiva === 'videoDrive' && tieneVideo && usuarioActual && !timerIniciado && !requisitoCumplido) {
       const iniciar = async () => {
@@ -119,7 +130,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
           const resultado = await iniciarTimerVideo(idGrupo);
           if (resultado && resultado.exito) {
             setTimerIniciado(true);
-            setReproduciendo(true);
             if (resultado.tiempoRequeridoSegundos) {
               setSegundosRestantes(resultado.tiempoRequeridoSegundos);
             }
@@ -531,76 +541,120 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
 
 {/* Reproductor de Video Iframe de Google Drive */}
           {grupo.urlVideo ? (
-            <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-2xl" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                src={grupo.urlVideo}
-                title={`Video de ${grupo.nombreGrupo}`}
-                className="absolute inset-0 w-full h-full"
-                allow="autoplay"
-                allowFullScreen
-              />
+            <div className="space-y-3">
+              {/* Contenedor del video */}
+              <div
+                ref={contenedorVideoRef}
+                className="relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl ring-1 ring-slate-200"
+                style={{ paddingBottom: '56.25%' }}
+              >
+                <iframe
+                  src={grupo.urlVideo}
+                  title={`Video de ${grupo.nombreGrupo}`}
+                  className="absolute inset-0 w-full h-full"
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                />
+
+                {/* Overlay con controles superpuestos */}
+                {!reproduciendo && !requisitoCumplido && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <button
+                      onClick={() => setReproduciendo(true)}
+                      className="w-20 h-20 rounded-full bg-[#E67A15] hover:bg-[#C8640C] text-white flex items-center justify-center shadow-2xl shadow-orange-500/40 transition-all hover:scale-105"
+                    >
+                      <Play className="w-10 h-10 fill-white ml-1" />
+                    </button>
+                  </div>
+                )}
+
+                {requisitoCumplido && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <div className="px-6 py-3 rounded-2xl bg-emerald-500/90 text-white font-bold text-sm flex items-center gap-2 shadow-2xl">
+                      <CheckCircle2 className="w-5 h-5" />
+                      ¡Visualización completada!
+                    </div>
+                  </div>
+                )}
+
+                {/* Botón pantalla completa */}
+                <button
+                  onClick={activarPantallaCompleta}
+                  className="absolute top-3 right-3 p-2.5 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-colors"
+                  title="Pantalla completa"
+                >
+                  <Maximize className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Barra de progreso + controles debajo del video */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setReproduciendo(!reproduciendo)}
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white shadow-lg transition-all ${
+                        reproduciendo
+                          ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30'
+                          : 'bg-[#E67A15] hover:bg-orange-600 shadow-orange-500/30'
+                      }`}
+                    >
+                      {reproduciendo ? (
+                        <Pause className="w-5 h-5 fill-white" />
+                      ) : (
+                        <Play className="w-5 h-5 fill-white ml-0.5" />
+                      )}
+                    </button>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        {requisitoCumplido
+                          ? '¡Desbloqueado! Ya puedes apoyar'
+                          : reproduciendo
+                            ? 'Temporizador activo — mantente en el video'
+                            : 'Presiona play para iniciar el conteo'}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Mínimo: {tiempoRequerido}s de {duracionTotal}s de video
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {requisitoCumplido ? (
+                      <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Listo
+                      </span>
+                    ) : (
+                      <span className="text-amber-600 font-mono font-bold text-sm">
+                        {segundosRestantes}s
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Barra de progreso */}
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-1000 ease-linear ${
+                      requisitoCumplido
+                        ? 'bg-gradient-to-r from-emerald-400 to-teal-400'
+                        : 'bg-gradient-to-r from-[#E67A15] to-amber-500'
+                    }`}
+                    style={{ width: `${porcentajeProgreso}%` }}
+                  />
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 p-6">
-              <Video className="w-10 h-10 text-[#0A4D9C] mx-auto mb-2 opacity-60" />
-              <p className="text-xs text-slate-400 font-bold">Este estand aún no publica su video de Google Drive</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">El equipo puede configurarlo desde el botón "Actualizar Video de Drive".</p>
+            <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200 border-dashed p-6">
+              <Video className="w-12 h-12 text-[#0A4D9C]/40 mx-auto mb-3" />
+              <p className="text-sm text-slate-500 font-bold">Este estand aún no publica su video</p>
+              <p className="text-xs text-slate-400 mt-1">El equipo puede configurarlo desde "Actualizar Video de Drive".</p>
             </div>
           )}
 
-          {/* Control y Barra de Retención para Validación de Apoyo */}
+          {/* Botón de donación */}
           {tieneVideo ? (
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setReproduciendo(!reproduciendo)}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white shadow-lg transition-all ${
-                    reproduciendo
-                      ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30'
-                      : 'bg-[#E67A15] hover:bg-orange-600 shadow-orange-500/30'
-                  }`}
-                >
-                  <Play className={`w-6 h-6 fill-white ${reproduciendo ? 'animate-pulse' : 'ml-0.5'}`} />
-                </button>
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    {reproduciendo ? 'Temporizador de visualización activo' : 'Presiona para iniciar conteo de validación'}
-                  </span>
-                  <span className="text-[11px] text-slate-400">
-                    Mínimo requerido: {tiempoRequerido}s (50% de la duración del video)
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-right">
-                {requisitoCumplido ? (
-                  <span className="text-emerald-600 font-bold text-xs flex items-center gap-1.5 justify-end">
-                    <CheckCircle2 className="w-4 h-4" />
-                    ¡Visualización Cumplida! Voto Desbloqueado
-                  </span>
-                ) : (
-                  <span className="text-amber-600 font-mono font-bold text-xs">
-                    {segundosRestantes} segundos restantes
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Barra de Progreso */}
-            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-500 ${
-                  requisitoCumplido
-                    ? 'bg-gradient-to-r from-emerald-400 to-teal-400'
-                    : 'bg-gradient-to-r from-[#E67A15] to-amber-500'
-                }`}
-                style={{ width: `${porcentajeProgreso}%` }}
-              />
-            </div>
-
-            {/* Botón Apoyar Estand desbloqueado */}
             <button
               onClick={() => setMostrarDonarModal(true)}
               disabled={!requisitoCumplido}
@@ -622,17 +676,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                 </>
               )}
             </button>
-
-          </div>
           ) : (
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-            <div className="flex items-center gap-3 text-slate-400">
-              <Video className="w-5 h-5" />
-              <div>
-                <span className="text-xs font-bold text-slate-800 block">Este estand aún no publica su video</span>
-                <span className="text-[11px] text-slate-400">La donación se habilitará cuando el equipo publique su demostración técnica.</span>
-              </div>
-            </div>
             <button
               disabled
               className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200/50 cursor-not-allowed"
@@ -640,7 +684,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
               <Lock className="w-4 h-4" />
               Donación no disponible
             </button>
-          </div>
           )}
 
         </div>

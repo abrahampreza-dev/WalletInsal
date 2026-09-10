@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Zap, 
   Play, 
@@ -11,7 +11,9 @@ import {
   Heart,
   QrCode,
   Grid,
-  Video
+  Video,
+  Maximize,
+  X
 } from 'lucide-react';
 import CodigoQRGrupo from './CodigoQRGrupo';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
@@ -28,6 +30,15 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const [mostrarVideoModal, setMostrarVideoModal] = useState(false);
   const [mostrarQR, setMostrarQR] = useState(false);
   const [timerIniciado, setTimerIniciado] = useState(false);
+  const contenedorVideoRef = useRef(null);
+
+  const activarPantallaCompleta = useCallback(() => {
+    const el = contenedorVideoRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  }, []);
 
   useEffect(() => {
     if (!tieneVideo || !mostrarVideoModal) return;
@@ -262,88 +273,146 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
 
       {/* Modal Reproductor de Video de Google Drive */}
       {mostrarVideoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-3xl bg-[#FFFFFF] border border-slate-200 rounded-3xl overflow-hidden shadow-2xl space-y-3 sm:space-y-4 p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md">
+          <div className="relative w-full max-w-3xl bg-[#FFFFFF] border border-slate-200 rounded-3xl overflow-hidden shadow-2xl">
             
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm sm:text-base font-black text-slate-800">{estand.nombreGrupo}</h4>
-                <p className="text-[10px] sm:text-xs text-slate-400">Demostración técnica en Google Drive</p>
+            {/* Header del modal */}
+            <div className="px-4 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#0A4D9C]/10 border border-[#0A4D9C]/30 flex items-center justify-center">
+                  <Video className="w-4 h-4 text-[#0A4D9C]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-800">{estand.nombreGrupo}</h4>
+                  <p className="text-[10px] text-slate-400">Demostración técnica • Google Drive</p>
+                </div>
               </div>
-
               <button
                 onClick={() => { setMostrarVideoModal(false); setReproduciendo(false); }}
-                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
               >
-                Cerrar Video
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-{/* Video Iframe Google Drive */}
+            {/* Video Iframe Google Drive */}
             {estand.urlVideo ? (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-slate-200" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  src={estand.urlVideo}
-                  title={`Video de ${estand.nombreGrupo}`}
-                  className="absolute inset-0 w-full h-full"
-                  allow="autoplay"
-                  allowFullScreen
-                />
+              <div className="space-y-0">
+                <div
+                  ref={contenedorVideoRef}
+                  className="relative w-full bg-black"
+                  style={{ paddingBottom: '56.25%' }}
+                >
+                  <iframe
+                    src={estand.urlVideo}
+                    title={`Video de ${estand.nombreGrupo}`}
+                    className="absolute inset-0 w-full h-full"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+
+                  {/* Overlay de play cuando no está reproduciendo */}
+                  {!reproduciendo && !requisitoCumplido && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <button
+                        onClick={() => {
+                          setReproduciendo(true);
+                          if (usuarioActual && !timerIniciado) {
+                            iniciarTimerVideo(estand.idGrupo).then((r) => {
+                              if (r && r.exito) {
+                                setTimerIniciado(true);
+                                if (r.tiempoRequeridoSegundos) setSegundosRestantes(r.tiempoRequeridoSegundos);
+                              }
+                            });
+                          }
+                        }}
+                        className="w-16 h-16 rounded-full bg-[#E67A15] hover:bg-[#C8640C] text-white flex items-center justify-center shadow-2xl shadow-orange-500/40 transition-all hover:scale-105"
+                      >
+                        <Play className="w-8 h-8 fill-white ml-0.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {requisitoCumplido && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <div className="px-5 py-2.5 rounded-2xl bg-emerald-500/90 text-white font-bold text-sm flex items-center gap-2 shadow-2xl">
+                        <CheckCircle2 className="w-5 h-5" />
+                        ¡Desbloqueado!
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botón pantalla completa */}
+                  <button
+                    onClick={activarPantallaCompleta}
+                    className="absolute top-3 right-3 p-2 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-colors"
+                    title="Pantalla completa"
+                  >
+                    <Maximize className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Controles debajo del video */}
+                <div className="p-4 bg-white space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          setReproduciendo(!reproduciendo);
+                          if (!reproduciendo && usuarioActual && !timerIniciado) {
+                            iniciarTimerVideo(estand.idGrupo).then((r) => {
+                              if (r && r.exito) {
+                                setTimerIniciado(true);
+                                if (r.tiempoRequeridoSegundos) setSegundosRestantes(r.tiempoRequeridoSegundos);
+                              }
+                            });
+                          }
+                        }}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md transition-all ${
+                          reproduciendo
+                            ? 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-[#E67A15] hover:bg-orange-600'
+                        }`}
+                      >
+                        {reproduciendo ? (
+                          <Pause className="w-4 h-4 fill-white" />
+                        ) : (
+                          <Play className="w-4 h-4 fill-white ml-0.5" />
+                        )}
+                      </button>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">
+                          {requisitoCumplido
+                            ? '¡Listo! Puedes apoyar este proyecto'
+                            : reproduciendo
+                              ? 'Conteo activo — no cierres el video'
+                              : 'Presiona play para iniciar validación'}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          Mínimo {tiempoRequeridoSegundos}s de {duracionTotal}s
+                        </span>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold font-mono ${requisitoCumplido ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {requisitoCumplido ? '✓' : `${segundosRestantes}s`}
+                    </span>
+                  </div>
+
+                  {/* Barra de progreso */}
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-1000 ease-linear ${requisitoCumplido ? 'bg-emerald-400' : 'bg-[#E67A15]'}`}
+                      style={{ width: `${porcentajeProgreso}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="aspect-video w-full rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center gap-2 text-center">
-                <Video className="w-8 h-8 text-[#0A4D9C]/60" />
+              <div className="aspect-video w-full bg-slate-50 flex flex-col items-center justify-center gap-2 text-center p-6">
+                <Video className="w-8 h-8 text-[#0A4D9C]/50" />
                 <p className="text-xs text-slate-400 font-semibold">Este estand aún no publica su video.</p>
               </div>
             )}
-
-            {/* Estado del temporizador dentro del modal */}
-            <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#E67A15]" />
-                  <span className="text-xs text-slate-400">
-                    Mínimo para desbloquear: <strong className="text-slate-800">{tiempoRequeridoSegundos}s</strong>
-                  </span>
-                </div>
-                <span className={`text-xs font-bold ${requisitoCumplido ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {requisitoCumplido ? '¡Desbloqueado!' : `${segundosRestantes}s restantes`}
-                </span>
-              </div>
-
-              {/* Barra de progreso */}
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-500 ${requisitoCumplido ? 'bg-emerald-400' : 'bg-[#E67A15]'}`}
-                  style={{ width: `${porcentajeProgreso}%` }}
-                />
-              </div>
-
-              {/* Botón pausa/play */}
-              {!requisitoCumplido && (
-                <button
-                  onClick={() => setReproduciendo(!reproduciendo)}
-                  className={`w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                    reproduciendo
-                      ? 'bg-amber-500/15 text-amber-600 border border-amber-500/40'
-                      : 'bg-[#E67A15]/15 text-[#E67A15] border border-[#E67A15]/40'
-                  }`}
-                >
-                  {reproduciendo ? (
-                    <>
-                      <Pause className="w-3.5 h-3.5" />
-                      Pausar conteo
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-3.5 h-3.5 fill-[#E67A15]" />
-                      Reanudar conteo
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
           </div>
         </div>
       )}

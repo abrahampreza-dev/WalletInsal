@@ -135,22 +135,46 @@ export function ProveedorUsuario({ children }) {
 
   // Cargar los datos oficiales desde Firebase vía Apps Script al abrir la app.
   useEffect(() => {
-    sincronizarConServidor();
+    sincronizarConServidor(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Resync periódico cada 30 segundos para mantener saldo y datos actualizados
+  // Poll ligero de saldo cada 5 segundos: solo lee 1 usuario en Firebase (casi instantáneo)
+  useEffect(() => {
+    if (!usuarioActual) return;
+    const intervalo = setInterval(async () => {
+      try {
+        const respuesta = await enviarPeticion("obtenerSaldoUsuario", {
+          idUsuario: usuarioActual.idUsuario
+        });
+        if (respuesta && respuesta.exito && respuesta.saldoActual !== undefined) {
+          setUsuarioActual((prev) => {
+            if (!prev) return prev;
+            if (prev.saldoActual !== respuesta.saldoActual) {
+              return { ...prev, saldoActual: respuesta.saldoActual };
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        // Silencioso: el sync completo lo cubrirá
+      }
+    }, 5000);
+    return () => clearInterval(intervalo);
+  }, [usuarioActual?.idUsuario]);
+
+  // Sync completa cada 60 segundos: grupos, transacciones, usuarios, bitácoras
   useEffect(() => {
     if (!usuarioActual) return;
     const intervalo = setInterval(() => {
       sincronizarConServidor();
-    }, 30000);
+    }, 60000);
     return () => clearInterval(intervalo);
   }, [usuarioActual]);
 
   // Sincronizar datos globales (grupos, transacciones, usuarios y bitácoras) con el backend.
-  const sincronizarConServidor = async () => {
-    setCargando(true);
+  const sincronizarConServidor = async (mostrarCargando = false) => {
+    if (mostrarCargando) setCargando(true);
     try {
       const respuesta = await enviarPeticion("obtenerTodo");
 
@@ -175,10 +199,9 @@ export function ProveedorUsuario({ children }) {
         }
       }
     } catch (error) {
-      setCargando(false);
-      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+      // Silencioso en syncs de fondo
     } finally {
-      setCargando(false);
+      if (mostrarCargando) setCargando(false);
     }
   };
 
