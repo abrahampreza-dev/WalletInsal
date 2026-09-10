@@ -139,6 +139,15 @@ export function ProveedorUsuario({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Resync periódico cada 30 segundos para mantener saldo y datos actualizados
+  useEffect(() => {
+    if (!usuarioActual) return;
+    const intervalo = setInterval(() => {
+      sincronizarConServidor();
+    }, 30000);
+    return () => clearInterval(intervalo);
+  }, [usuarioActual]);
+
   // Sincronizar datos globales (grupos, transacciones, usuarios y bitácoras) con el backend.
   const sincronizarConServidor = async () => {
     setCargando(true);
@@ -442,6 +451,12 @@ export function ProveedorUsuario({ children }) {
 
       if (respuesta.nuevoSaldoEmisor !== undefined) {
         setUsuarioActual((prev) => ({ ...prev, saldoActual: respuesta.nuevoSaldoEmisor }));
+      }
+      if (respuesta.nuevoSaldoReceptor !== undefined && respuesta.transaccion) {
+        const idReceptor = respuesta.transaccion.idReceptor;
+        setListaUsuarios((prev) =>
+          prev.map((u) => (u.idUsuario === idReceptor ? { ...u, saldoActual: respuesta.nuevoSaldoReceptor } : u))
+        );
       }
       if (respuesta.transaccion) {
         setListaTransacciones((prev) => [
