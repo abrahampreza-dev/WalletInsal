@@ -5,7 +5,7 @@ import VentanaDonar from './VentanaDonar';
 import { Search, Sparkles, Filter, Building2, Zap, Grid, Video } from 'lucide-react';
 
 export default function ListaEstands({ alAbrirRegistro, alAbrirPerfilInstagram }) {
-  const { listaGrupos } = usarUsuario();
+  const { listaGrupos, cargando } = usarUsuario();
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState('Todos los proyectos');
   const [estandParaDonar, setEstandParaDonar] = useState(null);
@@ -97,12 +97,34 @@ export default function ListaEstands({ alAbrirRegistro, alAbrirPerfilInstagram }
       </div>
 
       {/* Cuadrícula de Proyectos Técnicos */}
-      {gruposFiltrados.length === 0 ? (
+      {cargando && listaGrupos.length === 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1,2,3].map((n) => (
+            <div key={n} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden animate-pulse">
+              <div className="h-40 bg-slate-200" />
+              <div className="p-5 space-y-3">
+                <div className="h-4 bg-slate-200 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 rounded w-1/2" />
+                <div className="h-3 bg-slate-200 rounded w-full" />
+                <div className="h-3 bg-slate-200 rounded w-2/3" />
+                <div className="flex gap-2 pt-2">
+                  <div className="h-8 bg-slate-200 rounded-xl w-20" />
+                  <div className="h-8 bg-slate-200 rounded-xl w-20" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : gruposFiltrados.length === 0 ? (
 <div className="text-center py-16 bg-slate-50 rounded-3xl border border-slate-200 p-8 space-y-2">
           <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-          <h3 className="text-base font-bold text-slate-800">¡Ups! No encontramos ese estand</h3>
+          <h3 className="text-base font-bold text-slate-800">
+            {listaGrupos.length === 0 ? 'Aún no hay estands registrados' : '¡Ups! No encontramos ese estand'}
+          </h3>
           <p className="text-xs text-slate-400">
-            Intenta con otro término de búsqueda o selecciona otra especialidad.
+            {listaGrupos.length === 0
+              ? 'Los estands aparecerán aquí cuando se registren en Expotecnia 2026.'
+              : 'Intenta con otro término de búsqueda o selecciona otra especialidad.'}
           </p>
         </div>
       ) : (
