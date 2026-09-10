@@ -86,23 +86,22 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   }, []);
 
   useEffect(() => {
-    if (!tieneVideo || pestanaActiva !== 'videoDrive') return;
-    let intervalo = null;
-    if (reproduciendo && segundosRestantes > 0) {
-      intervalo = setInterval(() => {
-        setSegundosRestantes((prev) => {
-          if (prev <= 1) {
-            setRequisitoCumplido(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (segundosRestantes === 0) {
+    if (!tieneVideo || pestanaActiva !== 'videoDrive' || !reproduciendo) return;
+    if (segundosRestantes <= 0) {
       setRequisitoCumplido(true);
+      return;
     }
+    const intervalo = setInterval(() => {
+      setSegundosRestantes((prev) => {
+        if (prev <= 1) {
+          setRequisitoCumplido(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
     return () => clearInterval(intervalo);
-  }, [reproduciendo, segundosRestantes, tieneVideo, pestanaActiva]);
+  }, [reproduciendo, tieneVideo, pestanaActiva]);
 
   // Sincronizar con servidor cada 10 segundos mientras se reproduce
   useEffect(() => {
@@ -113,8 +112,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
         if (resultado && resultado.retencionCumplida) {
           setRequisitoCumplido(true);
           setSegundosRestantes(0);
-        } else if (resultado && resultado.segundosRestantes !== undefined) {
-          setSegundosRestantes(resultado.segundosRestantes);
         }
       } catch {}
     };
@@ -569,10 +566,10 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                 )}
 
                 {requisitoCumplido && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <div className="px-6 py-3 rounded-2xl bg-emerald-500/90 text-white font-bold text-sm flex items-center gap-2 shadow-2xl">
-                      <CheckCircle2 className="w-5 h-5" />
-                      ¡Visualización completada!
+                  <div className="absolute top-3 left-3 z-10">
+                    <div className="px-3 py-1.5 rounded-xl bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      ¡Desbloqueado!
                     </div>
                   </div>
                 )}
