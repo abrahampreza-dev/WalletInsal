@@ -470,6 +470,7 @@ export function ProveedorUsuario({ children }) {
         );
       }
 
+      await sincronizarConServidor();
       return { exito: true, mensaje: respuesta.mensaje };
     } catch (error) {
       setCargando(false);

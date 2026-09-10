@@ -3,9 +3,10 @@ import { X, Heart, MessageCircle, Zap, Share2 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 
 export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, alAbrirDonacion }) {
-  const { toggleLikeFoto, agregarComentarioFoto } = usarUsuario();
+  const { toggleLikeFoto, agregarComentarioFoto, cargando } = usarUsuario();
   const [comentarioTexto, setComentarioTexto] = useState('');
   const [animacionCorazon, setAnimacionCorazon] = useState(false);
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
 
   if (!estaAbierto || !foto || !grupo) return null;
 
@@ -17,11 +18,18 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
     }
   };
 
-  const enviarComentario = (e) => {
+  const enviarComentario = async (e) => {
     e.preventDefault();
-    if (!comentarioTexto.trim()) return;
-    agregarComentarioFoto(grupo.idGrupo, foto.id, comentarioTexto);
-    setComentarioTexto('');
+    if (!comentarioTexto.trim() || enviandoComentario) return;
+    setEnviandoComentario(true);
+    try {
+      await agregarComentarioFoto(grupo.idGrupo, foto.id, comentarioTexto);
+      setComentarioTexto('');
+    } catch (err) {
+      // error already handled in context
+    } finally {
+      setEnviandoComentario(false);
+    }
   };
 
   return (
@@ -86,7 +94,7 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
           </div>
 
           {/* Lista de Comentarios y Pie de Foto */}
-          <div className="p-4 flex-1 overflow-y-auto space-y-4 max-h-[300px] md:max-h-[380px] divide-y divide-slate-200/40">
+          <div className="p-4 flex-1 overflow-y-auto space-y-5 max-h-[350px] md:max-h-[420px]">
             
             {/* Pie de foto principal */}
             <div className="flex items-start gap-3 pb-3">
@@ -111,16 +119,16 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
               </div>
             ) : (
               (foto.comentarios || []).map((com) => (
-                <div key={com.id} className="pt-3 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-[#E67A15] font-bold flex-shrink-0">
+                <div key={com.id} className="pt-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E67A15] to-[#D19E37] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
                     {com.autor?.charAt(0) || "U"}
                   </div>
-                  <div className="text-xs flex-1">
-                    <p className="text-slate-800">
+                  <div className="text-xs flex-1 min-w-0">
+                    <p className="text-slate-800 leading-relaxed">
                       <strong className="text-slate-800 mr-1.5">{com.autor}</strong>
                       {com.texto}
                     </p>
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">{com.hora}</span>
+                    <span className="text-[10px] text-slate-400 mt-1 block">{com.hora}</span>
                   </div>
                 </div>
               ))
@@ -173,20 +181,21 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
             </div>
 
             {/* Input para agregar comentario */}
-            <form onSubmit={enviarComentario} className="pt-2 flex items-center gap-2 border-t border-slate-200">
+            <form onSubmit={enviarComentario} className="pt-3 flex items-center gap-2 border-t border-slate-200">
               <input
                 type="text"
                 value={comentarioTexto}
                 onChange={(e) => setComentarioTexto(e.target.value)}
                 placeholder="Añade un comentario..."
-                className="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
+                disabled={enviandoComentario}
+                className="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none disabled:opacity-50"
               />
               <button
                 type="submit"
-                disabled={!comentarioTexto.trim()}
-                className="text-xs font-bold text-[#E67A15] hover:text-[#E67A15] disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={!comentarioTexto.trim() || enviandoComentario}
+                className="text-xs font-bold text-[#E67A15] hover:text-[#C8640C] disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Comentar
+                {enviandoComentario ? '...' : 'Comentar'}
               </button>
             </form>
 

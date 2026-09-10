@@ -16,12 +16,12 @@ import VentanaRegistro from './componentes/registro/VentanaRegistro';
 import ModalEnviarBits from './componentes/billetera/ModalEnviarBits';
 import ModalRecibirBits from './componentes/billetera/ModalRecibirBits';
 import ModalRecompensas from './componentes/billetera/ModalRecompensas';
-import { Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Menu, X, PanelLeftClose, PanelLeftOpen, AlertCircle } from 'lucide-react';
 
 const APP_VERSION = '1.5.0';
 
 function ContenidoPrincipal() {
-  const { usuarioActual, grupoActual, adminAutenticado } = usarUsuario();
+  const { usuarioActual, grupoActual, adminAutenticado, mensajeAlerta, setMensajeAlerta } = usarUsuario();
 
   // Si hay usuario autenticado entra directo a su wallet; si no, al área pública
   const [seccionActiva, setSeccionActiva] = useState(() => {
@@ -104,6 +104,19 @@ function ContenidoPrincipal() {
 
   return (
     <div className="min-h-screen flex bg-[#F7F8FA] text-[#1E293B] selection:bg-[#E67A15] selection:text-white font-sans">
+      
+      {/* Banner de alerta (sesión expirada, etc.) */}
+      {mensajeAlerta && (
+        <div className="fixed top-0 left-0 right-0 z-[100] p-3 bg-amber-500 text-white text-xs font-bold flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{mensajeAlerta}</span>
+          </div>
+          <button onClick={() => setMensajeAlerta(null)} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
       
       {/* 1. Sidebar Fijo de Escritorio (ocupa toda la altura) */}
       {!sidebarCerrada && (

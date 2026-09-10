@@ -32,7 +32,7 @@ function doGet(e) {
   return crearRespuestaJson({
     exito: true,
     estado: "operativo",
-    version: "3.0.0",
+    version: "3.1.0",
     fechaServidor: new Date().toISOString()
   });
 }
@@ -61,6 +61,10 @@ function doPost(e) {
         return procesarDonacionSegura(datos);
       case "recargarSaldoAdmin":
         return recargarSaldoAdminSeguro(datos);
+      case "obtenerSaldoUsuario":
+        return obtenerSaldoUsuarioSeguro(datos);
+      case "auditarFinanzas":
+        return auditarFinanzasSeguro(datos);
 
       case "registrarVisitante":
         return registrarVisitante(datos);
@@ -124,152 +128,1059 @@ function doPost(e) {
 
 
 function transferirBitsSeguro(datos) {
+  return ejecutarOperacionFinanciera("transferencia", datos || {});
+}
+
+
+/**
+ * Motor único para transferencias y donaciones.
+ *
+ * IMPORTANTE:
+ * - Todos los cálculos se hacen en centavos.
+ * - Se usa un único requestId para idempotencia.
+ * - Se actualizan saldo emisor + receptor/grupo + transacción + ledger
+ *   en un solo PATCH de Firebase.
+ * - Se verifica el resultado después del PATCH.
+ * - Se guarda un hash/firma lógica de la operación para detectar
+ *   reutilización accidental de un requestId con otros datos.
+ */
+function ejecutarOperacionFinanciera(tipoOperacion, datos) {
   var lock = LockService.getScriptLock();
   var locked = false;
+
   try {
     locked = lock.tryLock(CONFIG.LOCK_TIMEOUT_MS);
-    if (!locked) return crearRespuestaJson({exito:false,codigo:"SERVIDOR_OCUPADO",mensaje:"El sistema está procesando otra operación. Intenta nuevamente."});
-
-    datos = datos || {};
-    var idEmisor = textoSeguro(datos.idEmisor);
-    var destinatario = textoSeguro(datos.destinatario);
-    var contrasena = textoSeguro(datos.contrasena);
-    var concepto = limitarTexto(textoSeguro(datos.concepto) || "Transferencia entre estudiantes", CONFIG.MAX_CONCEPTO_LENGTH);
-    var requestId = normalizarRequestId(datos.idTransaccion);
-    var montoC = parsearMontoCentavos(datos.monto);
-
-    if (!idEmisor || !destinatario) return crearRespuestaJson({exito:false,codigo:"DATOS_INCOMPLETOS",mensaje:"Emisor y destinatario son requeridos."});
-    if (!montoValidoTransferencia(montoC)) return crearRespuestaJson({exito:false,codigo:"MONTO_INVALIDO",mensaje:"El monto debe estar entre " + CONFIG.MONTO_MINIMO_TRANSFERENCIA.toFixed(2) + " y " + CONFIG.MONTO_MAXIMO_TRANSFERENCIA.toFixed(2) + " SL-BITS."});
-
-    if (requestId) {
-      var previo = obtenerIdempotencia(requestId);
-      if (previo) return crearRespuestaJson(previo.resultado);
+    if (!locked) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "SERVIDOR_OCUPADO",
+        mensaje: "El sistema está procesando otra operación. Intenta nuevamente."
+      });
     }
 
+    datos = datos || {};
+
+    var idEmisor = textoSeguro(datos.idEmisor || datos.idUsuario);
+    var destinatario = textoSeguro(datos.destinatario || datos.idGrupo);
+    var contrasena = textoSeguro(datos.contrasena);
+    var concepto = limitarTexto(
+      textoSeguro(datos.concepto) ||
+      (tipoOperacion === "donacion" ? "Donación" : "Transferencia entre estudiantes"),
+      CONFIG.MAX_CONCEPTO_LENGTH
+    );
+
+    // A partir de esta versión todos los flujos usan requestId.
+    var requestId = normalizarRequestId(
+      datos.requestId || datos.idTransaccion
+    );
+
+    if (!requestId) {
+      // El requestId es obligatorio para operaciones financieras.
+      // Esto evita duplicados causados por reintentos de red.
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "REQUEST_ID_REQUERIDO",
+        mensaje: "La operación financiera requiere un requestId único."
+      });
+    }
+
+    var montoC = parsearMontoCentavos(datos.monto);
+
+    if (!idEmisor || !destinatario) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "DATOS_INCOMPLETOS",
+        mensaje: "Faltan datos del emisor o destinatario."
+      });
+    }
+
+    if (!montoValidoTransferencia(montoC)) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "MONTO_INVALIDO",
+        mensaje:
+          "El monto debe estar entre " +
+          CONFIG.MONTO_MINIMO_TRANSFERENCIA.toFixed(2) +
+          " y " +
+          CONFIG.MONTO_MAXIMO_TRANSFERENCIA.toFixed(2) +
+          " SL-BITS."
+      });
+    }
+
+    // --------------------------------------------------------------
+    // 1. IDEMPOTENCIA: si ya se procesó, devolvemos exactamente
+    //    el mismo resultado. Si el requestId se intenta reutilizar
+    //    con otros datos, se rechaza.
+    // --------------------------------------------------------------
+    var previo = obtenerIdempotencia(requestId);
+
+    var firmaSolicitud = generarFirmaOperacion(
+      tipoOperacion,
+      idEmisor,
+      destinatario,
+      montoC,
+      concepto
+    );
+
+    if (previo) {
+      if (previo.firma && previo.firma !== firmaSolicitud) {
+        return crearRespuestaJson({
+          exito: false,
+          codigo: "REQUEST_ID_REUTILIZADO",
+          mensaje:
+            "El requestId ya fue utilizado para una operación diferente."
+        });
+      }
+
+      return crearRespuestaJson(previo.resultado);
+    }
+
+    // --------------------------------------------------------------
+    // 2. CARGA DE DATOS
+    // --------------------------------------------------------------
     var usuarios = leerDeFirebaseObligatorio("usuarios") || {};
     var grupos = leerDeFirebaseObligatorio("grupos") || {};
+
     var emisorEncontrado = buscarUsuarioFlexible(usuarios, idEmisor);
-    if (!emisorEncontrado) return crearRespuestaJson({exito:false,codigo:"EMISOR_NO_ENCONTRADO",mensaje:"Usuario emisor no encontrado."});
+
+    if (!emisorEncontrado) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "EMISOR_NO_ENCONTRADO",
+        mensaje: "Usuario emisor no encontrado."
+      });
+    }
 
     var emisor = emisorEncontrado.usuario;
     var claveEmisorReal = emisorEncontrado.id;
 
-    if (!emisor.contrasena || !contrasena || contrasena !== String(emisor.contrasena)) {
-      return crearRespuestaJson({exito:false,codigo:"CONTRASENA_INCORRECTA",mensaje:"Contraseña de confirmación incorrecta."});
+    // --------------------------------------------------------------
+    // 3. AUTENTICACIÓN DEL EMISOR
+    // --------------------------------------------------------------
+    if (!verificarContrasena(emisor, contrasena)) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "CONTRASENA_INCORRECTA",
+        mensaje: "Contraseña de confirmación incorrecta."
+      });
     }
 
-    var saldoEmisorC = obtenerSaldoCentavosSeguro(emisor.saldoActual, "emisor");
-    if (saldoEmisorC < montoC) return crearRespuestaJson({exito:false,codigo:"SALDO_INSUFICIENTE",mensaje:"Saldo insuficiente. Tu saldo actual es de " + centavosAMonto(saldoEmisorC).toFixed(2) + " SL-BITS."});
+    var saldoEmisorC = obtenerSaldoCentavosSeguro(
+      emisor.saldoActual,
+      "saldo del emisor"
+    );
 
-    var receptorEncontrado = buscarUsuarioFlexible(usuarios, destinatario);
+    if (saldoEmisorC < montoC) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "SALDO_INSUFICIENTE",
+        mensaje:
+          "Saldo insuficiente. Tu saldo actual es de " +
+          centavosAMonto(saldoEmisorC).toFixed(2) +
+          " SL-BITS."
+      });
+    }
+
+    // --------------------------------------------------------------
+    // 4. RESOLVER DESTINO
+    // --------------------------------------------------------------
+    var receptorEncontrado = null;
     var grupoEncontrado = null;
 
-    if (receptorEncontrado) {
-      var mismoDocumento = normalizarDocumento(receptorEncontrado.usuario.numeroDocumento) &&
-        normalizarDocumento(receptorEncontrado.usuario.numeroDocumento) === normalizarDocumento(emisor.numeroDocumento);
-      if (receptorEncontrado.id === claveEmisorReal || mismoDocumento) return crearRespuestaJson({exito:false,codigo:"AUTOTRANSFERENCIA",mensaje:"No puedes enviarte SL-BITS a tu propia cuenta."});
-    } else {
+    if (tipoOperacion === "donacion") {
       grupoEncontrado = buscarGrupoFlexible(grupos, destinatario);
+
+      if (!grupoEncontrado) {
+        return crearRespuestaJson({
+          exito: false,
+          codigo: "GRUPO_NO_ENCONTRADO",
+          mensaje: "Estand o grupo no encontrado."
+        });
+      }
+    } else {
+      receptorEncontrado = buscarUsuarioFlexible(usuarios, destinatario);
+
+      if (receptorEncontrado) {
+        var documentoEmisor = normalizarDocumento(emisor.numeroDocumento);
+        var documentoReceptor = normalizarDocumento(
+          receptorEncontrado.usuario.numeroDocumento
+        );
+
+        if (
+          receptorEncontrado.id === claveEmisorReal ||
+          (documentoEmisor &&
+            documentoReceptor &&
+            documentoEmisor === documentoReceptor)
+        ) {
+          return crearRespuestaJson({
+            exito: false,
+            codigo: "AUTOTRANSFERENCIA",
+            mensaje: "No puedes enviarte SL-BITS a tu propia cuenta."
+          });
+        }
+      } else {
+        // Conservamos la compatibilidad anterior: transferirBits también
+        // puede reconocer un grupo y convertirlo en donación.
+        grupoEncontrado = buscarGrupoFlexible(grupos, destinatario);
+      }
+
+      if (!receptorEncontrado && !grupoEncontrado) {
+        return crearRespuestaJson({
+          exito: false,
+          codigo: "DESTINATARIO_NO_ENCONTRADO",
+          mensaje:
+            "Destinatario no encontrado. Verifica el NIE, DUI o @handle del estand."
+        });
+      }
     }
 
-    if (!receptorEncontrado && !grupoEncontrado) return crearRespuestaJson({exito:false,codigo:"DESTINATARIO_NO_ENCONTRADO",mensaje:"Destinatario no encontrado. Verifica el NIE, DUI o @handle del estand."});
+    // --------------------------------------------------------------
+    // 5. RETENCIÓN DE VIDEO PARA DONACIONES
+    // --------------------------------------------------------------
+    if (tipoOperacion === "donacion" || grupoEncontrado) {
+      var idGrupoRetencion = grupoEncontrado.id;
+      var timerId = claveEmisorReal + "_" + idGrupoRetencion;
+      var timerRegistro = leerDeFirebase("timers_video/" + timerId);
 
+      if (timerRegistro) {
+        var ahoraRetencion = new Date().getTime();
+        var inicioRetencion = Number(timerRegistro.inicioEnMs || 0);
+        var tiempoTranscurridoSegundos =
+          inicioRetencion > 0
+            ? Math.floor((ahoraRetencion - inicioRetencion) / 1000)
+            : 0;
+
+        var tiempoRequerido =
+          Number(timerRegistro.tiempoRequeridoSegundos) || 15;
+
+        if (
+          tiempoTranscurridoSegundos < tiempoRequerido &&
+          !timerRegistro.completado
+        ) {
+          return crearRespuestaJson({
+            exito: false,
+            codigo: "RETENCION_NO_CUMPLIDA",
+            mensaje:
+              "Debes ver el video por al menos " +
+              tiempoRequerido +
+              " segundos antes de donar. Llevas " +
+              tiempoTranscurridoSegundos +
+              "s."
+          });
+        }
+      }
+    }
+
+    // --------------------------------------------------------------
+    // 6. CONSTRUIR OPERACIÓN
+    // --------------------------------------------------------------
     var timestamp = new Date().toISOString();
-    var idTransaccion = requestId ? "TX_" + requestId : generarId("TX");
+    var idTransaccion = "TX_" + requestId;
+    var idLedger = "LEDGER_" + requestId;
+
+    var nuevoSaldoEmisorC = saldoEmisorC - montoC;
+
     var patch = {};
     var resultado;
+    var transaccion;
+    var ledger;
 
-    patch["usuarios/" + claveEmisorReal + "/saldoActual"] = centavosAMonto(saldoEmisorC - montoC);
+    patch[
+      "usuarios/" + claveEmisorReal + "/saldoActual"
+    ] = centavosAMonto(nuevoSaldoEmisorC);
 
+    // --------------------------------------------------------------
+    // 6A. DONACIÓN A GRUPO
+    // --------------------------------------------------------------
     if (grupoEncontrado) {
       var grupo = grupoEncontrado.grupo;
-      var totalGrupoC = obtenerSaldoCentavosSeguro(grupo.totalRecaudado === undefined ? 0 : grupo.totalRecaudado, "grupo");
-      var nuevoTotalC = totalGrupoC + montoC;
-      var txGrupo = {idTransaccion:idTransaccion,tipo:"donacion",idEmisor:claveEmisorReal,nombreEmisor:emisor.nombreCompleto,idReceptor:grupoEncontrado.id,nombreReceptor:grupo.nombreGrupo,especialidad:grupo.especialidad||"General",monto:centavosAMonto(montoC),concepto:concepto,fecha:timestamp,requestId:requestId||null};
-      patch["grupos/" + grupoEncontrado.id + "/totalRecaudado"] = centavosAMonto(nuevoTotalC);
-      patch["transacciones/" + idTransaccion] = txGrupo;
-      resultado = {exito:true,mensaje:"¡Apoyo de " + centavosAMonto(montoC).toFixed(2) + " SL-BITS enviado con éxito a " + grupo.nombreGrupo + "!",nuevoSaldoEmisor:centavosAMonto(saldoEmisorC-montoC),nuevoTotalGrupo:centavosAMonto(nuevoTotalC),esDonacionGrupo:true,transaccion:txGrupo};
-    } else {
-      var receptor = receptorEncontrado.usuario;
-      var saldoReceptorC = obtenerSaldoCentavosSeguro(receptor.saldoActual, "receptor");
-      var nuevoSaldoReceptorC = saldoReceptorC + montoC;
-      var txUsuario = {idTransaccion:idTransaccion,tipo:"envio_estudiante",idEmisor:claveEmisorReal,nombreEmisor:emisor.nombreCompleto,idReceptor:receptorEncontrado.id,nombreReceptor:receptor.nombreCompleto,monto:centavosAMonto(montoC),concepto:concepto,fecha:timestamp,requestId:requestId||null};
-      patch["usuarios/" + receptorEncontrado.id + "/saldoActual"] = centavosAMonto(nuevoSaldoReceptorC);
-      patch["transacciones/" + idTransaccion] = txUsuario;
-      resultado = {exito:true,mensaje:"¡Transferencia de " + centavosAMonto(montoC).toFixed(2) + " SL-BITS enviada exitosamente a " + receptor.nombreCompleto + "!",nuevoSaldoEmisor:centavosAMonto(saldoEmisorC-montoC),nuevoSaldoReceptor:centavosAMonto(nuevoSaldoReceptorC),transaccion:txUsuario};
+
+      var totalGrupoC = obtenerSaldoCentavosSeguro(
+        grupo.totalRecaudado === undefined ? 0 : grupo.totalRecaudado,
+        "total del grupo"
+      );
+
+      var nuevoTotalGrupoC = totalGrupoC + montoC;
+
+      transaccion = {
+        idTransaccion: idTransaccion,
+        tipo: "donacion",
+        idEmisor: claveEmisorReal,
+        nombreEmisor: textoSeguro(emisor.nombreCompleto),
+        idReceptor: grupoEncontrado.id,
+        nombreReceptor: textoSeguro(grupo.nombreGrupo),
+        especialidad: textoSeguro(grupo.especialidad) || "General",
+        monto: centavosAMonto(montoC),
+        concepto: concepto,
+        fecha: timestamp,
+        requestId: requestId
+      };
+
+      ledger = {
+        idLedger: idLedger,
+        idTransaccion: idTransaccion,
+        tipo: "donacion",
+        fecha: timestamp,
+        requestId: requestId,
+        origen: {
+          tipo: "usuario",
+          id: claveEmisorReal,
+          saldoAnterior: centavosAMonto(saldoEmisorC),
+          debito: centavosAMonto(montoC),
+          saldoNuevo: centavosAMonto(nuevoSaldoEmisorC)
+        },
+        destino: {
+          tipo: "grupo",
+          id: grupoEncontrado.id,
+          saldoAnterior: centavosAMonto(totalGrupoC),
+          credito: centavosAMonto(montoC),
+          saldoNuevo: centavosAMonto(nuevoTotalGrupoC)
+        }
+      };
+
+      patch[
+        "grupos/" + grupoEncontrado.id + "/totalRecaudado"
+      ] = centavosAMonto(nuevoTotalGrupoC);
+
+      patch["transacciones/" + idTransaccion] = transaccion;
+      patch["ledger/" + idLedger] = ledger;
+
+      resultado = {
+        exito: true,
+        codigo: "DONACION_COMPLETADA",
+        mensaje:
+          "¡Donación de " +
+          centavosAMonto(montoC).toFixed(2) +
+          " SL-BITS enviada a " +
+          grupo.nombreGrupo +
+          "!",
+        nuevoSaldoEmisor: centavosAMonto(nuevoSaldoEmisorC),
+        nuevoSaldoUsuario: centavosAMonto(nuevoSaldoEmisorC),
+        nuevoTotalGrupo: centavosAMonto(nuevoTotalGrupoC),
+        esDonacionGrupo: true,
+        transaccion: transaccion
+      };
     }
 
-    if (requestId) patch["idempotencia/" + requestId] = {tipo:"transferencia",fecha:timestamp,resultado:resultado};
-    if (!actualizarEnFirebaseMultiRuta(patch)) throw new Error("Firebase rechazó la actualización atómica.");
+    // --------------------------------------------------------------
+    // 6B. TRANSFERENCIA A OTRO USUARIO
+    // --------------------------------------------------------------
+    else {
+      var receptor = receptorEncontrado.usuario;
+
+      var saldoReceptorC = obtenerSaldoCentavosSeguro(
+        receptor.saldoActual,
+        "saldo del receptor"
+      );
+
+      var nuevoSaldoReceptorC = saldoReceptorC + montoC;
+
+      transaccion = {
+        idTransaccion: idTransaccion,
+        tipo: "envio_estudiante",
+        idEmisor: claveEmisorReal,
+        nombreEmisor: textoSeguro(emisor.nombreCompleto),
+        idReceptor: receptorEncontrado.id,
+        nombreReceptor: textoSeguro(receptor.nombreCompleto),
+        monto: centavosAMonto(montoC),
+        concepto: concepto,
+        fecha: timestamp,
+        requestId: requestId
+      };
+
+      ledger = {
+        idLedger: idLedger,
+        idTransaccion: idTransaccion,
+        tipo: "transferencia",
+        fecha: timestamp,
+        requestId: requestId,
+        origen: {
+          tipo: "usuario",
+          id: claveEmisorReal,
+          saldoAnterior: centavosAMonto(saldoEmisorC),
+          debito: centavosAMonto(montoC),
+          saldoNuevo: centavosAMonto(nuevoSaldoEmisorC)
+        },
+        destino: {
+          tipo: "usuario",
+          id: receptorEncontrado.id,
+          saldoAnterior: centavosAMonto(saldoReceptorC),
+          credito: centavosAMonto(montoC),
+          saldoNuevo: centavosAMonto(nuevoSaldoReceptorC)
+        }
+      };
+
+      patch[
+        "usuarios/" + receptorEncontrado.id + "/saldoActual"
+      ] = centavosAMonto(nuevoSaldoReceptorC);
+
+      patch["transacciones/" + idTransaccion] = transaccion;
+      patch["ledger/" + idLedger] = ledger;
+
+      resultado = {
+        exito: true,
+        codigo: "TRANSFERENCIA_COMPLETADA",
+        mensaje:
+          "¡Transferencia de " +
+          centavosAMonto(montoC).toFixed(2) +
+          " SL-BITS enviada exitosamente a " +
+          receptor.nombreCompleto +
+          "!",
+        nuevoSaldoEmisor: centavosAMonto(nuevoSaldoEmisorC),
+        nuevoSaldoUsuario: centavosAMonto(nuevoSaldoEmisorC),
+        nuevoSaldoReceptor: centavosAMonto(nuevoSaldoReceptorC),
+        transaccion: transaccion
+      };
+    }
+
+    // --------------------------------------------------------------
+    // 7. IDEMPOTENCIA + METADATOS
+    // --------------------------------------------------------------
+    patch["idempotencia/" + requestId] = {
+      tipo: grupoEncontrado ? "donacion" : "transferencia",
+      fecha: timestamp,
+      firma: firmaSolicitud,
+      resultado: resultado
+    };
+
+    // Registro resumido para auditoría.
+    patch["auditoria_financiera/" + idTransaccion] = {
+      idTransaccion: idTransaccion,
+      requestId: requestId,
+      tipo: grupoEncontrado ? "donacion" : "transferencia",
+      monto: centavosAMonto(montoC),
+      fecha: timestamp,
+      estado: "PENDIENTE_VERIFICACION"
+    };
+
+    // --------------------------------------------------------------
+    // 8. PATCH ATÓMICO
+    // --------------------------------------------------------------
+    if (!actualizarEnFirebaseMultiRuta(patch)) {
+      throw new Error("Firebase rechazó la actualización financiera.");
+    }
+
+    // --------------------------------------------------------------
+    // 9. VERIFICACIÓN POSTERIOR
+    //
+    // Firebase REST confirmó el PATCH. Ahora comprobamos que los
+    // saldos que acabamos de escribir realmente quedaron almacenados.
+    // --------------------------------------------------------------
+    var saldoEmisorVerificado = obtenerSaldoCentavosSeguro(
+      leerDeFirebaseObligatorio(
+        "usuarios/" + claveEmisorReal + "/saldoActual"
+      ),
+      "saldo emisor verificado"
+    );
+
+    if (saldoEmisorVerificado !== nuevoSaldoEmisorC) {
+      throw new Error(
+        "Verificación fallida: el saldo del emisor no coincide."
+      );
+    }
+
+    if (grupoEncontrado) {
+      var grupoVerificado = leerDeFirebaseObligatorio(
+        "grupos/" + grupoEncontrado.id + "/totalRecaudado"
+      );
+
+      var totalGrupoVerificado = obtenerSaldoCentavosSeguro(
+        grupoVerificado,
+        "total grupo verificado"
+      );
+
+      if (totalGrupoVerificado !== resultado.nuevoTotalGrupo * 100) {
+        throw new Error(
+          "Verificación fallida: el total del grupo no coincide."
+        );
+      }
+    } else {
+      var saldoReceptorVerificado = obtenerSaldoCentavosSeguro(
+        leerDeFirebaseObligatorio(
+          "usuarios/" + receptorEncontrado.id + "/saldoActual"
+        ),
+        "saldo receptor verificado"
+      );
+
+      if (
+        saldoReceptorVerificado !==
+        Math.round(resultado.nuevoSaldoReceptor * 100)
+      ) {
+        throw new Error(
+          "Verificación fallida: el saldo del receptor no coincide."
+        );
+      }
+    }
+
+    // Marcar auditoría como confirmada.
+    escribirEnFirebase(
+      "auditoria_financiera/" + idTransaccion + "/estado",
+      "CONFIRMADA"
+    );
+
     return crearRespuestaJson(resultado);
+
   } catch (err) {
-    registrarError("transferirBitsSeguro",err);
-    return crearRespuestaJson({exito:false,codigo:"TRANSFERENCIA_ERROR",mensaje:"No fue posible completar la transferencia. La operación fue cancelada."});
-  } finally { if (locked) lock.releaseLock(); }
+    registrarError("ejecutarOperacionFinanciera", err);
+
+    return crearRespuestaJson({
+      exito: false,
+      codigo:
+        tipoOperacion === "donacion"
+          ? "DONACION_ERROR"
+          : "TRANSFERENCIA_ERROR",
+      mensaje:
+        "No fue posible completar la operación financiera. " +
+        "No se confirmó el movimiento."
+    });
+  } finally {
+    if (locked) {
+      lock.releaseLock();
+    }
+  }
 }
 
 
 function procesarDonacionSegura(datos) {
-  var lock=LockService.getScriptLock(), locked=false;
-  try {
-    locked=lock.tryLock(CONFIG.LOCK_TIMEOUT_MS);
-    if(!locked) return crearRespuestaJson({exito:false,codigo:"SERVIDOR_OCUPADO",mensaje:"Servidor ocupado. Intenta nuevamente."});
-    datos=datos||{};
-    var idUsuario=textoSeguro(datos.idUsuario), idGrupo=textoSeguro(datos.idGrupo), requestId=normalizarRequestId(datos.idTransaccion), montoC=parsearMontoCentavos(datos.monto);
-    if(!idUsuario||!idGrupo||!montoValidoTransferencia(montoC)) return crearRespuestaJson({exito:false,codigo:"MONTO_INVALIDO",mensaje:"Datos de donación inválidos. El monto debe estar entre " + CONFIG.MONTO_MINIMO_TRANSFERENCIA.toFixed(2) + " y " + CONFIG.MONTO_MAXIMO_TRANSFERENCIA.toFixed(2) + " SL-BITS."});
+  datos = datos || {};
 
-    // Verificar retención de video del lado del servidor
-    var timerId = idUsuario + "_" + idGrupo;
-    var timerRegistro = leerDeFirebase("timers_video/" + timerId);
-    if (timerRegistro) {
-      var ahora = new Date().getTime();
-      var tiempoTranscurridoSegundos = Math.floor((ahora - timerRegistro.inicioEnMs) / 1000);
-      var tiempoRequerido = timerRegistro.tiempoRequeridoSegundos || 15;
-      if (tiempoTranscurridoSegundos < tiempoRequerido && !timerRegistro.completado) {
-        return crearRespuestaJson({exito:false,codigo:"RETENCION_NO_CUMPLIDA",mensaje:"Debes ver el video por al menos " + tiempoRequerido + " segundos antes de donar. Llevas " + tiempoTranscurridoSegundos + "s."});
-      }
-    }
-
-    if(requestId){var prev=obtenerIdempotencia(requestId);if(prev)return crearRespuestaJson(prev.resultado);}
-    var usuario=leerDeFirebaseObligatorio("usuarios/"+idUsuario), grupo=leerDeFirebaseObligatorio("grupos/"+idGrupo);
-    if(!usuario)return crearRespuestaJson({exito:false,mensaje:"Usuario no encontrado."});
-    if(!grupo)return crearRespuestaJson({exito:false,mensaje:"Estand o grupo no encontrado."});
-    var saldoC=obtenerSaldoCentavosSeguro(usuario.saldoActual,"usuario");
-    var totalC=obtenerSaldoCentavosSeguro(grupo.totalRecaudado===undefined?0:grupo.totalRecaudado,"grupo");
-    if(saldoC<montoC)return crearRespuestaJson({exito:false,codigo:"SALDO_INSUFICIENTE",mensaje:"Saldo insuficiente ("+centavosAMonto(saldoC).toFixed(2)+" SL-BITS)."});
-    var idTx=requestId?"TX_"+requestId:generarId("TX_DONAR"), timestamp=new Date().toISOString();
-    var tx={idTransaccion:idTx,tipo:"donacion",idEmisor:idUsuario,nombreEmisor:usuario.nombreCompleto,idReceptor:idGrupo,nombreReceptor:grupo.nombreGrupo,especialidad:grupo.especialidad||"General",monto:centavosAMonto(montoC),fecha:timestamp,requestId:requestId||null};
-    var patch={}; patch["usuarios/"+idUsuario+"/saldoActual"]=centavosAMonto(saldoC-montoC); patch["grupos/"+idGrupo+"/totalRecaudado"]=centavosAMonto(totalC+montoC); patch["transacciones/"+idTx]=tx;
-    var resultado={exito:true,mensaje:"¡Donación de "+centavosAMonto(montoC).toFixed(2)+" SL-BITS enviada a "+grupo.nombreGrupo+"!",nuevoSaldoUsuario:centavosAMonto(saldoC-montoC),nuevoTotalGrupo:centavosAMonto(totalC+montoC),transaccion:tx};
-    if(requestId)patch["idempotencia/"+requestId]={tipo:"donacion",fecha:timestamp,resultado:resultado};
-    if(!actualizarEnFirebaseMultiRuta(patch))throw new Error("Firebase rechazó la donación.");
-    return crearRespuestaJson(resultado);
-  }catch(e){registrarError("procesarDonacionSegura",e);return crearRespuestaJson({exito:false,codigo:"DONACION_ERROR",mensaje:"No fue posible completar la donación."});}
-  finally{if(locked)lock.releaseLock();}
+  // La donación utiliza exactamente el mismo motor que una transferencia.
+  // Esto evita que existan dos lógicas monetarias diferentes.
+  return ejecutarOperacionFinanciera("donacion", {
+    idUsuario: datos.idUsuario,
+    idGrupo: datos.idGrupo,
+    requestId: datos.requestId || datos.idTransaccion,
+    monto: datos.monto,
+    concepto: datos.concepto || "Donación",
+    contrasena: datos.contrasena
+  });
 }
 
 
 function recargarSaldoAdminSeguro(datos) {
-  var lock=LockService.getScriptLock(),locked=false;
-  try{
-    locked=lock.tryLock(CONFIG.LOCK_TIMEOUT_MS);if(!locked)return crearRespuestaJson({exito:false,codigo:"SERVIDOR_OCUPADO",mensaje:"Servidor ocupado. Intenta nuevamente."});
-    if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Sesión de administrador inválida o expirada."});
-    datos=datos||{};var criterio=textoSeguro(datos.criterioBusqueda),montoC=parsearMontoCentavos(datos.montoRecarga),requestId=normalizarRequestId(datos.requestId);
-    var motivo=limitarTexto(textoSeguro(datos.motivo)||"Recarga en caja",CONFIG.MAX_CONCEPTO_LENGTH),nombreAdmin=limitarTexto(textoSeguro(datos.nombreAdmin)||"Caja Central",CONFIG.MAX_NOMBRE_LENGTH);
-    if(!criterio||montoC<=0||montoC>Math.round(CONFIG.MONTO_MAXIMO_RECARGA*100))return crearRespuestaJson({exito:false,codigo:"RECARGA_INVALIDA",mensaje:"Documento/ID inválido o monto incorrecto."});
-    if(requestId){var prev=obtenerIdempotencia(requestId);if(prev)return crearRespuestaJson(prev.resultado);}
-    var usuarios=leerDeFirebaseObligatorio("usuarios")||{},encontrado=buscarUsuarioFlexible(usuarios,criterio);
-    if(!encontrado)return crearRespuestaJson({exito:false,codigo:"USUARIO_NO_ENCONTRADO",mensaje:"Usuario beneficiario no encontrado."});
-    var saldoC=obtenerSaldoCentavosSeguro(encontrado.usuario.saldoActual,"saldo anterior"),nuevoC=saldoC+montoC,timestamp=new Date().toISOString(),idTx=requestId?"TX_"+requestId:generarId("TX_RECARGA"),idBit=generarId("BIT");
-    var tx={idTransaccion:idTx,tipo:"recarga_efectivo",idEmisor:"ADMIN_CAJA",nombreEmisor:"Caja San Luis - "+nombreAdmin,idReceptor:encontrado.id,nombreReceptor:encontrado.usuario.nombreCompleto,monto:centavosAMonto(montoC),fecha:timestamp,requestId:requestId||null};
-    var bit={idBitacora:idBit,tipoAccion:"recarga_saldo",idUsuarioBeneficiario:encontrado.id,nombreUsuario:encontrado.usuario.nombreCompleto,montoRecarga:centavosAMonto(montoC),saldoAnterior:centavosAMonto(saldoC),nuevoSaldo:centavosAMonto(nuevoC),motivo:motivo,autorizadoPor:nombreAdmin,fecha:timestamp,requestId:requestId||null};
-    var patch={};patch["usuarios/"+encontrado.id+"/saldoActual"]=centavosAMonto(nuevoC);patch["transacciones/"+idTx]=tx;patch["bitacora_admin/"+idBit]=bit;
-    var resultado={exito:true,mensaje:"Recarga de "+centavosAMonto(montoC).toFixed(2)+" SL-BITS aplicada a "+encontrado.usuario.nombreCompleto,usuarioActualizado:{idUsuario:encontrado.id,nombreCompleto:encontrado.usuario.nombreCompleto,saldoActual:centavosAMonto(nuevoC)}};
-    if(requestId)patch["idempotencia/"+requestId]={tipo:"recarga",fecha:timestamp,resultado:resultado};
-    if(!actualizarEnFirebaseMultiRuta(patch))throw new Error("Firebase rechazó la recarga.");
+  var lock = LockService.getScriptLock();
+  var locked = false;
+
+  try {
+    locked = lock.tryLock(CONFIG.LOCK_TIMEOUT_MS);
+
+    if (!locked) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "SERVIDOR_OCUPADO",
+        mensaje: "Servidor ocupado. Intenta nuevamente."
+      });
+    }
+
+    if (!validarAdminToken(datos && datos.adminToken)) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "ADMIN_NO_AUTORIZADO",
+        mensaje: "Sesión de administrador inválida o expirada."
+      });
+    }
+
+    datos = datos || {};
+
+    var criterio = textoSeguro(datos.criterioBusqueda);
+    var montoC = parsearMontoCentavos(datos.montoRecarga);
+    var requestId = normalizarRequestId(
+      datos.requestId || datos.idTransaccion
+    );
+
+    var motivo = limitarTexto(
+      textoSeguro(datos.motivo) || "Recarga en caja",
+      CONFIG.MAX_CONCEPTO_LENGTH
+    );
+
+    var nombreAdmin = limitarTexto(
+      textoSeguro(datos.nombreAdmin) || "Caja Central",
+      CONFIG.MAX_NOMBRE_LENGTH
+    );
+
+    if (
+      !criterio ||
+      !requestId ||
+      !isFinite(montoC) ||
+      montoC <= 0 ||
+      montoC > Math.round(CONFIG.MONTO_MAXIMO_RECARGA * 100)
+    ) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "RECARGA_INVALIDA",
+        mensaje: "Documento/ID, requestId o monto inválido."
+      });
+    }
+
+    var firmaSolicitud = generarFirmaOperacion(
+      "recarga",
+      criterio,
+      "ADMIN_CAJA",
+      montoC,
+      motivo
+    );
+
+    var previo = obtenerIdempotencia(requestId);
+
+    if (previo) {
+      if (previo.firma && previo.firma !== firmaSolicitud) {
+        return crearRespuestaJson({
+          exito: false,
+          codigo: "REQUEST_ID_REUTILIZADO",
+          mensaje:
+            "El requestId ya fue utilizado para otra recarga."
+        });
+      }
+
+      return crearRespuestaJson(previo.resultado);
+    }
+
+    var usuarios =
+      leerDeFirebaseObligatorio("usuarios") || {};
+
+    var encontrado = buscarUsuarioFlexible(usuarios, criterio);
+
+    if (!encontrado) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "USUARIO_NO_ENCONTRADO",
+        mensaje: "Usuario beneficiario no encontrado."
+      });
+    }
+
+    var saldoC = obtenerSaldoCentavosSeguro(
+      encontrado.usuario.saldoActual,
+      "saldo anterior"
+    );
+
+    var nuevoC = saldoC + montoC;
+    var timestamp = new Date().toISOString();
+    var idTx = "TX_" + requestId;
+    var idBit = generarId("BIT");
+    var idLedger = "LEDGER_" + requestId;
+
+    var tx = {
+      idTransaccion: idTx,
+      tipo: "recarga_efectivo",
+      idEmisor: "ADMIN_CAJA",
+      nombreEmisor: "Caja San Luis - " + nombreAdmin,
+      idReceptor: encontrado.id,
+      nombreReceptor: encontrado.usuario.nombreCompleto,
+      monto: centavosAMonto(montoC),
+      fecha: timestamp,
+      requestId: requestId
+    };
+
+    var bit = {
+      idBitacora: idBit,
+      tipoAccion: "recarga_saldo",
+      idUsuarioBeneficiario: encontrado.id,
+      nombreUsuario: encontrado.usuario.nombreCompleto,
+      montoRecarga: centavosAMonto(montoC),
+      saldoAnterior: centavosAMonto(saldoC),
+      nuevoSaldo: centavosAMonto(nuevoC),
+      motivo: motivo,
+      autorizadoPor: nombreAdmin,
+      fecha: timestamp,
+      requestId: requestId
+    };
+
+    var ledger = {
+      idLedger: idLedger,
+      idTransaccion: idTx,
+      tipo: "recarga",
+      fecha: timestamp,
+      requestId: requestId,
+      origen: {
+        tipo: "caja",
+        id: "ADMIN_CAJA",
+        creditoEmitido: centavosAMonto(montoC)
+      },
+      destino: {
+        tipo: "usuario",
+        id: encontrado.id,
+        saldoAnterior: centavosAMonto(saldoC),
+        credito: centavosAMonto(montoC),
+        saldoNuevo: centavosAMonto(nuevoC)
+      }
+    };
+
+    var resultado = {
+      exito: true,
+      codigo: "RECARGA_COMPLETADA",
+      mensaje:
+        "Recarga de " +
+        centavosAMonto(montoC).toFixed(2) +
+        " SL-BITS aplicada a " +
+        encontrado.usuario.nombreCompleto,
+      usuarioActualizado: {
+        idUsuario: encontrado.id,
+        nombreCompleto: encontrado.usuario.nombreCompleto,
+        saldoActual: centavosAMonto(nuevoC)
+      },
+      transaccion: tx
+    };
+
+    var patch = {};
+
+    patch[
+      "usuarios/" + encontrado.id + "/saldoActual"
+    ] = centavosAMonto(nuevoC);
+
+    patch["transacciones/" + idTx] = tx;
+    patch["bitacora_admin/" + idBit] = bit;
+    patch["ledger/" + idLedger] = ledger;
+
+    patch["idempotencia/" + requestId] = {
+      tipo: "recarga",
+      fecha: timestamp,
+      firma: firmaSolicitud,
+      resultado: resultado
+    };
+
+    patch["auditoria_financiera/" + idTx] = {
+      idTransaccion: idTx,
+      requestId: requestId,
+      tipo: "recarga",
+      monto: centavosAMonto(montoC),
+      fecha: timestamp,
+      estado: "CONFIRMADA"
+    };
+
+    if (!actualizarEnFirebaseMultiRuta(patch)) {
+      throw new Error("Firebase rechazó la recarga.");
+    }
+
+    var saldoVerificado = obtenerSaldoCentavosSeguro(
+      leerDeFirebaseObligatorio(
+        "usuarios/" + encontrado.id + "/saldoActual"
+      ),
+      "saldo recargado verificado"
+    );
+
+    if (saldoVerificado !== nuevoC) {
+      throw new Error(
+        "Verificación fallida: el saldo recargado no coincide."
+      );
+    }
+
     return crearRespuestaJson(resultado);
-  }catch(e){registrarError("recargarSaldoAdminSeguro",e);return crearRespuestaJson({exito:false,codigo:"RECARGA_ERROR",mensaje:"No fue posible completar la recarga."});}
-  finally{if(locked)lock.releaseLock();}
+
+  } catch (e) {
+    registrarError("recargarSaldoAdminSeguro", e);
+
+    return crearRespuestaJson({
+      exito: false,
+      codigo: "RECARGA_ERROR",
+      mensaje:
+        "No fue posible completar la recarga. La operación no fue confirmada."
+    });
+  } finally {
+    if (locked) {
+      lock.releaseLock();
+    }
+  }
+}
+
+
+/**
+ * Consulta puntual de saldo.
+ * Útil para que el frontend fuerce una sincronización después
+ * de una operación financiera.
+ */
+function obtenerSaldoUsuarioSeguro(datos) {
+  try {
+    var idUsuario = textoSeguro(datos && datos.idUsuario);
+
+    if (!idUsuario) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "ID_USUARIO_REQUERIDO",
+        mensaje: "Se requiere el ID del usuario."
+      });
+    }
+
+    var usuario = leerDeFirebaseObligatorio(
+      "usuarios/" + idUsuario
+    );
+
+    if (!usuario) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "USUARIO_NO_ENCONTRADO",
+        mensaje: "Usuario no encontrado."
+      });
+    }
+
+    var saldoC = obtenerSaldoCentavosSeguro(
+      usuario.saldoActual,
+      "saldo del usuario"
+    );
+
+    return crearRespuestaJson({
+      exito: true,
+      idUsuario: idUsuario,
+      saldoActual: centavosAMonto(saldoC),
+      fechaServidor: new Date().toISOString()
+    });
+
+  } catch (e) {
+    registrarError("obtenerSaldoUsuarioSeguro", e);
+
+    return crearRespuestaJson({
+      exito: false,
+      codigo: "SALDO_ERROR",
+      mensaje: "No fue posible consultar el saldo."
+    });
+  }
+}
+
+
+/**
+ * Auditoría financiera global.
+ *
+ * No modifica dinero. Solamente detecta:
+ * - saldos negativos;
+ * - montos inválidos;
+ * - ledger inconsistentes;
+ * - diferencias entre transacción y ledger;
+ * - operaciones financieras sin ledger.
+ */
+function auditarFinanzasSeguro(datos) {
+  var lock = LockService.getScriptLock();
+  var locked = false;
+
+  try {
+    locked = lock.tryLock(CONFIG.LOCK_TIMEOUT_MS);
+
+    if (!locked) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "SERVIDOR_OCUPADO",
+        mensaje: "Servidor ocupado. Intenta nuevamente."
+      });
+    }
+
+    if (!validarAdminToken(datos && datos.adminToken)) {
+      return crearRespuestaJson({
+        exito: false,
+        codigo: "ADMIN_NO_AUTORIZADO",
+        mensaje: "Se requiere una sesión administrativa válida."
+      });
+    }
+
+    var usuarios =
+      leerDeFirebaseObligatorio("usuarios") || {};
+
+    var grupos =
+      leerDeFirebaseObligatorio("grupos") || {};
+
+    var transacciones =
+      leerDeFirebaseObligatorio("transacciones") || {};
+
+    var ledger =
+      leerDeFirebase("ledger") || {};
+
+    var errores = [];
+    var usuariosRevisados = 0;
+    var gruposRevisados = 0;
+    var transaccionesRevisadas = 0;
+    var ledgerRevisados = 0;
+    var dineroEnUsuariosC = 0;
+    var dineroEnGruposC = 0;
+
+    // --------------------------------------------------------------
+    // Usuarios
+    // --------------------------------------------------------------
+    for (var uid in usuarios) {
+      if (!usuarios[uid]) continue;
+
+      usuariosRevisados++;
+
+      try {
+        var saldoUsuarioC = obtenerSaldoCentavosSeguro(
+          usuarios[uid].saldoActual,
+          "usuario " + uid
+        );
+
+        if (saldoUsuarioC < 0) {
+          errores.push({
+            tipo: "SALDO_NEGATIVO",
+            id: uid
+          });
+        }
+
+        dineroEnUsuariosC += saldoUsuarioC;
+
+      } catch (eU) {
+        errores.push({
+          tipo: "SALDO_CORRUPTO",
+          id: uid,
+          detalle: eU.message
+        });
+      }
+    }
+
+    // --------------------------------------------------------------
+    // Grupos
+    // --------------------------------------------------------------
+    for (var gid in grupos) {
+      if (!grupos[gid]) continue;
+
+      gruposRevisados++;
+
+      try {
+        var totalGrupoC = obtenerSaldoCentavosSeguro(
+          grupos[gid].totalRecaudado === undefined
+            ? 0
+            : grupos[gid].totalRecaudado,
+          "grupo " + gid
+        );
+
+        if (totalGrupoC < 0) {
+          errores.push({
+            tipo: "TOTAL_GRUPO_NEGATIVO",
+            id: gid
+          });
+        }
+
+        dineroEnGruposC += totalGrupoC;
+
+      } catch (eG) {
+        errores.push({
+          tipo: "TOTAL_GRUPO_CORRUPTO",
+          id: gid,
+          detalle: eG.message
+        });
+      }
+    }
+
+    // --------------------------------------------------------------
+    // Transacciones + ledger
+    // --------------------------------------------------------------
+    for (var txId in transacciones) {
+      if (!transacciones[txId]) continue;
+
+      transaccionesRevisadas++;
+
+      var tx = transacciones[txId];
+
+      try {
+        var montoTxC = parsearMontoCentavos(tx.monto);
+
+        if (
+          !isFinite(montoTxC) ||
+          montoTxC <= 0
+        ) {
+          errores.push({
+            tipo: "MONTO_TRANSACCION_INVALIDO",
+            id: txId
+          });
+        }
+
+        var ledgerEncontrado = ledger[txId];
+
+        // También aceptamos el ID de ledger guardado como LEDGER_TX.
+        if (!ledgerEncontrado) {
+          var posibleLedgerId = "LEDGER_" + txId.replace(/^TX_/, "");
+          ledgerEncontrado = ledger[posibleLedgerId];
+        }
+
+        if (!ledgerEncontrado) {
+          errores.push({
+            tipo: "TRANSACCION_SIN_LEDGER",
+            id: txId
+          });
+        }
+      } catch (eTx) {
+        errores.push({
+          tipo: "TRANSACCION_CORRUPTA",
+          id: txId,
+          detalle: eTx.message
+        });
+      }
+    }
+
+    for (var lid in ledger) {
+      if (!ledger[lid]) continue;
+      ledgerRevisados++;
+    }
+
+    var estado = errores.length === 0
+      ? "INTEGRO"
+      : "ERRORES_DETECTADOS";
+
+    return crearRespuestaJson({
+      exito: true,
+      estado: estado,
+      fechaAuditoria: new Date().toISOString(),
+      resumen: {
+        usuariosRevisados: usuariosRevisados,
+        gruposRevisados: gruposRevisados,
+        transaccionesRevisadas: transaccionesRevisadas,
+        ledgerRevisados: ledgerRevisados,
+        erroresEncontrados: errores.length,
+        saldoUsuarios: centavosAMonto(dineroEnUsuariosC),
+        totalGrupos: centavosAMonto(dineroEnGruposC)
+      },
+      errores: errores
+    });
+
+  } catch (e) {
+    registrarError("auditarFinanzasSeguro", e);
+
+    return crearRespuestaJson({
+      exito: false,
+      codigo: "AUDITORIA_ERROR",
+      mensaje: "No fue posible ejecutar la auditoría financiera."
+    });
+  } finally {
+    if (locked) {
+      lock.releaseLock();
+    }
+  }
+}
+
+
+function generarFirmaOperacion(
+  tipo,
+  origen,
+  destino,
+  montoC,
+  concepto
+) {
+  var texto =
+    String(tipo) +
+    "|" +
+    String(origen) +
+    "|" +
+    String(destino) +
+    "|" +
+    String(montoC) +
+    "|" +
+    String(concepto);
+
+  var digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    texto,
+    Utilities.Charset.UTF_8
+  );
+
+  var salida = "";
+
+  for (var i = 0; i < digest.length; i++) {
+    var b = digest[i];
+
+    if (b < 0) b += 256;
+
+    var h = b.toString(16);
+
+    if (h.length === 1) h = "0" + h;
+
+    salida += h;
+  }
+
+  return salida;
 }
 
 
@@ -385,7 +1296,11 @@ function registrarVisitante(datos) {
     fechaRegistro: new Date().toISOString()
   };
 
-  var idTxBono = "TX_BONO_" + new Date().getTime();
+  var idTxBono = "TX_BONO_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);
+  var idLedgerBono = "LEDGER_BONO_" + idUsuario;
+
+  var fechaBono = new Date().toISOString();
+
   var txBono = {
     idTransaccion: idTxBono,
     tipo: "bono_bienvenida",
@@ -394,12 +1309,34 @@ function registrarVisitante(datos) {
     idReceptor: idUsuario,
     nombreReceptor: nombreCompleto,
     monto: 1.00,
-    fecha: new Date().toISOString()
+    fecha: fechaBono,
+    requestId: idTxBono
+  };
+
+  var ledgerBono = {
+    idLedger: idLedgerBono,
+    idTransaccion: idTxBono,
+    tipo: "bono_bienvenida",
+    fecha: fechaBono,
+    requestId: idTxBono,
+    origen: {
+      tipo: "sistema",
+      id: "SISTEMA_SAN_LUIS",
+      creditoEmitido: 1.00
+    },
+    destino: {
+      tipo: "usuario",
+      id: idUsuario,
+      saldoAnterior: 0.00,
+      credito: 1.00,
+      saldoNuevo: 1.00
+    }
   };
 
   var patchData = {};
   patchData["usuarios/" + idUsuario] = nuevoUsuario;
   patchData["transacciones/" + idTxBono] = txBono;
+  patchData["ledger/" + idLedgerBono] = ledgerBono;
 
   if (!actualizarEnFirebaseMultiRuta(patchData)) {
     return crearRespuestaJson({ exito: false, codigo: "REGISTRO_NO_GUARDADO", mensaje: "No fue posible guardar el registro. Intenta nuevamente." });
@@ -700,13 +1637,22 @@ function obtenerTodo() {
     var grupos = leerDeFirebase("grupos") || {};
     var transacciones = leerDeFirebase("transacciones") || {};
     var bitacoras = leerDeFirebase("bitacora_admin") || {};
+    var ledger = leerDeFirebase("ledger") || {};
+    var auditoriaFinanciera = leerDeFirebase("auditoria_financiera") || {};
 
     for (var gId in grupos) {
       if (grupos[gId]) delete grupos[gId].claveAcceso;
     }
     return crearRespuestaJson({
       exito: true,
-      datos: { usuarios: usuariosSegurosParaCliente(usuarios), grupos: grupos, transacciones: transacciones, bitacoras: bitacoras }
+      datos: {
+        usuarios: usuariosSegurosParaCliente(usuarios),
+        grupos: grupos,
+        transacciones: transacciones,
+        ledger: ledger,
+        auditoriaFinanciera: auditoriaFinanciera,
+        bitacoras: bitacoras
+      }
     });
   } catch (e) {
     return crearRespuestaJson({ exito: false, mensaje: "Error al sincronizar datos." });
@@ -846,9 +1792,11 @@ function validarAdminToken(token) {
 
 
 function obtenerIdempotencia(requestId) {
-  if(!requestId)return null;
-  var x=leerDeFirebase("idempotencia/"+requestId);
-  return x&&x.resultado?x:null;
+  if (!requestId) return null;
+
+  var x = leerDeFirebase("idempotencia/" + requestId);
+
+  return x && x.resultado ? x : null;
 }
 
 
