@@ -1381,7 +1381,8 @@ function iniciarSesionAdmin(datos) {
   if(!claveConfigurada)return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_CONFIGURADO",mensaje:"ADMIN_PASSWORD no está configurada en Script Properties."});
   if(!datos||!datos.claveAdmin||String(datos.claveAdmin)!==String(claveConfigurada))return crearRespuestaJson({exito:false,codigo:"ADMIN_CREDENCIALES_INVALIDAS",mensaje:"Credenciales de administrador incorrectas."});
   var token=Utilities.getUuid();
-  CacheService.getScriptCache().put("admin_"+token,"autorizado",CONFIG.ADMIN_TOKEN_TTL_SECONDS);
+  var expira=Date.now()+(CONFIG.ADMIN_TOKEN_TTL_SECONDS*1000);
+  escribirEnFirebase("adminTokens/"+token,{autorizado:true,expiraEn:expira});
   return crearRespuestaJson({exito:true,token:token,expiraEnSegundos:CONFIG.ADMIN_TOKEN_TTL_SECONDS,mensaje:"Acceso administrativo autorizado."});
 }
 
@@ -1808,7 +1809,15 @@ function verificarContrasena(usuario, contrasena) {
 
 
 function validarAdminToken(token) {
-  var t=textoSeguro(token);return !!t && CacheService.getScriptCache().get("admin_"+t)==="autorizado";
+  var t=textoSeguro(token);
+  if(!t)return false;
+  var datos=leerDeFirebase("adminTokens/"+t);
+  if(!datos||!datos.autorizado)return false;
+  if(datos.expiraEn && Date.now()>datos.expiraEn){
+    escribirEnFirebase("adminTokens/"+t,null);
+    return false;
+  }
+  return true;
 }
 
 
