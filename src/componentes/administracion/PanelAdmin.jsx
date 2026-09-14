@@ -11,11 +11,12 @@ import {
   Zap, 
   RefreshCw,
   Award,
-  Wallet
+  Wallet,
+  LogOut
 } from 'lucide-react';
 
 export default function PanelAdmin() {
-  const { listaGrupos, listaTransacciones, listaBitacoras, sincronizarConServidor, cargando } = usarUsuario();
+  const { listaGrupos, listaTransacciones, listaBitacoras, sincronizarConServidor, cargando, cerrarSesion } = usarUsuario();
 
   // Métricas globales del evento
   const totalRecaudado = listaGrupos.reduce(
@@ -49,14 +50,23 @@ export default function PanelAdmin() {
           </p>
         </div>
 
-        <button
-          onClick={sincronizarConServidor}
-          disabled={cargando}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 hover:text-white border border-slate-200 font-bold text-xs transition-colors"
-        >
-          <RefreshCw className={`w-4 h-4 ${cargando ? 'animate-spin text-[#0A4D9C]' : ''}`} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={sincronizarConServidor}
+            disabled={cargando}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 hover:text-white border border-slate-200 font-bold text-xs transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${cargando ? 'animate-spin text-[#0A4D9C]' : ''}`} />
           Sincronizar Datos
-        </button>
+          </button>
+          <button
+            onClick={cerrarSesion}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar Sesión
+          </button>
+        </div>
       </div>
 
       {/* Tarjetas de Métricas Globales */}
