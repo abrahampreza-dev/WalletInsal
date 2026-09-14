@@ -79,7 +79,7 @@ export default function InicioPublico({
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#E67A15] hover:to-[#D19E37] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-orange-500/30 flex items-center gap-2 transform hover:-translate-y-0.5 transition-all"
                 >
                   <Zap className="w-4 h-4 fill-white" />
-                  Ir a Mi Wallet ({usuarioActual.saldoActual.toFixed(2)} SL - BITS)
+                  Ir a Mi Wallet ({(usuarioActual.saldoActual ?? 0).toFixed(2)} SL - BITS)
                 </button>
               ) : (
                 <button

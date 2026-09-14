@@ -11,8 +11,12 @@ export default function AccesoAdmin() {
   const enviar = async (evento) => {
     evento.preventDefault();
     setError('');
-    const respuesta = await iniciarSesionAdmin(clave);
-    if (!respuesta.exito) setError(respuesta.mensaje);
+    try {
+      const respuesta = await iniciarSesionAdmin(clave);
+      if (!respuesta.exito) setError(respuesta.mensaje);
+    } catch (err) {
+      setError('Error de conexión con el servidor.');
+    }
   };
 
   return (

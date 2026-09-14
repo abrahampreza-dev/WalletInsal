@@ -40,20 +40,25 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
     setErrorLogin('');
     setMensajeLogin('');
 
-    const resultado = await iniciarSesionVisitante(documentoLogin, claveLogin);
-    setCargandoLogin(false);
+    try {
+      const resultado = await iniciarSesionVisitante(documentoLogin, claveLogin);
+      setCargandoLogin(false);
 
-    if (resultado.exito) {
-      setUsuarioLogueado(resultado.usuario);
-      if (resultado.contrasenaTemporal) {
-        setCambioForzado(true);
-        setMensajeLogin('');
+      if (resultado.exito) {
+        setUsuarioLogueado(resultado.usuario);
+        if (resultado.contrasenaTemporal) {
+          setCambioForzado(true);
+          setMensajeLogin('');
+        } else {
+          setMensajeLogin('Inicio de sesión exitoso. Redirigiendo...');
+          setTimeout(() => alCerrar(), 800);
+        }
       } else {
-        setMensajeLogin('Inicio de sesión exitoso. Redirigiendo...');
-        setTimeout(() => alCerrar(), 800);
+        setErrorLogin(resultado.mensaje);
       }
-    } else {
-      setErrorLogin(resultado.mensaje);
+    } catch (err) {
+      setCargandoLogin(false);
+      setErrorLogin('Error de conexión con el servidor.');
     }
   };
 

@@ -36,14 +36,20 @@ export default function PanelGrupo({ alVerPerfilInstagram }) {
     (tx) => tx.idReceptor === grupoActual.idGrupo || tx.nombreReceptor?.includes(grupoActual.nombreGrupo)
   );
 
-  const guardar = (evento) => {
+  const guardar = async (evento) => {
     evento.preventDefault();
-    actualizarGrupo({ 
-      idGrupo: grupoActual.idGrupo, 
-      urlFoto: foto, 
-      urlVideo: video 
-    }).then(() => setGuardado(true));
-    setTimeout(() => setGuardado(false), 2000);
+    try {
+      await actualizarGrupo({ 
+        idGrupo: grupoActual.idGrupo, 
+        claveAcceso: grupoActual.claveAcceso,
+        urlFoto: foto, 
+        urlVideo: video 
+      });
+      setGuardado(true);
+      setTimeout(() => setGuardado(false), 2000);
+    } catch (err) {
+      // Error silencioso — el contexto ya maneja errores
+    }
   };
 
   const fotos = grupoActual.fotos || [];

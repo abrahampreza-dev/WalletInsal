@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import {
   Users, Search, Edit2, Trash2, Save, X, DollarSign,
-  AlertCircle, CheckCircle2, User, Mail, FileText, Shield, Key
+  AlertCircle, CheckCircle2, User, Mail, FileText, Shield, Key, Building2
 } from 'lucide-react';
 import { ModalConfirmacion, ModalInput, ModalAlerta } from '../comun/ModalProfesional';
 
@@ -22,6 +22,10 @@ export default function GestionUsuarios() {
   const [modalReset, setModalReset] = useState(false);
   const [usuarioReset, setUsuarioReset] = useState(null);
   const [modalAlerta, setModalAlerta] = useState({ abierto: false, titulo: '', mensaje: '', tipo: 'info' });
+
+  // Gestión de grupos
+  const [grupoReset, setGrupoReset] = useState(null);
+  const [modalResetGrupo, setModalResetGrupo] = useState(false);
 
   const usuariosFiltrados = listaUsuarios.filter((u) => {
     const texto = busqueda.toLowerCase();
@@ -134,7 +138,8 @@ export default function GestionUsuarios() {
       const { enviarPeticion } = await import('../../servicios/conexionGas');
       const respuesta = await enviarPeticion('restablecerContrasena', {
         idUsuario: u.idUsuario,
-        nuevaContrasena: nuevaClave.trim()
+        nuevaContrasena: nuevaClave.trim(),
+        adminToken: adminToken
       });
 
       if (respuesta && respuesta.exito) {
@@ -146,6 +151,46 @@ export default function GestionUsuarios() {
         });
       } else {
         setMensajeError(respuesta?.mensaje || 'Error al restablecer contraseña.');
+      }
+    } catch (err) {
+      setMensajeError('Error de conexión con el servidor.');
+    }
+  };
+
+  const restablecerClaveGrupo = async (g) => {
+    setGrupoReset(g);
+    setModalResetGrupo(true);
+  };
+
+  const confirmarResetGrupo = async (nuevaClave) => {
+    const g = grupoReset;
+    setModalResetGrupo(false);
+    setGrupoReset(null);
+    setMensajeExito('');
+    setMensajeError('');
+
+    if (!nuevaClave || nuevaClave.trim().length < 6) {
+      setModalAlerta({ abierto: true, titulo: 'Contraseña inválida', mensaje: 'La contraseña del grupo debe tener al menos 6 caracteres.', tipo: 'peligro' });
+      return;
+    }
+
+    try {
+      const { enviarPeticion } = await import('../../servicios/conexionGas');
+      const respuesta = await enviarPeticion('restablecerContrasenaGrupo', {
+        idGrupo: g.idGrupo,
+        nuevaClave: nuevaClave.trim(),
+        adminToken: adminToken
+      });
+
+      if (respuesta && respuesta.exito) {
+        setModalAlerta({
+          abierto: true,
+          titulo: 'Contraseña restablecida',
+          mensaje: `La nueva contraseña de "${g.nombreGrupo}" es: "${nuevaClave.trim()}". Comunícasela al equipo.`,
+          tipo: 'exito'
+        });
+      } else {
+        setMensajeError(respuesta?.mensaje || 'Error al restablecer contraseña del grupo.');
       }
     } catch (err) {
       setMensajeError('Error de conexión con el servidor.');
@@ -275,6 +320,46 @@ export default function GestionUsuarios() {
         ))}
       </div>
 
+      {/* Sección de Grupos / Estands */}
+      <div className="border-t border-slate-200 pt-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#E67A15]/15 border border-[#E67A15]/50 flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-[#E67A15]" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-800">Gestión de Estands</h3>
+            <p className="text-xs text-slate-400">{listaGrupos.length} estands registrados</p>
+          </div>
+        </div>
+
+        {listaGrupos.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-4">No hay estands registrados aún.</p>
+        ) : (
+          <div className="space-y-2">
+            {listaGrupos.map((g) => (
+              <div key={g.idGrupo} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E67A15] to-[#D19E37] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
+                    {g.nombreGrupo?.charAt(0)?.toUpperCase() || 'E'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate">{g.nombreGrupo}</p>
+                    <p className="text-[10px] text-slate-400">{g.especialidad} · {g.handle || g.idGrupo}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => restablecerClaveGrupo(g)}
+                  className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-[#E67A15] hover:bg-[#E67A15]/10 flex-shrink-0"
+                  title="Restablecer contraseña del grupo"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <ModalConfirmacion
         estaAbierto={modalEliminar}
         alCerrar={() => { setModalEliminar(false); setUsuarioEliminar(null); }}
@@ -293,6 +378,17 @@ export default function GestionUsuarios() {
         mensaje={`Ingresa la nueva contraseña temporal para "${usuarioReset?.nombreCompleto}". El usuario deberá cambiarla al iniciar sesión.`}
         placeholder="Nueva contraseña (mín. 4 caracteres)"
         valorInicial="1234"
+        tipo="text"
+        textoConfirmar="Restablecer"
+      />
+
+      <ModalInput
+        estaAbierto={modalResetGrupo}
+        alCerrar={() => { setModalResetGrupo(false); setGrupoReset(null); }}
+        alConfirmar={confirmarResetGrupo}
+        titulo="Restablecer contraseña del estand"
+        mensaje={`Ingresa la nueva contraseña para "${grupoReset?.nombreGrupo}". El equipo deberá usar esta nueva clave para iniciar sesión.`}
+        placeholder="Nueva contraseña (mín. 6 caracteres)"
         tipo="text"
         textoConfirmar="Restablecer"
       />

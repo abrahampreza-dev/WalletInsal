@@ -84,18 +84,22 @@ export default function RegistroVisitante({ alCompletarRegistro }) {
       contrasena: contrasena.trim()
     };
 
-    const resultado = await registrarNuevoVisitante(datos);
+    try {
+      const resultado = await registrarNuevoVisitante(datos);
 
-    if (resultado.exito) {
-      setMensajeExito(resultado.mensaje || '¡Registro completado exitosamente!');
-      if (fotoSelfie && resultado.usuario && resultado.usuario.idUsuario) {
-        subirAvatar(fotoSelfie, resultado.usuario.idUsuario);
+      if (resultado.exito) {
+        setMensajeExito(resultado.mensaje || '¡Registro completado exitosamente!');
+        if (fotoSelfie && resultado.usuario && resultado.usuario.idUsuario) {
+          subirAvatar(fotoSelfie, resultado.usuario.idUsuario);
+        }
+        setTimeout(() => {
+          if (alCompletarRegistro) alCompletarRegistro();
+        }, 1200);
+      } else {
+        setMensajeError(resultado.mensaje || 'Ocurrió un error al procesar el registro.');
       }
-      setTimeout(() => {
-        if (alCompletarRegistro) alCompletarRegistro();
-      }, 1200);
-    } else {
-      setMensajeError(resultado.mensaje || 'Ocurrió un error al procesar el registro.');
+    } catch (err) {
+      setMensajeError('Error de conexión con el servidor.');
     }
   };
 

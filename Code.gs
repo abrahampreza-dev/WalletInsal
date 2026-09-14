@@ -78,6 +78,8 @@ function doPost(e) {
         return cambiarContrasena(datos);
       case "restablecerContrasena":
         return restablecerContrasena(datos);
+      case "restablecerContrasenaGrupo":
+        return restablecerContrasenaGrupo(datos);
       case "editarUsuario":
         return editarUsuario(datos);
       case "eliminarUsuario":
@@ -1564,6 +1566,16 @@ function restablecerContrasena(datos) {
 }
 
 
+function restablecerContrasenaGrupo(datos) {
+  if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Se requiere una sesión administrativa válida."});
+  var id=textoSeguro(datos&&datos.idGrupo),nuevaClave=textoSeguro(datos&&datos.nuevaClave);
+  if(!id||!nuevaClave||nuevaClave.length<6)return crearRespuestaJson({exito:false,mensaje:"ID de grupo y nueva contraseña (mín. 6 caracteres) requeridos."});
+  var grupo=leerDeFirebaseObligatorio("grupos/"+id);if(!grupo)return crearRespuestaJson({exito:false,mensaje:"Grupo no encontrado."});
+  var ok=escribirEnFirebase("grupos/"+id+"/claveAcceso",nuevaClave);if(!ok)throw new Error("No se pudo actualizar la contraseña del grupo.");
+  return crearRespuestaJson({exito:true,mensaje:"Contraseña del grupo restablecida correctamente."});
+}
+
+
 function editarUsuario(datos) {
   if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Se requiere una sesión administrativa válida."});
   var id=textoSeguro(datos&&datos.idUsuario);if(!id)return crearRespuestaJson({exito:false,mensaje:"ID de usuario requerido."});
@@ -1573,7 +1585,6 @@ function editarUsuario(datos) {
   if(datos.correo!==undefined)patch["usuarios/"+id+"/correo"]=limitarTexto(textoSeguro(datos.correo).toLowerCase(),CONFIG.MAX_CORREO_LENGTH);
   if(datos.avatar!==undefined)patch["usuarios/"+id+"/avatar"]=textoSeguro(datos.avatar);
   if(datos.contrasena!==undefined)patch["usuarios/"+id+"/contrasena"]=textoSeguro(datos.contrasena);
-  if(datos.saldoActual!==undefined)return crearRespuestaJson({exito:false,codigo:"SALDO_SOLO_FINANCIERO",mensaje:"El saldo no puede modificarse desde editarUsuario. Utiliza recargarSaldoAdmin."});
   if(Object.keys(patch).length===0)return crearRespuestaJson({exito:false,mensaje:"No hay cambios para aplicar."});
   if(!actualizarEnFirebaseMultiRuta(patch))throw new Error("No se pudieron guardar los cambios.");
   var actualizado=leerDeFirebaseObligatorio("usuarios/"+id);return crearRespuestaJson({exito:true,usuario:actualizado});

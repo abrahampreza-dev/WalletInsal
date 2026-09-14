@@ -10,7 +10,7 @@ export default function HistorialBitacora() {
   const transaccionesFiltradas = listaTransacciones.filter((tx) =>
     (tx.nombreEmisor || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (tx.nombreReceptor || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-    (tx.idTransaccion || '').toLowerCase().includes(busqueda.toLowerCase())
+    (String(tx.idTransaccion) || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const bitacorasFiltradas = listaBitacoras.filter((bit) =>

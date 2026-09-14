@@ -129,15 +129,19 @@ export default function RegistroGrupo({ alCompletarRegistro }) {
       claveAcceso: claveAcceso
     };
 
-    const resultado = await registrarNuevoGrupo(datos);
+    try {
+      const resultado = await registrarNuevoGrupo(datos);
 
-    if (resultado.exito) {
-      setMensajeExito(resultado.mensaje || '¡Estand registrado exitosamente!');
-      setTimeout(() => {
-        if (alCompletarRegistro) alCompletarRegistro();
-      }, 1200);
-    } else {
-      setMensajeError(resultado.mensaje || 'Ocurrió un error al registrar el estand.');
+      if (resultado.exito) {
+        setMensajeExito(resultado.mensaje || '¡Estand registrado exitosamente!');
+        setTimeout(() => {
+          if (alCompletarRegistro) alCompletarRegistro();
+        }, 1200);
+      } else {
+        setMensajeError(resultado.mensaje || 'Ocurrió un error al registrar el estand.');
+      }
+    } catch (err) {
+      setMensajeError('Error de conexión con el servidor.');
     }
   };
 

@@ -15,7 +15,8 @@ import {
   Edit2,
   Building2,
   Camera,
-  Key
+  Key,
+  AlertCircle
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import MostrarQR from './MostrarQR';
