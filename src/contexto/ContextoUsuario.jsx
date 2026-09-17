@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { enviarPeticion } from '../servicios/conexionGas';
+import { firebaseLeer } from '../servicios/firebaseDirecto';
 import { normalizarCarrera } from '../datos/carreras';
 
 const crearCodigoQRGrupo = (idGrupo, nombreGrupo) => JSON.stringify({
@@ -14,11 +15,17 @@ const ContextoUsuario = createContext();
  * Adapta un grupo proveniente de Firebase (vía GAS) al formato que usa la interfaz:
  * convierte likesUsers en likes/leGusta y normaliza la carrera.
  */
+const firebaseObjToArray = (valor) => {
+  if (Array.isArray(valor)) return valor;
+  if (valor && typeof valor === 'object') return Object.values(valor);
+  return [];
+};
+
 const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
   const grupoMapeado = { ...grupo };
   grupoMapeado.especialidad = normalizarCarrera(grupoMapeado.especialidad);
   grupoMapeado.handle = grupoMapeado.handle || `@${(grupoMapeado.nombreGrupo || 'estand').toLowerCase().replace(/\s+/g, '.')}`;
-  grupoMapeado.fotos = (grupoMapeado.fotos || []).map((foto) => {
+  grupoMapeado.fotos = firebaseObjToArray(grupoMapeado.fotos).map((foto) => {
     const likesUsuarios = foto.likesUsers || {};
     const nombresLikkes = Object.values(likesUsuarios).filter((v) => typeof v === 'string');
     return {
@@ -28,6 +35,14 @@ const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
       nombresLikkes
     };
   });
+  const integrantesRaw = grupoMapeado.integrantes;
+  if (Array.isArray(integrantesRaw)) {
+    grupoMapeado.integrantes = integrantesRaw.filter(Boolean).join(', ');
+  } else if (typeof integrantesRaw === 'object' && integrantesRaw !== null) {
+    grupoMapeado.integrantes = Object.values(integrantesRaw).filter(Boolean).join(', ');
+  } else if (typeof integrantesRaw !== 'string') {
+    grupoMapeado.integrantes = '';
+  }
   return grupoMapeado;
 };
 
@@ -199,7 +214,35 @@ export function ProveedorUsuario({ children }) {
         }
       }
     } catch (error) {
-      // Silencioso en syncs de fondo
+      // CORS falló, leer directo de Firebase
+    }
+
+    try {
+      const [gruposFirebase, txFirebase, usersFirebase, bitFirebase] = await Promise.all([
+        firebaseLeer("grupos"),
+        firebaseLeer("transacciones"),
+        firebaseLeer("usuarios"),
+        firebaseLeer("bitacora_admin")
+      ]);
+
+      if (gruposFirebase) {
+        const arregloGrupos = Object.values(gruposFirebase).map((grupo) =>
+          mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
+        );
+        setListaGrupos(arregloGrupos);
+      }
+      if (txFirebase) {
+        const arregloTx = Object.values(txFirebase).reverse();
+        setListaTransacciones(arregloTx);
+      }
+      if (usersFirebase) {
+        setListaUsuarios(Object.values(usersFirebase));
+      }
+      if (bitFirebase) {
+        setListaBitacoras(Object.values(bitFirebase).reverse());
+      }
+    } catch (error) {
+      console.error("Error en sync:", error);
     } finally {
       if (mostrarCargando) setCargando(false);
     }
