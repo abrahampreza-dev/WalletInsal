@@ -1424,6 +1424,10 @@ function actualizarGrupo(datos) {
     grupo.urlVideo = urlV;
   }
   if (datos.duracionSegundos !== undefined) grupo.duracionSegundos = parseInt(datos.duracionSegundos, 10);
+  if (datos.descripcion !== undefined) grupo.descripcion = datos.descripcion.trim();
+  if (datos.integrantes !== undefined) grupo.integrantes = datos.integrantes.trim();
+  if (datos.nombreGrupo !== undefined) grupo.nombreGrupo = datos.nombreGrupo.trim();
+  if (datos.especialidad !== undefined) grupo.especialidad = datos.especialidad.trim();
   escribirEnFirebase("grupos/" + datos.idGrupo, grupo);
   delete grupo.claveAcceso;
   return crearRespuestaJson({ exito: true, grupo: grupo });

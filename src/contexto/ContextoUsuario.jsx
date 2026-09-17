@@ -387,7 +387,11 @@ export function ProveedorUsuario({ children }) {
         claveAcceso: grupoActual.claveAcceso,
         urlFoto: datos.urlFoto ?? grupoActual.urlFoto ?? "",
         urlVideo: datos.urlVideo ?? grupoActual.urlVideo ?? "",
-        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10)
+        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10),
+        descripcion: datos.descripcion ?? undefined,
+        integrantes: datos.integrantes ?? undefined,
+        nombreGrupo: datos.nombreGrupo ?? undefined,
+        especialidad: datos.especialidad ?? undefined
       });
 
       if (respuesta && respuesta.exito && respuesta.grupo) {
