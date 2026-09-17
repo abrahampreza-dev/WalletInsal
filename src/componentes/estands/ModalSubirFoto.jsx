@@ -1,12 +1,27 @@
 import React, { useState, useRef } from 'react';
 import { X, UploadCloud, Image as ImageIcon, Sparkles, Check, Loader2 } from 'lucide-react';
-import { enviarPeticion } from '../../servicios/conexionGas';
+
+const IMGBB_KEY = import.meta.env.VITE_IMGBB_API_KEY || '';
+
+async function subirAImgBB(base64) {
+  const body = new FormData();
+  body.append('key', IMGBB_KEY);
+  body.append('image', base64.includes(',') ? base64.split(',')[1] : base64);
+
+  const resp = await fetch('https://api.imgbb.com/1/upload', {
+    method: 'POST',
+    body
+  });
+  const data = await resp.json();
+  if (data?.success) return data.data.url;
+  throw new Error(data?.error?.message || 'Error al subir a imgBB');
+}
 
 export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreGrupo }) {
   const [pieDeFoto, setPieDeFoto] = useState('');
   const [vistaPrevia, setVistaPrevia] = useState('');
   const [urlSubida, setUrlSubida] = useState('');
-  const [estado, setEstado] = useState('idle'); // idle | cargando | subiendo | listo | error
+  const [estado, setEstado] = useState('idle');
   const [mensajeError, setMensajeError] = useState('');
   const inputRef = useRef(null);
 
@@ -49,19 +64,12 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
       setVistaPrevia(base64);
       setEstado('subiendo');
 
-      const respuesta = await enviarPeticion('subirImagen', { imagenBase64: base64 });
-
-      if (respuesta?.exito && respuesta.urlImagen) {
-        setUrlSubida(respuesta.urlImagen);
-        setVistaPrevia(respuesta.urlImagen);
-        setEstado('listo');
-      } else {
-        setMensajeError(respuesta?.mensaje || 'Error al subir la imagen. Verifica que IMGBB_API_KEY esté configurada en Apps Script.');
-        setEstado('error');
-        setVistaPrevia('');
-      }
+      const url = await subirAImgBB(base64);
+      setUrlSubida(url);
+      setVistaPrevia(url);
+      setEstado('listo');
     } catch (err) {
-      setMensajeError('Error de conexión al subir la imagen.');
+      setMensajeError(err.message || 'Error al subir la imagen.');
       setEstado('error');
       setVistaPrevia('');
     }
@@ -71,7 +79,7 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
     e.preventDefault();
     if (!urlSubida.trim()) return;
 
-    const textoCompleto = pieDeFoto.trim() 
+    const textoCompleto = pieDeFoto.trim()
       ? `${pieDeFoto.trim()} #Expotecnia2026 #SanLuis`
       : `Proyecto ${nombreGrupo} ⚡ #Expotecnia2026 #SanLuis`;
 
@@ -107,7 +115,6 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
             </div>
           )}
 
-          {/* Zona de carga */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
               Selecciona tu imagen
@@ -154,7 +161,6 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
             </div>
           </div>
 
-          {/* Vista previa */}
           {vistaPrevia && (
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-emerald-600 flex items-center gap-1.5">
@@ -167,7 +173,6 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
             </div>
           )}
 
-          {/* Pie de foto */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
               Pie de foto (opcional)
@@ -181,7 +186,6 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
             />
           </div>
 
-          {/* Botones */}
           <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-200">
             <button type="button" onClick={cerrar} className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-400 hover:text-white text-xs font-semibold">
               Cancelar
