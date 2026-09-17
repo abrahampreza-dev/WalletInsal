@@ -44,6 +44,15 @@ const {
   const [mostrarMenuUsuario, setMostrarMenuUsuario] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
+  // Filtrar exclusivamente las transacciones del usuario en sesión por privacidad
+  const misTransacciones = usuarioActual
+    ? listaTransacciones.filter((tx) =>
+        tx.idEmisor === usuarioActual.idUsuario ||
+        tx.idReceptor === usuarioActual.idUsuario ||
+        (usuarioActual.numeroDocumento && (tx.idEmisor === usuarioActual.numeroDocumento || tx.idReceptor === usuarioActual.numeroDocumento))
+      )
+    : [];
+
   const saldo = usuarioActual?.saldoActual !== undefined ? usuarioActual.saldoActual : 0;
   const codigoQRValor = usuarioActual
     ? JSON.stringify({
@@ -285,54 +294,60 @@ Explorar Muro SPACE
               </button>
             </div>
 
-            {/* Lista de transacciones exactas */}
+            {/* Lista de transacciones exclusivas del usuario */}
             <div className="divide-y divide-slate-200/60 pt-2">
-              {listaTransacciones.slice(0, 5).map((tx) => {
-                const esNegativo = tx.tipo === 'pago_comercio' || tx.tipo === 'donacion' || tx.tipo === 'envio_estudiante';
-                
-                let IconoTx = Send;
-                let bgIcono = "bg-[#0A4D9C]/15 text-[#0A4D9C]";
-                if (tx.categoria === 'recarga') {
-                  IconoTx = PlusCircle;
-                  bgIcono = "bg-emerald-500/15 text-emerald-600";
-                } else if (tx.categoria === 'tienda') {
-                  IconoTx = ShoppingBag;
-                  bgIcono = "bg-indigo-500/10 text-indigo-400";
-                } else if (tx.categoria === 'premio') {
-                  IconoTx = Star;
-                  bgIcono = "bg-amber-500/10 text-amber-600";
-                } else if (tx.categoria === 'comunitaria') {
-                  IconoTx = Users;
-                  bgIcono = "bg-[#E67A15]/15 text-[#E67A15]";
-                }
+              {misTransacciones.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  {usuarioActual ? 'Sin movimientos registrados en tu cuenta.' : 'Inicia sesión para ver tu historial de movimientos.'}
+                </div>
+              ) : (
+                misTransacciones.slice(0, 5).map((tx) => {
+                  const esNegativo = tx.tipo === 'pago_comercio' || tx.tipo === 'donacion' || tx.tipo === 'envio_estudiante';
+                  
+                  let IconoTx = Send;
+                  let bgIcono = "bg-[#0A4D9C]/15 text-[#0A4D9C]";
+                  if (tx.categoria === 'recarga') {
+                    IconoTx = PlusCircle;
+                    bgIcono = "bg-emerald-500/15 text-emerald-600";
+                  } else if (tx.categoria === 'tienda') {
+                    IconoTx = ShoppingBag;
+                    bgIcono = "bg-indigo-500/10 text-indigo-400";
+                  } else if (tx.categoria === 'premio') {
+                    IconoTx = Star;
+                    bgIcono = "bg-amber-500/10 text-amber-600";
+                  } else if (tx.categoria === 'comunitaria') {
+                    IconoTx = Users;
+                    bgIcono = "bg-[#E67A15]/15 text-[#E67A15]";
+                  }
 
-                return (
-                  <div key={tx.idTransaccion} className="py-3.5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl ${bgIcono} flex items-center justify-center flex-shrink-0`}>
-                        <IconoTx className="w-4 h-4" />
+                  return (
+                    <div key={tx.idTransaccion} className="py-3.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl ${bgIcono} flex items-center justify-center flex-shrink-0`}>
+                          <IconoTx className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">{tx.nombreReceptor || tx.nombreEmisor}</p>
+                          <p className="text-[10px] text-slate-400">
+                            {new Date(tx.fecha).toLocaleString('es-SV', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-800">{tx.nombreReceptor || tx.nombreEmisor}</p>
-                        <p className="text-[10px] text-slate-400">
-                          {new Date(tx.fecha).toLocaleString('es-SV', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
+
+                      <div className="text-right">
+                        <span className={`text-xs font-black ${esNegativo ? 'text-slate-400' : 'text-emerald-600'}`}>
+                          {esNegativo ? '-' : '+'} {parseFloat(tx.monto).toFixed(2)} SL - BITS
+                        </span>
                       </div>
                     </div>
-
-                    <div className="text-right">
-                      <span className={`text-xs font-black ${esNegativo ? 'text-slate-400' : 'text-emerald-600'}`}>
-                        {esNegativo ? '-' : '+'} {parseFloat(tx.monto).toFixed(2)} SL - BITS
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 

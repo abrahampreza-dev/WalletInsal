@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, AlertTriangle, CheckCircle2, Info, Eye, EyeOff } from 'lucide-react';
 
 export function ModalConfirmacion({ estaAbierto, alCerrar, alConfirmar, titulo, mensaje, textoConfirmar, textoCancelar, tipo = 'peligro' }) {
   if (!estaAbierto) return null;
@@ -34,11 +34,17 @@ export function ModalConfirmacion({ estaAbierto, alCerrar, alConfirmar, titulo, 
   );
 }
 
-export function ModalInput({ estaAbierto, alCerrar, alConfirmar, titulo, mensaje, placeholder, valorInicial = '', tipo = 'text', textoConfirmar = 'Guardar' }) {
-  const [valor, setValor] = React.useState(valorInicial);
+export function ModalInput({ estaAbierto, alCerrar, alConfirmar, titulo, mensaje, placeholder, valorInicial = '', tipo = 'text', tipoInput, textoConfirmar = 'Guardar' }) {
+  const [valor, setValor] = useState(valorInicial);
+  const tipoEfectivo = tipoInput || tipo;
+  const esPassword = tipoEfectivo === 'password';
+  const [mostrarPassword, setMostrarPassword] = useState(false);
 
   React.useEffect(() => {
-    if (estaAbierto) setValor(valorInicial);
+    if (estaAbierto) {
+      setValor(valorInicial);
+      setMostrarPassword(false);
+    }
   }, [estaAbierto, valorInicial]);
 
   if (!estaAbierto) return null;
@@ -53,15 +59,27 @@ export function ModalInput({ estaAbierto, alCerrar, alConfirmar, titulo, mensaje
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">{mensaje}</p>
           </div>
         </div>
-        <input
-          type={tipo}
-          value={valor}
-          onChange={(e) => setValor(e.target.value)}
-          placeholder={placeholder}
-          autoFocus
-          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
-          onKeyDown={(e) => { if (e.key === 'Enter') alConfirmar(valor); }}
-        />
+        <div className="relative">
+          <input
+            type={esPassword ? (mostrarPassword ? 'text' : 'password') : tipoEfectivo}
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder={placeholder}
+            autoFocus
+            className="w-full px-4 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
+            onKeyDown={(e) => { if (e.key === 'Enter') alConfirmar(valor); }}
+          />
+          {esPassword && (
+            <button
+              type="button"
+              onClick={() => setMostrarPassword(!mostrarPassword)}
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700"
+              aria-label={mostrarPassword ? "Ocultar clave" : "Mostrar clave"}
+            >
+              {mostrarPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
         <div className="flex gap-2 pt-1">
           <button onClick={alCerrar} className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition-colors">
             Cancelar

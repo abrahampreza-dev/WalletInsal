@@ -87,6 +87,8 @@ function doPost(e) {
 
       case "registrarGrupo":
         return registrarGrupo(datos);
+      case "eliminarGrupo":
+        return eliminarGrupo(datos);
       case "actualizarGrupo":
         return actualizarGrupo(datos);
       case "subirFotoGrupo":
@@ -1389,8 +1391,16 @@ function iniciarSesionAdmin(datos) {
 
 function iniciarSesionGrupo(datos) {
   var grupos = leerDeFirebase("grupos") || {};
-  var grupo = grupos[datos.idGrupo];
-  if (!grupo || !grupo.claveAcceso || grupo.claveAcceso !== datos.claveAcceso) {
+  var idBuscado = textoSeguro(datos && datos.idGrupo);
+  var claveIngresada = (datos && datos.claveAcceso || "").trim();
+
+  var encontrado = buscarGrupoFlexible(grupos, idBuscado);
+  if (!encontrado || !encontrado.grupo) {
+    return crearRespuestaJson({ exito: false, mensaje: "Grupo no encontrado en el sistema." });
+  }
+
+  var grupo = encontrado.grupo;
+  if (!grupo.claveAcceso || grupo.claveAcceso.trim() !== claveIngresada) {
     return crearRespuestaJson({ exito: false, mensaje: "Código de acceso del grupo incorrecto." });
   }
   var copia = JSON.parse(JSON.stringify(grupo));
@@ -1536,70 +1546,126 @@ function agregarComentarioFoto(datos) {
 
 
 function cambiarContrasena(datos) {
-  var idUsuario = datos.idUsuario;
-  var actual = (datos.contrasenaActual || "").trim();
-  var nueva = (datos.nuevaContrasena || "").trim();
+  var idUsuario = textoSeguro(datos && datos.idUsuario);
+  var actual = (datos && datos.contrasenaActual || "").trim();
+  var nueva = (datos && datos.nuevaContrasena || "").trim();
 
   if (!idUsuario || !actual || !nueva || nueva.length < CONFIG.PASSWORD_MIN_LENGTH) {
     return crearRespuestaJson({ exito: false, mensaje: "La contraseña debe tener mínimo " + CONFIG.PASSWORD_MIN_LENGTH + " caracteres." });
   }
 
-  var usuario = leerDeFirebase("usuarios/" + idUsuario);
-  if (!usuario || usuario.contrasena !== actual) {
+  var usuarios = leerDeFirebase("usuarios") || {};
+  var encontrado = buscarUsuarioFlexible(usuarios, idUsuario);
+  if (!encontrado || !encontrado.usuario) {
+    return crearRespuestaJson({ exito: false, mensaje: "Usuario no encontrado." });
+  }
+
+  var usuario = encontrado.usuario;
+  var claveReal = encontrado.id;
+
+  if (usuario.contrasena !== actual) {
     return crearRespuestaJson({ exito: false, mensaje: "Contraseña actual incorrecta." });
   }
 
   usuario.contrasena = nueva;
   usuario.contrasenaTemporal = false;
-  escribirEnFirebase("usuarios/" + idUsuario, usuario);
+  escribirEnFirebase("usuarios/" + claveReal, usuario);
   return crearRespuestaJson({ exito: true, mensaje: "Contraseña actualizada exitosamente." });
 }
 
 
 function restablecerContrasena(datos) {
-  if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Se requiere una sesión administrativa válida."});
-  var id=textoSeguro(datos&&datos.idUsuario),temp=textoSeguro(datos&&datos.nuevaContrasena)||"1234";
-  if(!id||temp.length<CONFIG.PASSWORD_MIN_LENGTH)return crearRespuestaJson({exito:false,mensaje:"Datos de restablecimiento inválidos."});
-  var usuario=leerDeFirebaseObligatorio("usuarios/"+id);if(!usuario)return crearRespuestaJson({exito:false,mensaje:"Usuario no encontrado."});
-  var ok=escribirEnFirebase("usuarios/"+id+"/contrasena",temp);if(!ok)throw new Error("No se pudo actualizar la contraseña.");
-  escribirEnFirebase("usuarios/"+id+"/contrasenaTemporal",true);
-  return crearRespuestaJson({exito:true,mensaje:"Contraseña temporal restablecida."});
+  if (!validarAdminToken(datos && datos.adminToken)) return crearRespuestaJson({ exito: false, codigo: "ADMIN_NO_AUTORIZADO", mensaje: "Se requiere una sesión administrativa válida." });
+  var id = textoSeguro(datos && datos.idUsuario);
+  var temp = textoSeguro(datos && datos.nuevaContrasena) || "1234";
+
+  if (!id || temp.length < CONFIG.PASSWORD_MIN_LENGTH) return crearRespuestaJson({ exito: false, mensaje: "Datos de restablecimiento inválidos." });
+
+  var usuarios = leerDeFirebase("usuarios") || {};
+  var encontrado = buscarUsuarioFlexible(usuarios, id);
+  if (!encontrado || !encontrado.usuario) return crearRespuestaJson({ exito: false, mensaje: "Usuario no encontrado." });
+
+  var claveReal = encontrado.id;
+  var ok = escribirEnFirebase("usuarios/" + claveReal + "/contrasena", temp);
+  if (!ok) throw new Error("No se pudo actualizar la contraseña.");
+  escribirEnFirebase("usuarios/" + claveReal + "/contrasenaTemporal", true);
+
+  return crearRespuestaJson({ exito: true, mensaje: "Contraseña temporal restablecida." });
 }
 
 
 function restablecerContrasenaGrupo(datos) {
-  if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Se requiere una sesión administrativa válida."});
-  var id=textoSeguro(datos&&datos.idGrupo),nuevaClave=textoSeguro(datos&&datos.nuevaClave);
-  if(!id||!nuevaClave||nuevaClave.length<6)return crearRespuestaJson({exito:false,mensaje:"ID de grupo y nueva contraseña (mín. 6 caracteres) requeridos."});
-  var grupo=leerDeFirebaseObligatorio("grupos/"+id);if(!grupo)return crearRespuestaJson({exito:false,mensaje:"Grupo no encontrado."});
-  var ok=escribirEnFirebase("grupos/"+id+"/claveAcceso",nuevaClave);if(!ok)throw new Error("No se pudo actualizar la contraseña del grupo.");
-  return crearRespuestaJson({exito:true,mensaje:"Contraseña del grupo restablecida correctamente."});
+  if (!validarAdminToken(datos && datos.adminToken)) return crearRespuestaJson({ exito: false, codigo: "ADMIN_NO_AUTORIZADO", mensaje: "Se requiere una sesión administrativa válida." });
+  var id = textoSeguro(datos && datos.idGrupo);
+  var nuevaClave = textoSeguro(datos && datos.nuevaClave);
+
+  if (!id || !nuevaClave || nuevaClave.length < 6) return crearRespuestaJson({ exito: false, mensaje: "ID de grupo y nueva contraseña (mín. 6 caracteres) requeridos." });
+
+  var grupos = leerDeFirebase("grupos") || {};
+  var encontrado = buscarGrupoFlexible(grupos, id);
+  if (!encontrado || !encontrado.grupo) return crearRespuestaJson({ exito: false, mensaje: "Grupo no encontrado." });
+
+  var idGrupoReal = encontrado.id;
+  var ok = escribirEnFirebase("grupos/" + idGrupoReal + "/claveAcceso", nuevaClave);
+  if (!ok) throw new Error("No se pudo actualizar la contraseña del grupo.");
+
+  return crearRespuestaJson({ exito: true, mensaje: "Contraseña del grupo restablecida correctamente." });
 }
 
 
 function editarUsuario(datos) {
-  if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Se requiere una sesión administrativa válida."});
-  var id=textoSeguro(datos&&datos.idUsuario);if(!id)return crearRespuestaJson({exito:false,mensaje:"ID de usuario requerido."});
-  var usuario=leerDeFirebaseObligatorio("usuarios/"+id);if(!usuario)return crearRespuestaJson({exito:false,mensaje:"Usuario no encontrado."});
-  var patch={};
-  if(datos.nombreCompleto!==undefined)patch["usuarios/"+id+"/nombreCompleto"]=limitarTexto(textoSeguro(datos.nombreCompleto),CONFIG.MAX_NOMBRE_LENGTH);
-  if(datos.correo!==undefined)patch["usuarios/"+id+"/correo"]=limitarTexto(textoSeguro(datos.correo).toLowerCase(),CONFIG.MAX_CORREO_LENGTH);
-  if(datos.avatar!==undefined)patch["usuarios/"+id+"/avatar"]=textoSeguro(datos.avatar);
-  if(datos.contrasena!==undefined)patch["usuarios/"+id+"/contrasena"]=textoSeguro(datos.contrasena);
-  if(Object.keys(patch).length===0)return crearRespuestaJson({exito:false,mensaje:"No hay cambios para aplicar."});
-  if(!actualizarEnFirebaseMultiRuta(patch))throw new Error("No se pudieron guardar los cambios.");
-  var actualizado=leerDeFirebaseObligatorio("usuarios/"+id);return crearRespuestaJson({exito:true,usuario:actualizado});
+  if (!validarAdminToken(datos && datos.adminToken)) return crearRespuestaJson({ exito: false, codigo: "ADMIN_NO_AUTORIZADO", mensaje: "Se requiere una sesión administrativa válida." });
+  var id = textoSeguro(datos && datos.idUsuario);
+  if (!id) return crearRespuestaJson({ exito: false, mensaje: "ID de usuario requerido." });
+
+  var usuarios = leerDeFirebase("usuarios") || {};
+  var encontrado = buscarUsuarioFlexible(usuarios, id);
+  if (!encontrado || !encontrado.usuario) return crearRespuestaJson({ exito: false, mensaje: "Usuario no encontrado." });
+
+  var claveReal = encontrado.id;
+  var patch = {};
+  if (datos.nombreCompleto !== undefined) patch["usuarios/" + claveReal + "/nombreCompleto"] = limitarTexto(textoSeguro(datos.nombreCompleto), CONFIG.MAX_NOMBRE_LENGTH);
+  if (datos.correo !== undefined) patch["usuarios/" + claveReal + "/correo"] = limitarTexto(textoSeguro(datos.correo).toLowerCase(), CONFIG.MAX_CORREO_LENGTH);
+  if (datos.avatar !== undefined) patch["usuarios/" + claveReal + "/avatar"] = textoSeguro(datos.avatar);
+  if (datos.contrasena !== undefined) patch["usuarios/" + claveReal + "/contrasena"] = textoSeguro(datos.contrasena);
+
+  if (Object.keys(patch).length === 0) return crearRespuestaJson({ exito: false, mensaje: "No hay cambios para aplicar." });
+  if (!actualizarEnFirebaseMultiRuta(patch)) throw new Error("No se pudieron guardar los cambios.");
+  var actualizado = leerDeFirebaseObligatorio("usuarios/" + claveReal);
+  return crearRespuestaJson({ exito: true, usuario: actualizado });
 }
 
 
 function eliminarUsuario(datos) {
-  if(!validarAdminToken(datos&&datos.adminToken))return crearRespuestaJson({exito:false,codigo:"ADMIN_NO_AUTORIZADO",mensaje:"Se requiere una sesión administrativa válida."});
-  var id=textoSeguro(datos&&datos.idUsuario);if(!id)return crearRespuestaJson({exito:false,mensaje:"ID de usuario requerido."});
-  var usuario=leerDeFirebaseObligatorio("usuarios/"+id);if(!usuario)return crearRespuestaJson({exito:false,mensaje:"Usuario no encontrado."});
-  var saldoC=obtenerSaldoCentavosSeguro(usuario.saldoActual,"saldo del usuario");
-  if(saldoC!==0)return crearRespuestaJson({exito:false,codigo:"USUARIO_CON_SALDO",mensaje:"No se puede eliminar un usuario con saldo distinto de 0. Primero debe quedar en saldo 0."});
-  if(!escribirEnFirebase("usuarios/"+id,null))throw new Error("Firebase rechazó la eliminación.");
-  return crearRespuestaJson({exito:true,mensaje:"Usuario eliminado correctamente."});
+  if (!validarAdminToken(datos && datos.adminToken)) return crearRespuestaJson({ exito: false, codigo: "ADMIN_NO_AUTORIZADO", mensaje: "Se requiere una sesión administrativa válida." });
+  var id = textoSeguro(datos && datos.idUsuario);
+  if (!id) return crearRespuestaJson({ exito: false, mensaje: "ID de usuario requerido." });
+
+  var usuarios = leerDeFirebase("usuarios") || {};
+  var encontrado = buscarUsuarioFlexible(usuarios, id);
+  if (!encontrado || !encontrado.usuario) return crearRespuestaJson({ exito: false, mensaje: "Usuario no encontrado." });
+
+  var claveReal = encontrado.id;
+  var usuario = encontrado.usuario;
+  var saldoC = obtenerSaldoCentavosSeguro(usuario.saldoActual, "saldo del usuario");
+  if (saldoC !== 0) return crearRespuestaJson({ exito: false, codigo: "USUARIO_CON_SALDO", mensaje: "No se puede eliminar un usuario con saldo distinto de 0. Primero debe quedar en saldo 0." });
+  if (!escribirEnFirebase("usuarios/" + claveReal, null)) throw new Error("Firebase rechazó la eliminación.");
+  return crearRespuestaJson({ exito: true, mensaje: "Usuario eliminado correctamente." });
+}
+
+
+function eliminarGrupo(datos) {
+  if (!validarAdminToken(datos && datos.adminToken)) return crearRespuestaJson({ exito: false, codigo: "ADMIN_NO_AUTORIZADO", mensaje: "Se requiere una sesión administrativa válida." });
+  var id = textoSeguro(datos && datos.idGrupo);
+  if (!id) return crearRespuestaJson({ exito: false, mensaje: "ID de grupo requerido." });
+
+  var grupos = leerDeFirebase("grupos") || {};
+  var encontrado = buscarGrupoFlexible(grupos, id);
+  if (!encontrado || !encontrado.grupo) return crearRespuestaJson({ exito: false, mensaje: "Grupo no encontrado." });
+
+  var idGrupoReal = encontrado.id;
+  if (!escribirEnFirebase("grupos/" + idGrupoReal, null)) throw new Error("Firebase rechazó la eliminación del estand.");
+  return crearRespuestaJson({ exito: true, mensaje: "Estand eliminado correctamente." });
 }
 
 
@@ -1809,15 +1875,23 @@ function verificarContrasena(usuario, contrasena) {
 
 
 function validarAdminToken(token) {
-  var t=textoSeguro(token);
-  if(!t)return false;
-  var datos=leerDeFirebase("adminTokens/"+t);
-  if(!datos||!datos.autorizado)return false;
-  if(datos.expiraEn && Date.now()>datos.expiraEn){
-    escribirEnFirebase("adminTokens/"+t,null);
-    return false;
+  var t = textoSeguro(token);
+  if (!t) return false;
+
+  var claveConfigurada = PropertiesService.getScriptProperties().getProperty("ADMIN_PASSWORD");
+  if (claveConfigurada && t === String(claveConfigurada).trim()) {
+    return true;
   }
-  return true;
+
+  var datos = leerDeFirebase("adminTokens/" + t);
+  if (datos && datos.autorizado) {
+    if (datos.expiraEn && Date.now() > datos.expiraEn) {
+      escribirEnFirebase("adminTokens/" + t, null);
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 

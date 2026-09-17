@@ -26,6 +26,7 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
   const [cargandoCambio, setCargandoCambio] = useState(false);
   const [modalExitoCambio, setModalExitoCambio] = useState(false);
   const [usuarioLogueado, setUsuarioLogueado] = useState(null);
+  const [modalOlvido, setModalOlvido] = useState(false);
 
   // Acceso grupo
   const [idGrupo, setIdGrupo] = useState('');
@@ -76,8 +77,9 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
     setCargandoCambio(true);
     try {
       const { enviarPeticion } = await import('../../servicios/conexionGas');
+      const idUsuarioActual = usuarioLogueado?.idUsuario || documentoLogin.trim();
       const respuesta = await enviarPeticion('cambiarContrasena', {
-        idUsuario: usuarioLogueado?.idUsuario,
+        idUsuario: idUsuarioActual,
         contrasenaActual: claveLogin.trim(),
         nuevaContrasena: nuevaClaveForzada.trim()
       });
@@ -230,7 +232,12 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Contraseña</label>
+                      <button type="button" onClick={() => setModalOlvido(true)} className="text-[11px] font-semibold text-[#0A4D9C] hover:underline">
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
                     <div className="relative">
                       <input
                         type={verClaveLogin ? "text" : "password"}
@@ -328,6 +335,14 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
         titulo="Contraseña actualizada"
         mensaje="Tu contraseña se actualizó correctamente. Ya puedes usar la plataforma con tu nueva contraseña."
         tipo="exito"
+      />
+
+      <ModalAlerta
+        estaAbierto={modalOlvido}
+        alCerrar={() => setModalOlvido(false)}
+        titulo="Recuperación de Contraseña"
+        mensaje="Si olvidaste tu contraseña o perdiste el acceso, por favor acércate a la mesa de Caja o Administración con tu número de NIE/DUI. Un administrador verificará tu identidad y te asignará una contraseña temporal."
+        tipo="info"
       />
     </div>
   );

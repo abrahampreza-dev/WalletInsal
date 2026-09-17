@@ -104,14 +104,14 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
             </label>
             <input
               type="number"
-              min="15"
+              min="120"
               max="300"
               value={duracion}
               onChange={(e) => setDuracion(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#0A4D9C] font-bold"
             />
             <p className="text-[10px] text-slate-400">
-              Mínimo de retención requerido para votar: {Math.max(15, Math.ceil(duracion * 0.5))} segundos (50%).
+              Mínimo de retención requerido para votar: {Math.max(120, Math.ceil(duracion * 0.5))} segundos (50%).
             </p>
           </div>
 

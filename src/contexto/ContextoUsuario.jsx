@@ -139,7 +139,7 @@ export function ProveedorUsuario({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll ligero de saldo cada 5 segundos: solo lee 1 usuario en Firebase (casi instantáneo)
+  // Poll ligero de saldo cada 3 segundos: solo lee 1 usuario en Firebase (casi instantáneo)
   useEffect(() => {
     if (!usuarioActual) return;
     const intervalo = setInterval(async () => {
@@ -159,16 +159,16 @@ export function ProveedorUsuario({ children }) {
       } catch (err) {
         // Silencioso: el sync completo lo cubrirá
       }
-    }, 5000);
+    }, 3000);
     return () => clearInterval(intervalo);
   }, [usuarioActual?.idUsuario]);
 
-  // Sync completa cada 60 segundos: grupos, transacciones, usuarios, bitácoras
+  // Sync completa cada 10 segundos: grupos, transacciones, usuarios, bitácoras (tiempo real)
+  // Para usuarios no logueados, solo sincroniza grupos (página pública)
   useEffect(() => {
-    if (!usuarioActual) return;
     const intervalo = setInterval(() => {
       sincronizarConServidor();
-    }, 60000);
+    }, 10000);
     return () => clearInterval(intervalo);
   }, [usuarioActual]);
 
@@ -283,6 +283,7 @@ export function ProveedorUsuario({ children }) {
             return { ...g, fotos: fotosActualizadas };
           })
         );
+        setTimeout(() => sincronizarConServidor(), 500);
         return { exito: true };
       }
 
@@ -317,6 +318,7 @@ export function ProveedorUsuario({ children }) {
         setListaGrupos((prev) =>
           prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
         );
+        setTimeout(() => sincronizarConServidor(), 500);
         return { exito: true };
       }
       return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se pudo procesar tu comentario. Inténtalo nuevamente." };
@@ -783,6 +785,8 @@ export function ProveedorUsuario({ children }) {
         grupoActual,
         setGrupoActual,
         adminAutenticado: Boolean(adminToken),
+        adminToken,
+        setAdminToken,
         listaGrupos,
         setListaGrupos,
         listaUsuarios,

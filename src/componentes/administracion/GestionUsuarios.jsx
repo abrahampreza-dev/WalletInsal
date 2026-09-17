@@ -7,7 +7,7 @@ import {
 import { ModalConfirmacion, ModalInput, ModalAlerta } from '../comun/ModalProfesional';
 
 export default function GestionUsuarios() {
-  const { listaUsuarios, setListaUsuarios, listaGrupos, sincronizarConServidor, adminToken } = usarUsuario();
+  const { listaUsuarios, setListaUsuarios, listaGrupos, setListaGrupos, sincronizarConServidor, adminToken, setAdminToken } = usarUsuario();
   const [busqueda, setBusqueda] = useState('');
   const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [editNombre, setEditNombre] = useState('');
@@ -26,6 +26,8 @@ export default function GestionUsuarios() {
   // Gestión de grupos
   const [grupoReset, setGrupoReset] = useState(null);
   const [modalResetGrupo, setModalResetGrupo] = useState(false);
+  const [grupoEliminar, setGrupoEliminar] = useState(null);
+  const [modalEliminarGrupo, setModalEliminarGrupo] = useState(false);
 
   const usuariosFiltrados = listaUsuarios.filter((u) => {
     const texto = busqueda.toLowerCase();
@@ -51,6 +53,13 @@ export default function GestionUsuarios() {
     setEditNombre('');
     setEditCorreo('');
     setEditSaldo('');
+  };
+
+  const manejarNoAutorizado = (resp) => {
+    if (resp?.codigo === 'ADMIN_NO_AUTORIZADO') {
+      if (setAdminToken) setAdminToken('');
+      try { localStorage.removeItem('admin_sl_bits'); } catch {}
+    }
   };
 
   const guardarEdicion = async (u) => {
@@ -83,6 +92,7 @@ export default function GestionUsuarios() {
         setListaUsuarios((prev) => prev.map((usr) => usr.idUsuario === u.idUsuario ? { ...usr, nombreCompleto: editNombre.trim(), correo: editCorreo.trim(), saldoActual: saldoNum } : usr));
         cancelarEdicion();
       } else {
+        manejarNoAutorizado(respuesta);
         setMensajeError(respuesta?.mensaje || 'Error al actualizar.');
       }
     } catch (err) {
@@ -110,6 +120,7 @@ export default function GestionUsuarios() {
         setMensajeExito('Usuario eliminado.');
         setListaUsuarios((prev) => prev.filter((usr) => usr.idUsuario !== u.idUsuario));
       } else {
+        manejarNoAutorizado(respuesta);
         setMensajeError(respuesta?.mensaje || 'Error al eliminar.');
       }
     } catch (err) {
@@ -150,6 +161,7 @@ export default function GestionUsuarios() {
           tipo: 'exito'
         });
       } else {
+        manejarNoAutorizado(respuesta);
         setMensajeError(respuesta?.mensaje || 'Error al restablecer contraseña.');
       }
     } catch (err) {
@@ -190,7 +202,36 @@ export default function GestionUsuarios() {
           tipo: 'exito'
         });
       } else {
+        manejarNoAutorizado(respuesta);
         setMensajeError(respuesta?.mensaje || 'Error al restablecer contraseña del grupo.');
+      }
+    } catch (err) {
+      setMensajeError('Error de conexión con el servidor.');
+    }
+  };
+
+  const eliminarGrupoAccion = async (g) => {
+    setGrupoEliminar(g);
+    setModalEliminarGrupo(true);
+  };
+
+  const confirmarEliminarGrupo = async () => {
+    const g = grupoEliminar;
+    setModalEliminarGrupo(false);
+    setGrupoEliminar(null);
+    setMensajeExito('');
+    setMensajeError('');
+
+    try {
+      const { enviarPeticion } = await import('../../servicios/conexionGas');
+      const respuesta = await enviarPeticion('eliminarGrupo', { idGrupo: g.idGrupo, adminToken });
+
+      if (respuesta && respuesta.exito) {
+        setMensajeExito(`Estand "${g.nombreGrupo}" eliminado correctamente.`);
+        setListaGrupos((prev) => prev.filter((grupo) => grupo.idGrupo !== g.idGrupo));
+      } else {
+        manejarNoAutorizado(respuesta);
+        setMensajeError(respuesta?.mensaje || 'Error al eliminar el estand.');
       }
     } catch (err) {
       setMensajeError('Error de conexión con el servidor.');
@@ -347,13 +388,22 @@ export default function GestionUsuarios() {
                     <p className="text-[10px] text-slate-400">{g.especialidad} · {g.handle || g.idGrupo}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => restablecerClaveGrupo(g)}
-                  className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-[#E67A15] hover:bg-[#E67A15]/10 flex-shrink-0"
-                  title="Restablecer contraseña del grupo"
-                >
-                  <Key className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => restablecerClaveGrupo(g)}
+                    className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-[#E67A15] hover:bg-[#E67A15]/10"
+                    title="Restablecer contraseña del grupo"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => eliminarGrupoAccion(g)}
+                    className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10"
+                    title="Eliminar estand"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -370,6 +420,16 @@ export default function GestionUsuarios() {
         tipo="peligro"
       />
 
+      <ModalConfirmacion
+        estaAbierto={modalEliminarGrupo}
+        alCerrar={() => { setModalEliminarGrupo(false); setGrupoEliminar(null); }}
+        alConfirmar={confirmarEliminarGrupo}
+        titulo="Eliminar estand"
+        mensaje={`¿Estás seguro de eliminar el estand "${grupoEliminar?.nombreGrupo}"? Esta acción no se puede deshacer.`}
+        textoConfirmar="Eliminar Estand"
+        tipo="peligro"
+      />
+
       <ModalInput
         estaAbierto={modalReset}
         alCerrar={() => { setModalReset(false); setUsuarioReset(null); }}
@@ -378,7 +438,7 @@ export default function GestionUsuarios() {
         mensaje={`Ingresa la nueva contraseña temporal para "${usuarioReset?.nombreCompleto}". El usuario deberá cambiarla al iniciar sesión.`}
         placeholder="Nueva contraseña (mín. 4 caracteres)"
         valorInicial="1234"
-        tipo="text"
+        tipo="password"
         textoConfirmar="Restablecer"
       />
 
@@ -389,7 +449,7 @@ export default function GestionUsuarios() {
         titulo="Restablecer contraseña del estand"
         mensaje={`Ingresa la nueva contraseña para "${grupoReset?.nombreGrupo}". El equipo deberá usar esta nueva clave para iniciar sesión.`}
         placeholder="Nueva contraseña (mín. 6 caracteres)"
-        tipo="text"
+        tipo="password"
         textoConfirmar="Restablecer"
       />
 

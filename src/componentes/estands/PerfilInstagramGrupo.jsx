@@ -280,21 +280,25 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
                   Apoyar con SL - BITS
                 </button>
 
-                <button
-                  onClick={() => solicitarAccionEquipo('subirFoto')}
-                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-bold shadow-lg shadow-pink-500/20 flex items-center gap-2"
-                >
-                  <UploadCloud className="w-4 h-4" />
-                  Nueva Publicación
-                </button>
+                {esMiembroEquipo && (
+                  <>
+                    <button
+                      onClick={() => solicitarAccionEquipo('subirFoto')}
+                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-bold shadow-lg shadow-pink-500/20 flex items-center gap-2"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      Nueva Publicación
+                    </button>
 
-                <button
-                  onClick={() => solicitarAccionEquipo('configDrive')}
-                  className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-2"
-                >
-                  <Video className="w-4 h-4 text-[#0A4D9C]" />
-                  Video Drive
-                </button>
+                    <button
+                      onClick={() => solicitarAccionEquipo('configDrive')}
+                      className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-2"
+                    >
+                      <Video className="w-4 h-4 text-[#0A4D9C]" />
+                      Video Drive
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -362,16 +366,18 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
         <div className="pt-4 border-t border-slate-200">
           <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-none">
             
-            {/* Botón para subir historia o foto */}
-            <button
-              onClick={() => solicitarAccionEquipo('subirFoto')}
-              className="flex flex-col items-center gap-1.5 group flex-shrink-0"
-            >
-              <div className="w-16 h-16 rounded-full bg-slate-50 border-2 border-dashed border-slate-200 group-hover:border-[#E67A15] flex items-center justify-center text-slate-400 group-hover:text-[#E67A15] transition-colors">
-                <PlusCircle className="w-6 h-6" />
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium group-hover:text-white">Nueva Publicación</span>
-            </button>
+            {/* Botón para subir historia o foto (Solo visible para miembros del estand activo) */}
+            {esMiembroEquipo && (
+              <button
+                onClick={() => solicitarAccionEquipo('subirFoto')}
+                className="flex flex-col items-center gap-1.5 group flex-shrink-0"
+              >
+                <div className="w-16 h-16 rounded-full bg-slate-50 border-2 border-dashed border-slate-200 group-hover:border-[#E67A15] flex items-center justify-center text-slate-400 group-hover:text-[#E67A15] transition-colors">
+                  <PlusCircle className="w-6 h-6" />
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium group-hover:text-white">Nueva Publicación</span>
+              </button>
+            )}
 
             {/* Burbujas de Historias */}
             {historias.map((historia, idx) => (
@@ -842,7 +848,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
       <ModalFotoDetalle
         estaAbierto={Boolean(fotoSeleccionada)}
         alCerrar={() => setFotoSeleccionada(null)}
-        foto={fotoSeleccionada}
+        foto={fotoSeleccionada ? (grupo.fotos || []).find(f => f.id === fotoSeleccionada.id) || fotoSeleccionada : null}
         grupo={grupo}
         alAbrirDonacion={() => {
           setFotoSeleccionada(null);
