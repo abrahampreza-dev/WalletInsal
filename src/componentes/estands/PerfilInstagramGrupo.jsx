@@ -99,6 +99,32 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
     };
   }, []);
 
+  // Detener video al salir de la pestaña de video
+  useEffect(() => {
+    if (pestanaActiva !== 'videoDrive' && reproduciendo) {
+      setReproduciendo(false);
+      setYaInicio(false);
+      setTimerIniciado(false);
+      // Forzar detención del iframe
+      if (contenedorVideoRef.current) {
+        const iframe = contenedorVideoRef.current.querySelector('iframe');
+        if (iframe) {
+          const src = iframe.src;
+          iframe.src = '';
+          iframe.src = src;
+        }
+      }
+    }
+  }, [pestanaActiva]);
+
+  // Resetear video al cambiar de estand
+  useEffect(() => {
+    setReproduciendo(false);
+    setYaInicio(false);
+    setTimerIniciado(false);
+    setSegundosRestantes(Math.max(15, Math.ceil((grupo?.duracionSegundos || 30) * 0.5)));
+  }, [idGrupo]);
+
   const activarPantallaCompleta = useCallback(() => {
     const el = contenedorVideoRef.current;
     if (!el) return;
