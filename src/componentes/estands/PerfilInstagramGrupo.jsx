@@ -34,6 +34,7 @@ import ModalConfigurarDrive from './ModalConfigurarDrive';
 import ModalHistoria from './ModalHistoria';
 import ModalFotoDetalle from './ModalFotoDetalle';
 import ModalAccesoEquipo from './ModalAccesoEquipo';
+import ModalEditarPerfilGrupo from './ModalEditarPerfilGrupo';
 import VentanaDonar from './VentanaDonar';
 import CodigoQRGrupo from './CodigoQRGrupo';
 
@@ -44,6 +45,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
     grupoActual,
     subirFotoGrupo, 
     actualizarVideoDrive, 
+    actualizarGrupo,
     listaTransacciones,
     iniciarTimerVideo,
     verificarRetencionVideo
@@ -57,6 +59,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
   const [pestanaActiva, setPestanaActiva] = useState('publicaciones'); // 'publicaciones', 'videoDrive', 'apoyos', 'ficha'
   const [modalSubirAbierto, setModalSubirAbierto] = useState(false);
   const [modalDriveAbierto, setModalDriveAbierto] = useState(false);
+  const [modalEditarPerfilAbierto, setModalEditarPerfilAbierto] = useState(false);
   const [modalHistoriaAbierto, setModalHistoriaAbierto] = useState(false);
   const [modalAccesoEquipoAbierto, setModalAccesoEquipoAbierto] = useState(false);
   const [accionPendiente, setAccionPendiente] = useState(null); // 'subirFoto' o 'configDrive'
@@ -167,6 +170,15 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
       iniciar();
     }
   }, [pestanaActiva, tieneVideo, usuarioActual, timerIniciado, requisitoCumplido, idGrupo, iniciarTimerVideo]);
+
+  useEffect(() => {
+    if (pestanaActiva !== 'videoDrive') {
+      setReproduciendo(false);
+      setYaInicio(false);
+      setTimerIniciado(false);
+      setSegundosRestantes(0);
+    }
+  }, [pestanaActiva, idGrupo]);
 
   if (!grupo) return null;
 
@@ -305,6 +317,14 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
                     >
                       <Video className="w-4 h-4 text-[#0A4D9C]" />
                       Video Drive
+                    </button>
+
+                    <button
+                      onClick={() => setModalEditarPerfilAbierto(true)}
+                      className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-2"
+                    >
+                      <Settings className="w-4 h-4 text-[#0A4D9C]" />
+                      Editar Estand
                     </button>
                   </>
                 )}
@@ -847,6 +867,14 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
         nombreGrupo={grupo.nombreGrupo}
       />
 
+      {/* Modal Editar Perfil del Estand */}
+      <ModalEditarPerfilGrupo
+        estaAbierto={modalEditarPerfilAbierto}
+        alCerrar={() => setModalEditarPerfilAbierto(false)}
+        grupo={grupo}
+        alGuardar={(datos) => actualizarGrupo(datos)}
+      />
+
       {/* Modal Historias */}
       <ModalHistoria
         estaAbierto={modalHistoriaAbierto}
@@ -873,7 +901,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
         estand={grupo}
         estaAbierto={mostrarDonarModal}
         alCerrar={() => setMostrarDonarModal(false)}
-        alAbrirRegistro={() => {}}
+        alAbrirRegistro={alAbrirRegistro}
       />
 
       {/* Modal Código QR */}

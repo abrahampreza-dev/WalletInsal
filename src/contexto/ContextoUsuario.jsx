@@ -385,6 +385,10 @@ export function ProveedorUsuario({ children }) {
       const respuesta = await enviarPeticion("actualizarGrupo", {
         idGrupo: datos.idGrupo,
         claveAcceso: grupoActual.claveAcceso,
+        nombreGrupo: datos.nombreGrupo ?? grupoActual.nombreGrupo ?? "",
+        especialidad: datos.especialidad ?? grupoActual.especialidad ?? "",
+        descripcion: datos.descripcion ?? grupoActual.descripcion ?? "",
+        integrantes: datos.integrantes ?? grupoActual.integrantes ?? "",
         urlFoto: datos.urlFoto ?? grupoActual.urlFoto ?? "",
         urlVideo: datos.urlVideo ?? grupoActual.urlVideo ?? "",
         duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10)

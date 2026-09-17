@@ -1415,6 +1415,10 @@ function actualizarGrupo(datos) {
   if (!grupo || !grupo.claveAcceso || grupo.claveAcceso !== datos.claveAcceso) {
     return crearRespuestaJson({ exito: false, mensaje: "No tienes autorización para editar este grupo." });
   }
+  if (datos.nombreGrupo !== undefined) grupo.nombreGrupo = datos.nombreGrupo.trim();
+  if (datos.especialidad !== undefined) grupo.especialidad = datos.especialidad.trim();
+  if (datos.descripcion !== undefined) grupo.descripcion = datos.descripcion.trim();
+  if (datos.integrantes !== undefined) grupo.integrantes = datos.integrantes.trim();
   if (datos.urlFoto !== undefined) grupo.urlFoto = datos.urlFoto.trim();
   if (datos.urlVideo !== undefined) {
     var urlV = datos.urlVideo.trim();
