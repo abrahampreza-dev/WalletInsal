@@ -177,61 +177,32 @@ export function ProveedorUsuario({ children }) {
   const sincronizarConServidor = async (mostrarCargando = false) => {
     if (mostrarCargando) setCargando(true);
     try {
-      // Intentar primero con GAS
-      const respuesta = await enviarPeticion("obtenerTodo");
+      // Leer todo directamente de Firebase (sin GAS)
+      const [gruposFirebase, txFirebase, usersFirebase, bitFirebase] = await Promise.all([
+        firebaseLeer("grupos"),
+        firebaseLeer("transacciones"),
+        firebaseLeer("usuarios"),
+        firebaseLeer("bitacora_admin")
+      ]);
 
-      if (respuesta && respuesta.exito && respuesta.datos) {
-        if (respuesta.datos.grupos && Object.keys(respuesta.datos.grupos).length > 0) {
-          const arregloGrupos = Object.values(respuesta.datos.grupos).map((grupo) =>
-            mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
-          );
-          setListaGrupos(arregloGrupos);
-        }
-        if (respuesta.datos.transacciones && Object.keys(respuesta.datos.transacciones).length > 0) {
-          const arregloTx = Object.values(respuesta.datos.transacciones).reverse();
-          setListaTransacciones(arregloTx);
-        }
-        if (respuesta.datos.usuarios && Object.keys(respuesta.datos.usuarios).length > 0) {
-          const arregloUsuarios = Object.values(respuesta.datos.usuarios);
-          setListaUsuarios(arregloUsuarios);
-        }
-        if (respuesta.datos.bitacoras && Object.keys(respuesta.datos.bitacoras).length > 0) {
-          const arregloBitacoras = Object.values(respuesta.datos.bitacoras).reverse();
-          setListaBitacoras(arregloBitacoras);
-        }
-        return;
-      }
-    } catch (error) {
-      // CORS falló, intentar directamente con Firebase
-    }
-
-    // Fallback: leer directamente de Firebase
-    try {
-      const gruposFirebase = await firebaseLeer("grupos");
       if (gruposFirebase) {
         const arregloGrupos = Object.values(gruposFirebase).map((grupo) =>
           mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
         );
         setListaGrupos(arregloGrupos);
       }
-
-      const txFirebase = await firebaseLeer("transacciones");
       if (txFirebase) {
         const arregloTx = Object.values(txFirebase).reverse();
         setListaTransacciones(arregloTx);
       }
-
-      const usersFirebase = await firebaseLeer("usuarios");
       if (usersFirebase) {
         setListaUsuarios(Object.values(usersFirebase));
       }
-
-      const bitFirebase = await firebaseLeer("bitacoras");
       if (bitFirebase) {
         setListaBitacoras(Object.values(bitFirebase).reverse());
       }
-    } catch (fbError) {
-      console.error("Firebase direct sync also failed:", fbError);
+    } catch (error) {
+      console.error("Error en sync directa con Firebase:", error);
     } finally {
       if (mostrarCargando) setCargando(false);
     }
