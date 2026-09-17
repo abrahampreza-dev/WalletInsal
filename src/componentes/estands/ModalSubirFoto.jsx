@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, UploadCloud, Image as ImageIcon, Sparkles, Check, Loader2, AlertTriangle } from 'lucide-react';
-import { enviarPeticion } from '../../servicios/conexionGas';
+
+const IMGBB_KEY = import.meta.env.VITE_IMGBB_API_KEY || '';
 
 export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreGrupo }) {
   const [pieDeFoto, setPieDeFoto] = useState('');
@@ -49,22 +50,34 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
       setVistaPrevia(base64);
       setEstado('subiendo');
 
-      const respuesta = await enviarPeticion('subirImagen', { imagenBase64: base64 });
+      const soloBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
 
-      if (respuesta?.exito && respuesta.urlImagen) {
-        setUrlSubida(respuesta.urlImagen);
-        setVistaPrevia(respuesta.urlImagen);
+      const formData = new FormData();
+      formData.append('key', IMGBB_KEY);
+      formData.append('image', soloBase64);
+      formData.append('name', 'wallet_' + Date.now());
+
+      const resp = await fetch('https://api.imgbb.com/1/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await resp.json();
+
+      if (data?.success && data.data?.url) {
+        setUrlSubida(data.data.url);
+        setVistaPrevia(data.data.url);
         setEstado('listo');
       } else {
-        const msg = respuesta?.mensaje || 'Error al subir imagen. Verifica que GAS esté redeployado y la IMGBB_API_KEY configurada.';
-        console.error('[ModalSubirFoto] Error subirImagen:', respuesta);
+        const msg = data?.error?.message || 'Error al subir la imagen.';
+        console.error('[imgBB]', data);
         setMensajeError(msg);
         setEstado('error');
         setVistaPrevia('');
       }
     } catch (err) {
-      console.error('[ModalSubirFoto] Error de red:', err);
-      setMensajeError('Error de conexión con el servidor. Verifica tu conexión a Internet.');
+      console.error('[imgBB] Error:', err);
+      setMensajeError('Error de conexión: ' + err.message);
       setEstado('error');
       setVistaPrevia('');
     }
@@ -145,12 +158,12 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
                 <>
                   <Check className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
                   <p className="text-sm font-bold text-emerald-600">Imagen lista para publicar</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Haz clic para cambiar la imagen</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Haz clic para cambiar</p>
                 </>
               ) : (
                 <>
                   <UploadCloud className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-slate-800">Haz clic para seleccionar una imagen</p>
+                  <p className="text-sm font-bold text-slate-800">Haz clic para seleccionar imagen</p>
                   <p className="text-[11px] text-slate-400 mt-1">JPG, PNG o WEBP — máximo 10 MB</p>
                 </>
               )}

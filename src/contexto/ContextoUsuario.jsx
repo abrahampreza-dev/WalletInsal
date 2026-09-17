@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { enviarPeticion } from '../servicios/conexionGas';
+import { firebaseLeer, firebaseEscribir } from '../servicios/firebaseDirecto';
 import { normalizarCarrera } from '../datos/carreras';
 
 const crearCodigoQRGrupo = (idGrupo, nombreGrupo) => JSON.stringify({
@@ -213,7 +214,8 @@ export function ProveedorUsuario({ children }) {
       id: "post_" + Date.now(),
       url: datosFoto.url,
       pie: datosFoto.pie || "",
-      fecha: "Justo ahora",
+      fecha: new Date().toISOString(),
+      autor: usuarioActual.nombre || usuarioActual.documento || "Anónimo",
       likes: 0,
       leGusta: false,
       likesUsers: {},
@@ -231,26 +233,33 @@ export function ProveedorUsuario({ children }) {
       setGrupoActual((prev) => prev ? { ...prev, fotos: [...(prev.fotos || []), fotoNueva] } : prev);
     }
 
-    // Guardar en Firebase en segundo plano (sin bloquear la UI)
+    // Guardar directamente en Firebase (sin GAS)
     try {
-      const respuesta = await enviarPeticion("subirFotoGrupo", {
-        idGrupo,
-        foto: fotoNueva
-      });
+      const grupoFirebase = await firebaseLeer("grupos/" + idGrupo);
+      if (!grupoFirebase) throw new Error("Grupo no encontrado en Firebase");
 
-      if (respuesta && respuesta.exito && respuesta.grupo) {
-        const grupoMapeado = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario);
-        setListaGrupos((prev) =>
-          prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
+      const fotos = grupoFirebase.fotos || [];
+      fotos.push(fotoNueva);
+      grupoFirebase.fotos = fotos;
+
+      await firebaseEscribir("grupos/" + idGrupo, grupoFirebase);
+
+      // Refrescar con datos reales de Firebase
+      const grupoActualizado = await firebaseLeer("grupos/" + idGrupo);
+      if (grupoActualizado) {
+        const grupoMapeado = mapearGrupoDesdeServidor(
+          { ...grupoActualizado, claveAcceso: grupoActual?.claveAcceso || "" },
+          usuarioActual?.idUsuario
         );
+        setListaGrupos((prev) => prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g)));
         if (grupoActual && grupoActual.idGrupo === idGrupo) setGrupoActual(grupoMapeado);
       }
-    } catch (error) {
-      // La foto ya se muestra localmente aunque falló el guardado en Firebase
-      console.warn("Guardado en Firebase falló, pero la foto está visible localmente:", error);
-    }
 
-    return { exito: true, mensaje: "¡Publicación subida con éxito!" };
+      return { exito: true, mensaje: "¡Publicación subida con éxito!" };
+    } catch (error) {
+      console.error("Error guardando foto en Firebase:", error);
+      return { exito: true, mensaje: "Foto publicada (se sincronizará cuando el servidor esté disponible)." };
+    }
   };
 
   // Dar/quitar like a una foto: se persiste en Firebase vía GAS.
