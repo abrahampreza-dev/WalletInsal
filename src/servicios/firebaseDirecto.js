@@ -1,4 +1,4 @@
-const FIREBASE_URL = "https://walletinsal-3c820-default-rtdb.firebaseio.com";
+const FIREBASE_URL = "https://walletinsals-default-rtdb.firebaseio.com";
 
 export async function firebaseLeer(ruta) {
   const resp = await fetch(`${FIREBASE_URL}/${ruta}.json`);

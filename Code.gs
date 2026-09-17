@@ -13,7 +13,7 @@
 // 1. CONFIGURACIÓN Y CONSTANTES DEL SISTEMA
 // --------------------------------------------------------------------------
 var CONFIG = {
-  FIREBASE_URL: PropertiesService.getScriptProperties().getProperty("FIREBASE_URL") || "https://walletinsal-3c820-default-rtdb.firebaseio.com/",
+  FIREBASE_URL: PropertiesService.getScriptProperties().getProperty("FIREBASE_URL") || "https://walletinsals-default-rtdb.firebaseio.com/",
   IMGBB_API_KEY: PropertiesService.getScriptProperties().getProperty("IMGBB_API_KEY") || "",
   MONTO_MINIMO_TRANSFERENCIA: 0.01,
   MONTO_MAXIMO_TRANSFERENCIA: 999999.99,
