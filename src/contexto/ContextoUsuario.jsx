@@ -35,7 +35,14 @@ const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
       nombresLikkes
     };
   });
-  grupoMapeado.integrantes = firebaseObjToArray(grupoMapeado.integrantes);
+  const integrantesRaw = grupoMapeado.integrantes;
+  if (Array.isArray(integrantesRaw)) {
+    grupoMapeado.integrantes = integrantesRaw.filter(Boolean).join(', ');
+  } else if (typeof integrantesRaw === 'object' && integrantesRaw !== null) {
+    grupoMapeado.integrantes = Object.values(integrantesRaw).filter(Boolean).join(', ');
+  } else if (typeof integrantesRaw !== 'string') {
+    grupoMapeado.integrantes = '';
+  }
   return grupoMapeado;
 };
 
