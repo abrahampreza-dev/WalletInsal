@@ -1416,7 +1416,13 @@ function actualizarGrupo(datos) {
     return crearRespuestaJson({ exito: false, mensaje: "No tienes autorización para editar este grupo." });
   }
   if (datos.urlFoto !== undefined) grupo.urlFoto = datos.urlFoto.trim();
-  if (datos.urlVideo !== undefined) grupo.urlVideo = datos.urlVideo.trim();
+  if (datos.urlVideo !== undefined) {
+    var urlV = datos.urlVideo.trim();
+    if (urlV && !urlV.includes('drive.google.com')) {
+      return crearRespuestaJson({ exito: false, mensaje: "Solo se aceptan enlaces de Google Drive. YouTube, Vimeo y otros no son compatibles." });
+    }
+    grupo.urlVideo = urlV;
+  }
   if (datos.duracionSegundos !== undefined) grupo.duracionSegundos = parseInt(datos.duracionSegundos, 10);
   escribirEnFirebase("grupos/" + datos.idGrupo, grupo);
   delete grupo.claveAcceso;
@@ -1438,6 +1444,10 @@ function registrarGrupo(datos) {
 
   if (!urlVideo) {
     return crearRespuestaJson({ exito: false, mensaje: "El video de presentación es obligatorio para inscribir el estand." });
+  }
+
+  if (!urlVideo.includes('drive.google.com')) {
+    return crearRespuestaJson({ exito: false, mensaje: "Solo se aceptan enlaces de Google Drive. YouTube, Vimeo y otros no son compatibles." });
   }
 
   if (duracion < 180) {

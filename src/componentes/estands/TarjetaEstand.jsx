@@ -28,7 +28,9 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const [segundosRestantes, setSegundosRestantes] = useState(tiempoRequeridoSegundos);
   const [reproduciendo, setReproduciendo] = useState(false);
   const [yaInicio, setYaInicio] = useState(false);
-  const [requisitoCumplido, setRequisitoCumplido] = useState(false);
+  const [requisitoCumplido, setRequisitoCumplido] = useState(() => {
+    try { return localStorage.getItem('slbits_video_' + estand.idGrupo) === 'true'; } catch { return false; }
+  });
   const [mostrarVideoModal, setMostrarVideoModal] = useState(false);
   const [mostrarQR, setMostrarQR] = useState(false);
   const [timerIniciado, setTimerIniciado] = useState(false);
@@ -60,6 +62,12 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     else if (document.msExitFullscreen) document.msExitFullscreen();
   }, []);
+
+  useEffect(() => {
+    if (requisitoCumplido) {
+      try { localStorage.setItem('slbits_video_' + estand.idGrupo, 'true'); } catch {}
+    }
+  }, [requisitoCumplido, estand.idGrupo]);
 
   useEffect(() => {
     if (!tieneVideo || !mostrarVideoModal || !reproduciendo) return;

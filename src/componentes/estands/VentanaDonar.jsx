@@ -101,6 +101,23 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
           <p className="text-xs text-slate-500 font-medium">{estand.especialidad}</p>
         </div>
 
+        {/* Si no hay sesión, mostrar prompt de login */}
+        {!usuarioActual && !mensajeExito && (
+          <div className="text-center space-y-3 animate-fadeIn">
+            <div className="p-4 rounded-2xl bg-[#0A4D9C]/10 border border-[#0A4D9C]/30">
+              <Lock className="w-8 h-8 text-[#0A4D9C] mx-auto mb-2" />
+              <p className="text-sm font-bold text-slate-800">Necesitas iniciar sesión</p>
+              <p className="text-xs text-slate-500 mt-1">Regístrate o inicia sesión para donar SL-BITS a este proyecto.</p>
+            </div>
+            <button
+              onClick={() => { alCerrar(); if (alAbrirRegistro) alAbrirRegistro(); }}
+              className="w-full py-3 rounded-xl bg-[#0A4D9C] hover:bg-[#07366E] text-white text-xs font-bold shadow-lg transition-colors"
+            >
+              Iniciar Sesión / Registrarse
+            </button>
+          </div>
+        )}
+
         {/* MODAL DE ÉXITO - persistente */}
         {mensajeExito && (
           <div className="space-y-4 animate-fadeIn">

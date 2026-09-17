@@ -37,7 +37,7 @@ import ModalAccesoEquipo from './ModalAccesoEquipo';
 import VentanaDonar from './VentanaDonar';
 import CodigoQRGrupo from './CodigoQRGrupo';
 
-export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
+export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistro }) {
   const { 
     listaGrupos, 
     usuarioActual, 
@@ -75,7 +75,9 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
   const [segundosRestantes, setSegundosRestantes] = useState(tiempoRequerido);
   const [reproduciendo, setReproduciendo] = useState(false);
   const [yaInicio, setYaInicio] = useState(false);
-  const [requisitoCumplido, setRequisitoCumplido] = useState(false);
+  const [requisitoCumplido, setRequisitoCumplido] = useState(() => {
+    try { return localStorage.getItem('slbits_video_' + idGrupo) === 'true'; } catch { return false; }
+  });
   const [timerIniciado, setTimerIniciado] = useState(false);
   const contenedorVideoRef = useRef(null);
   const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
@@ -106,6 +108,13 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     else if (document.msExitFullscreen) document.msExitFullscreen();
   }, []);
+
+  // Guardar en localStorage cuando se cumple el requisito del video
+  useEffect(() => {
+    if (requisitoCumplido) {
+      try { localStorage.setItem('slbits_video_' + idGrupo, 'true'); } catch {}
+    }
+  }, [requisitoCumplido, idGrupo]);
 
   useEffect(() => {
     if (!tieneVideo || pestanaActiva !== 'videoDrive' || !reproduciendo) return;
@@ -555,6 +564,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
               </p>
             </div>
 
+            {esMiembroEquipo && (
             <button
               onClick={() => solicitarAccionEquipo('configDrive')}
               className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#0A4D9C] border border-slate-200 text-xs font-bold flex items-center gap-2 self-start sm:self-auto"
@@ -562,6 +572,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
               <Settings className="w-4 h-4" />
               Actualizar Video de Drive
             </button>
+            )}
           </div>
 
 {/* Reproductor de Video Iframe de Google Drive */}
@@ -854,6 +865,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver }) {
           setFotoSeleccionada(null);
           setMostrarDonarModal(true);
         }}
+        alAbrirRegistro={alAbrirRegistro}
       />
 
       {/* Modal Apoyar Estand */}

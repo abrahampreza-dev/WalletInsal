@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Heart, MessageCircle, Zap, Share2 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 
-export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, alAbrirDonacion }) {
-  const { toggleLikeFoto, agregarComentarioFoto } = usarUsuario();
+export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, alAbrirDonacion, alAbrirRegistro }) {
+  const { toggleLikeFoto, agregarComentarioFoto, usuarioActual } = usarUsuario();
   const [comentarioTexto, setComentarioTexto] = useState('');
   const [animacionCorazon, setAnimacionCorazon] = useState(false);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
@@ -64,26 +64,37 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
 
         {/* EN MÓVIL: Input de comentario ARRIBA para que el teclado no lo tape */}
         <div className="sm:hidden flex items-center gap-2 px-4 py-3 bg-white border-b border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E67A15] to-[#D19E37] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
-            {grupo.handle?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-          <input
-            ref={inputRef}
-            type="text"
-            value={comentarioTexto}
-            onChange={(e) => setComentarioTexto(e.target.value)}
-            placeholder="Escribe un comentario..."
-            disabled={enviandoComentario}
-            className="flex-1 bg-slate-100 rounded-full px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E67A15]/30 disabled:opacity-50"
-          />
-          <button
-            type="button"
-            onClick={enviarComentario}
-            disabled={!comentarioTexto.trim() || enviandoComentario}
-            className="text-sm font-bold text-[#E67A15] hover:text-[#C8640C] disabled:opacity-30 disabled:cursor-not-allowed px-1"
-          >
+          {usuarioActual ? (
+            <>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E67A15] to-[#D19E37] flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
+                {grupo.handle?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <input
+                ref={inputRef}
+                type="text"
+                value={comentarioTexto}
+                onChange={(e) => setComentarioTexto(e.target.value)}
+                placeholder="Escribe un comentario..."
+                disabled={enviandoComentario}
+                className="flex-1 bg-slate-100 rounded-full px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E67A15]/30 disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={enviarComentario}
+                disabled={!comentarioTexto.trim() || enviandoComentario}
+                className="text-sm font-bold text-[#E67A15] hover:text-[#C8640C] disabled:opacity-30 disabled:cursor-not-allowed px-1"
+              >
             {enviandoComentario ? '...' : 'Publicar'}
           </button>
+            </>
+          ) : (
+            <button
+              onClick={() => { alCerrar(); if (alAbrirRegistro) alAbrirRegistro(); }}
+              className="flex-1 py-2.5 rounded-xl bg-[#0A4D9C] hover:bg-[#07366E] text-white text-xs font-bold text-center transition-colors"
+            >
+              Inicia sesión para comentar
+            </button>
+          )}
         </div>
 
         {/* Columna Izquierda: Imagen */}
@@ -192,6 +203,7 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
             </div>
 
             {/* Input de comentario — solo en desktop */}
+            {usuarioActual ? (
             <form onSubmit={enviarComentario} className="hidden sm:flex items-center gap-2 px-4 pb-3 pt-1 border-t border-slate-100">
               <input
                 type="text"
@@ -209,6 +221,16 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
                 {enviandoComentario ? '...' : 'Publicar'}
               </button>
             </form>
+            ) : (
+              <div className="hidden sm:flex items-center justify-center px-4 pb-3 pt-1 border-t border-slate-100">
+                <button
+                  onClick={() => { alCerrar(); if (alAbrirRegistro) alAbrirRegistro(); }}
+                  className="text-xs font-bold text-[#0A4D9C] hover:text-[#07366E] py-2"
+                >
+                  Inicia sesión para dejar un comentario
+                </button>
+              </div>
+            )}
           </div>
 
         </div>

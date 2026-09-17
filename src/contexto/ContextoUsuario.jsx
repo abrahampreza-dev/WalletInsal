@@ -253,47 +253,65 @@ export function ProveedorUsuario({ children }) {
     const foto = grupo?.fotos?.find((f) => f.id === idFoto);
     if (!foto) return { exito: false, mensaje: "La publicación consultada no se encuentra disponible." };
 
-    setCargando(true);
+    const quiereLike = !foto.leGusta;
+    const nombreUser = usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario;
+
+    // Actualización optimista: se ve al instante
+    setListaGrupos((prev) =>
+      prev.map((g) => {
+        if (g.idGrupo !== idGrupo) return g;
+        const fotosActualizadas = (g.fotos || []).map((f) => {
+          if (f.id !== idFoto) return f;
+          const nuevosNombres = quiereLike
+            ? [...(f.nombresLikkes || []), nombreUser]
+            : (f.nombresLikkes || []).filter((n) => n !== nombreUser);
+          return {
+            ...f,
+            leGusta: quiereLike,
+            likes: Math.max(0, f.likes + (quiereLike ? 1 : -1)),
+            nombresLikkes: nuevosNombres
+          };
+        });
+        return { ...g, fotos: fotosActualizadas };
+      })
+    );
+
+    // Enviar al servidor en background (sin bloquear UI)
     try {
-      const quiereLike = !foto.leGusta;
       const respuesta = await enviarPeticion("toggleLikeFoto", {
         idGrupo,
         idFoto,
         idUsuario: usuarioActual.idUsuario,
-        nombreUsuario: usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario,
+        nombreUsuario: nombreUser,
         quiereLike
       });
 
-      if (respuesta && respuesta.exito) {
+      if (respuesta && respuesta.exito && respuesta.likes !== undefined) {
+        // Ajustar con el conteo real del servidor
         setListaGrupos((prev) =>
           prev.map((g) => {
             if (g.idGrupo !== idGrupo) return g;
-            const fotosActualizadas = (g.fotos || []).map((f) => {
-              if (f.id !== idFoto) return f;
-              const nuevosNombres = quiereLike
-                ? [...(f.nombresLikkes || []), usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario]
-                : (f.nombresLikkes || []).filter((n) => n !== (usuarioActual.nombre || usuarioActual.documento || usuarioActual.idUsuario));
-              return {
-                ...f,
-                leGusta: quiereLike,
-                likes: respuesta.likes !== undefined ? respuesta.likes : Math.max(0, f.likes + (quiereLike ? 1 : -1)),
-                nombresLikkes: nuevosNombres
-              };
-            });
-            return { ...g, fotos: fotosActualizadas };
+            return { ...g, fotos: (g.fotos || []).map((f) => f.id === idFoto ? { ...f, likes: respuesta.likes } : f) };
           })
         );
-        setTimeout(() => sincronizarConServidor(), 500);
-        return { exito: true };
       }
-
-      return { exito: false, mensaje: (respuesta && respuesta.mensaje) || 'No fue posible registrar tu interacción en este momento.' };
+      setTimeout(() => sincronizarConServidor(), 500);
     } catch (error) {
-      setCargando(false);
-      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
-    } finally {
-      setCargando(false);
+      // Revertir si falla
+      setListaGrupos((prev) =>
+        prev.map((g) => {
+          if (g.idGrupo !== idGrupo) return g;
+          return { ...g, fotos: (g.fotos || []).map((f) => {
+            if (f.id !== idFoto) return f;
+            const revertNombres = quiereLike
+              ? (f.nombresLikkes || []).filter((n) => n !== nombreUser)
+              : [...(f.nombresLikkes || []), nombreUser];
+            return { ...f, leGusta: !quiereLike, likes: Math.max(0, f.likes + (quiereLike ? -1 : 1)), nombresLikkes: revertNombres };
+          }) };
+        })
+      );
     }
+    return { exito: true };
   };
 
   // Agregar comentario a una foto: se persiste en Firebase vía GAS.

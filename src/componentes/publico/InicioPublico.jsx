@@ -20,7 +20,7 @@ export default function InicioPublico({
   alIrARanking, 
   alIrABilletera 
 }) {
-  const { listaGrupos, usuarioActual } = usarUsuario();
+  const { listaGrupos, usuarioActual, cargando } = usarUsuario();
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState('Todos los proyectos');
   const [estandParaDonar, setEstandParaDonar] = useState(null);
@@ -126,7 +126,14 @@ export default function InicioPublico({
         </div>
 
         <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto pb-1 scrollbar-none">
-          {listaGrupos.map((grupo) => (
+          {cargando && listaGrupos.length === 0 ? (
+            [1,2,3,4,5].map((n) => (
+              <div key={n} className="flex flex-col items-center gap-1.5 flex-shrink-0 animate-pulse">
+                <div className="w-16 h-16 rounded-full bg-slate-200" />
+                <div className="w-12 h-2 bg-slate-200 rounded" />
+              </div>
+            ))
+          ) : listaGrupos.map((grupo) => (
             <button
               key={grupo.idGrupo}
               onClick={() => {

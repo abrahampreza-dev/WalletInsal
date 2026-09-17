@@ -266,67 +266,68 @@ function ContenidoPrincipal() {
         )}
 
         {/* Vistas Dinámicas */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-h-[60vh]">
           
           {/* A. Vista Inicio */}
-          {seccionActiva === 'inicio_publico' && (
+          <div className={seccionActiva === 'inicio_publico' ? 'animate-fadeIn' : 'hidden'}>
             <InicioPublico
               alAbrirRegistro={() => abrirRegistro('visitante')}
               alAbrirPerfilInstagram={abrirPerfilInstagramGrupo}
               alIrARanking={() => cambiarSeccion('ranking')}
               alIrABilletera={() => cambiarSeccion('wallet_dashboard')}
             />
-          )}
+          </div>
 
           {/* B. Vista Mi Wallet Privada */}
-          {seccionActiva === 'wallet_dashboard' && (
+          <div className={seccionActiva === 'wallet_dashboard' ? 'animate-fadeIn' : 'hidden'}>
             <DashboardPrincipal
               alIrAEstands={() => cambiarSeccion('estands')}
               alIrAHistorial={() => cambiarSeccion('billetera')}
               alIrAPerfil={() => cambiarSeccion('perfil')}
               alAbrirEstand={abrirPerfilInstagramGrupo}
             />
-          )}
+          </div>
 
           {/* C. Vista Muro SPACE / Estands */}
-          {seccionActiva === 'estands' && (
+          <div className={seccionActiva === 'estands' ? 'animate-fadeIn' : 'hidden'}>
             <ListaEstands
               alAbrirRegistro={() => abrirRegistro('visitante')}
               alAbrirPerfilInstagram={abrirPerfilInstagramGrupo}
             />
-          )}
+          </div>
 
           {/* D. Vista SPACE: Perfil del Estand */}
-          {seccionActiva === 'instagram_perfil' && (
+          <div className={seccionActiva === 'instagram_perfil' ? 'animate-fadeIn' : 'hidden'}>
             <PerfilInstagramGrupo
               idGrupo={grupoInstagramSeleccionado}
               alVolver={() => cambiarSeccion('estands')}
+              alAbrirRegistro={() => abrirRegistro('visitante')}
             />
-          )}
+          </div>
 
           {/* E. Vista Ranking Oficial */}
-          {seccionActiva === 'ranking' && (
+          <div className={seccionActiva === 'ranking' ? 'animate-fadeIn' : 'hidden'}>
             <TablaPosiciones />
-          )}
+          </div>
 
           {/* F. Vista Mi Billetera */}
-          {seccionActiva === 'billetera' && (
+          <div className={seccionActiva === 'billetera' ? 'animate-fadeIn' : 'hidden'}>
             <MiBilletera
               alIrAEstands={() => cambiarSeccion('estands')}
               alIrARecargar={() => setModalEnviarAbierto(true)}
             />
-          )}
+          </div>
 
           {/* G. Vista Historial */}
-          {seccionActiva === 'historial' && (
+          <div className={seccionActiva === 'historial' ? 'animate-fadeIn' : 'hidden'}>
             <MiBilletera
               alIrAEstands={() => cambiarSeccion('estands')}
               alIrARecargar={() => cambiarSeccion('billetera')}
             />
-          )}
+          </div>
 
           {/* H. Vista Perfil Estudiantil */}
-          {seccionActiva === 'perfil' && (
+          <div className={seccionActiva === 'perfil' ? 'animate-fadeIn' : 'hidden'}>
             <div className="space-y-10">
               <PerfilUsuario
                 alIrABilletera={() => cambiarSeccion('billetera')}
@@ -338,12 +339,12 @@ function ContenidoPrincipal() {
                 <PanelGrupo alVerPerfilInstagram={abrirPerfilInstagramGrupo} />
               )}
             </div>
-          )}
+          </div>
 
           {/* J. Vista Administración */}
-          {seccionActiva === 'admin' && (
-            adminAutenticado ? <PanelAdmin /> : <AccesoAdmin />
-          )}
+          <div className={seccionActiva === 'admin' ? 'animate-fadeIn' : 'hidden'}>
+            {adminAutenticado ? <PanelAdmin /> : <AccesoAdmin />}
+          </div>
 
         </main>
 
@@ -391,6 +392,7 @@ function ContenidoPrincipal() {
         estaAbierto={modalRegistroAbierto}
         pestanaInicial={pestanaRegistroInicial}
         alCerrar={() => setModalRegistroAbierto(false)}
+        alIrAEstand={abrirPerfilInstagramGrupo}
       />
 
     </div>

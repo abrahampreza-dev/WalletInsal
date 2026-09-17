@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import CamaraSelfie from '../comun/CamaraSelfie';
 
-export default function RegistroGrupo({ alCompletarRegistro }) {
+export default function RegistroGrupo({ alCompletarRegistro, alIrAEstand }) {
   const { registrarNuevoGrupo, cargando } = usarUsuario();
 
   const [nombreGrupo, setNombreGrupo] = useState('');
@@ -134,8 +134,14 @@ export default function RegistroGrupo({ alCompletarRegistro }) {
 
       if (resultado.exito) {
         setMensajeExito(resultado.mensaje || '¡Estand registrado exitosamente!');
+        const idNuevoGrupo = resultado.grupo?.idGrupo;
         setTimeout(() => {
-          if (alCompletarRegistro) alCompletarRegistro();
+          if (alIrAEstand && idNuevoGrupo) {
+            alCompletarRegistro();
+            alIrAEstand(idNuevoGrupo);
+          } else if (alCompletarRegistro) {
+            alCompletarRegistro();
+          }
         }, 1200);
       } else {
         setMensajeError(resultado.mensaje || 'Ocurrió un error al registrar el estand.');

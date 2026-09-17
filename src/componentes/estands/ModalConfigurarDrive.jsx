@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Video, Play, CheckCircle2, HelpCircle, ExternalLink } from 'lucide-react';
+import { X, Video, Play, CheckCircle2, HelpCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 
 export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual, duracionActual, alGuardar, nombreGrupo }) {
   const [urlVideo, setUrlVideo] = useState(urlActual || '');
@@ -7,8 +7,13 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
   const [urlPrevia, setUrlPrevia] = useState(urlActual || '');
   const [probando, setProbando] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [errorUrl, setErrorUrl] = useState('');
 
   if (!estaAbierto) return null;
+
+  const esUrlDriveValida = (url) => {
+    return url.includes('drive.google.com');
+  };
 
   // Convertir URL compartida de Google Drive a formato incrustable /preview
   const transformarUrlDrive = (url) => {
@@ -26,12 +31,22 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
 
   const manejarCambioUrl = (valor) => {
     setUrlVideo(valor);
-    const convertida = transformarUrlDrive(valor);
-    setUrlPrevia(convertida);
+    setErrorUrl('');
+    if (valor.trim() && !esUrlDriveValida(valor)) {
+      setErrorUrl('Solo se aceptan enlaces de Google Drive. YouTube, Vimeo y otros no son compatibles.');
+      setUrlPrevia('');
+    } else {
+      const convertida = transformarUrlDrive(valor);
+      setUrlPrevia(convertida);
+    }
   };
 
   const manejarGuardar = async (e) => {
     e.preventDefault();
+    if (urlVideo.trim() && !esUrlDriveValida(urlVideo)) {
+      setErrorUrl('Solo se aceptan enlaces de Google Drive.');
+      return;
+    }
     setCargando(true);
     try {
       const finalUrl = transformarUrlDrive(urlVideo);
@@ -82,6 +97,15 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
             </ol>
           </div>
 
+          {/* Advertencia: Solo Drive */}
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-400/40">
+            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-amber-700">Solo se aceptan videos de Google Drive</p>
+              <p className="text-[11px] text-amber-600 mt-0.5">YouTube, Vimeo y otros enlaces externos no son compatibles con el reproductor del sistema.</p>
+            </div>
+          </div>
+
           {/* Input de URL */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -95,6 +119,12 @@ export default function ModalConfigurarDrive({ estaAbierto, alCerrar, urlActual,
               placeholder="https://drive.google.com/file/d/1Bxi.../view?usp=sharing"
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#0A4D9C] font-mono"
             />
+            {errorUrl && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                <span className="text-[11px] text-amber-600 font-medium">{errorUrl}</span>
+              </div>
+            )}
           </div>
 
           {/* Duración */}

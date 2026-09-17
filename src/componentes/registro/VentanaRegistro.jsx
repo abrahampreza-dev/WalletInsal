@@ -5,7 +5,7 @@ import RegistroGrupo from './RegistroGrupo';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import { ModalAlerta } from '../comun/ModalProfesional';
 
-export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial = 'visitante' }) {
+export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial = 'visitante', alIrAEstand }) {
   const [pestanaActiva, setPestanaActiva] = useState(pestanaInicial);
   const [modoVisitante, setModoVisitante] = useState('login');
   const { listaGrupos, iniciarSesionGrupo, iniciarSesionVisitante, setUsuarioActual } = usarUsuario();
@@ -103,7 +103,17 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
     setCargandoGrupo(true);
     try {
       const resultado = await iniciarSesionGrupo(idGrupo.trim(), claveGrupo);
-      setMensajeGrupo(resultado.exito ? 'Acceso concedido. Ya puedes ver tu estand en Mi Perfil.' : resultado.mensaje);
+      if (resultado.exito) {
+        setMensajeGrupo('Acceso concedido. Redirigiendo a tu estand...');
+        setTimeout(() => {
+          if (alIrAEstand) {
+            alCerrar();
+            alIrAEstand(idGrupo.trim());
+          }
+        }, 1000);
+      } else {
+        setMensajeGrupo(resultado.mensaje);
+      }
     } finally {
       setCargandoGrupo(false);
     }
@@ -322,7 +332,7 @@ export default function VentanaRegistro({ estaAbierto, alCerrar, pestanaInicial 
           {/* ESTAND / GRUPO - Registro */}
           {pestanaActiva === 'grupo' && (
             <>
-              <RegistroGrupo alCompletarRegistro={alCerrar} />
+              <RegistroGrupo alCompletarRegistro={alCerrar} alIrAEstand={alIrAEstand} />
             </>
           )}
 
