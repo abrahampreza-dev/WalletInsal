@@ -32,18 +32,9 @@ function doGet(e) {
   return crearRespuestaJson({
     exito: true,
     estado: "operativo",
-    version: "3.2.0",
+    version: "3.1.0",
     fechaServidor: new Date().toISOString()
   });
-}
-
-
-function doOptions(e) {
-  return ContentService.createTextOutput("")
-    .setMimeType(ContentService.MimeType.TEXT)
-    .setHeader("Access-Control-Allow-Origin", "*")
-    .setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-    .setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 
@@ -1433,10 +1424,6 @@ function actualizarGrupo(datos) {
     grupo.urlVideo = urlV;
   }
   if (datos.duracionSegundos !== undefined) grupo.duracionSegundos = parseInt(datos.duracionSegundos, 10);
-  if (datos.descripcion !== undefined) grupo.descripcion = datos.descripcion.trim();
-  if (datos.integrantes !== undefined) grupo.integrantes = datos.integrantes.trim();
-  if (datos.nombreGrupo !== undefined) grupo.nombreGrupo = datos.nombreGrupo.trim();
-  if (datos.especialidad !== undefined) grupo.especialidad = datos.especialidad.trim();
   escribirEnFirebase("grupos/" + datos.idGrupo, grupo);
   delete grupo.claveAcceso;
   return crearRespuestaJson({ exito: true, grupo: grupo });

@@ -26,8 +26,7 @@ import {
   KeyRound,
   ShieldCheck,
   Maximize,
-  Minimize,
-  Pencil
+  Minimize
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import ModalSubirFoto from './ModalSubirFoto';
@@ -35,7 +34,6 @@ import ModalConfigurarDrive from './ModalConfigurarDrive';
 import ModalHistoria from './ModalHistoria';
 import ModalFotoDetalle from './ModalFotoDetalle';
 import ModalAccesoEquipo from './ModalAccesoEquipo';
-import ModalEditarPerfilGrupo from './ModalEditarPerfilGrupo';
 import VentanaDonar from './VentanaDonar';
 import CodigoQRGrupo from './CodigoQRGrupo';
 
@@ -46,7 +44,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
     grupoActual,
     subirFotoGrupo, 
     actualizarVideoDrive, 
-    actualizarGrupo,
     listaTransacciones,
     iniciarTimerVideo,
     verificarRetencionVideo
@@ -67,7 +64,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
   const [mostrarDonarModal, setMostrarDonarModal] = useState(false);
   const [mostrarQRModal, setMostrarQRModal] = useState(false);
   const [copiado, setCopiado] = useState(false);
-  const [modalEditarPerfilAbierto, setModalEditarPerfilAbierto] = useState(false);
 
   // Comprobar si el usuario actual está autenticado como el equipo de este estand
   const esMiembroEquipo = grupoActual && grupoActual.idGrupo === grupo.idGrupo;
@@ -98,32 +94,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
       document.removeEventListener('webkitfullscreenchange', manejarCambio);
     };
   }, []);
-
-  // Detener video al salir de la pestaña de video
-  useEffect(() => {
-    if (pestanaActiva !== 'videoDrive' && reproduciendo) {
-      setReproduciendo(false);
-      setYaInicio(false);
-      setTimerIniciado(false);
-      // Forzar detención del iframe
-      if (contenedorVideoRef.current) {
-        const iframe = contenedorVideoRef.current.querySelector('iframe');
-        if (iframe) {
-          const src = iframe.src;
-          iframe.src = '';
-          iframe.src = src;
-        }
-      }
-    }
-  }, [pestanaActiva]);
-
-  // Resetear video al cambiar de estand
-  useEffect(() => {
-    setReproduciendo(false);
-    setYaInicio(false);
-    setTimerIniciado(false);
-    setSegundosRestantes(Math.max(15, Math.ceil((grupo?.duracionSegundos || 30) * 0.5)));
-  }, [idGrupo]);
 
   const activarPantallaCompleta = useCallback(() => {
     const el = contenedorVideoRef.current;
@@ -381,16 +351,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
                 <span className="font-medium text-slate-800">Equipo de trabajo:</span>
                 <span className="text-slate-400">{grupo.integrantes}</span>
               </div>
-
-              {esMiembroEquipo && (
-                <button
-                  onClick={() => setModalEditarPerfilAbierto(true)}
-                  className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl bg-[#0A4D9C]/10 hover:bg-[#0A4D9C]/20 text-[#0A4D9C] text-[11px] font-bold transition-colors border border-[#0A4D9C]/30"
-                >
-                  <Pencil className="w-3 h-3" />
-                  Editar información del estand
-                </button>
-              )}
 
               {grupo.enlaceDriveCarpeta && (
                 <div className="pt-1">
@@ -867,14 +827,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
           if (accionPendiente === 'configDrive') setModalDriveAbierto(true);
           setAccionPendiente(null);
         }}
-      />
-
-      {/* Modal Editar Perfil del Estand */}
-      <ModalEditarPerfilGrupo
-        estaAbierto={modalEditarPerfilAbierto}
-        alCerrar={() => setModalEditarPerfilAbierto(false)}
-        grupo={grupo}
-        alGuardar={(datos) => actualizarGrupo(datos)}
       />
 
       {/* Modal Nueva Publicación */}

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { enviarPeticion } from '../servicios/conexionGas';
-import { firebaseLeer, firebaseEscribir, firebasePATCH } from '../servicios/firebaseDirecto';
 import { normalizarCarrera } from '../datos/carreras';
 
 const crearCodigoQRGrupo = (idGrupo, nombreGrupo) => JSON.stringify({
@@ -15,17 +14,11 @@ const ContextoUsuario = createContext();
  * Adapta un grupo proveniente de Firebase (vía GAS) al formato que usa la interfaz:
  * convierte likesUsers en likes/leGusta y normaliza la carrera.
  */
-const firebaseObjToArray = (valor) => {
-  if (Array.isArray(valor)) return valor;
-  if (valor && typeof valor === 'object') return Object.values(valor);
-  return [];
-};
-
 const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
   const grupoMapeado = { ...grupo };
   grupoMapeado.especialidad = normalizarCarrera(grupoMapeado.especialidad);
   grupoMapeado.handle = grupoMapeado.handle || `@${(grupoMapeado.nombreGrupo || 'estand').toLowerCase().replace(/\s+/g, '.')}`;
-  grupoMapeado.fotos = firebaseObjToArray(grupoMapeado.fotos).map((foto) => {
+  grupoMapeado.fotos = (grupoMapeado.fotos || []).map((foto) => {
     const likesUsuarios = foto.likesUsers || {};
     const nombresLikkes = Object.values(likesUsuarios).filter((v) => typeof v === 'string');
     return {
@@ -35,14 +28,6 @@ const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
       nombresLikkes
     };
   });
-  const integrantesRaw = grupoMapeado.integrantes;
-  if (Array.isArray(integrantesRaw)) {
-    grupoMapeado.integrantes = integrantesRaw.filter(Boolean).join(', ');
-  } else if (typeof integrantesRaw === 'object' && integrantesRaw !== null) {
-    grupoMapeado.integrantes = Object.values(integrantesRaw).filter(Boolean).join(', ');
-  } else if (typeof integrantesRaw !== 'string') {
-    grupoMapeado.integrantes = '';
-  }
   return grupoMapeado;
 };
 
@@ -191,86 +176,72 @@ export function ProveedorUsuario({ children }) {
   const sincronizarConServidor = async (mostrarCargando = false) => {
     if (mostrarCargando) setCargando(true);
     try {
-      // Leer todo directamente de Firebase (sin GAS)
-      const [gruposFirebase, txFirebase, usersFirebase, bitFirebase] = await Promise.all([
-        firebaseLeer("grupos"),
-        firebaseLeer("transacciones"),
-        firebaseLeer("usuarios"),
-        firebaseLeer("bitacora_admin")
-      ]);
+      const respuesta = await enviarPeticion("obtenerTodo");
 
-      if (gruposFirebase) {
-        const arregloGrupos = Object.values(gruposFirebase).map((grupo) =>
-          mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
-        );
-        setListaGrupos(arregloGrupos);
-      }
-      if (txFirebase) {
-        const arregloTx = Object.values(txFirebase).reverse();
-        setListaTransacciones(arregloTx);
-      }
-      if (usersFirebase) {
-        setListaUsuarios(Object.values(usersFirebase));
-      }
-      if (bitFirebase) {
-        setListaBitacoras(Object.values(bitFirebase).reverse());
+      if (respuesta && respuesta.exito && respuesta.datos) {
+        if (respuesta.datos.grupos && Object.keys(respuesta.datos.grupos).length > 0) {
+          const arregloGrupos = Object.values(respuesta.datos.grupos).map((grupo) =>
+            mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
+          );
+          setListaGrupos(arregloGrupos);
+        }
+        if (respuesta.datos.transacciones && Object.keys(respuesta.datos.transacciones).length > 0) {
+          const arregloTx = Object.values(respuesta.datos.transacciones).reverse();
+          setListaTransacciones(arregloTx);
+        }
+        if (respuesta.datos.usuarios && Object.keys(respuesta.datos.usuarios).length > 0) {
+          const arregloUsuarios = Object.values(respuesta.datos.usuarios);
+          setListaUsuarios(arregloUsuarios);
+        }
+        if (respuesta.datos.bitacoras && Object.keys(respuesta.datos.bitacoras).length > 0) {
+          const arregloBitacoras = Object.values(respuesta.datos.bitacoras).reverse();
+          setListaBitacoras(arregloBitacoras);
+        }
       }
     } catch (error) {
-      console.error("Error en sync directa con Firebase:", error);
+      // Silencioso en syncs de fondo
     } finally {
       if (mostrarCargando) setCargando(false);
     }
   };
 
-  // Subir una foto al feed del estand
+  // Subir una foto al feed del estand: se guarda en Firebase vía GAS.
   const subirFotoGrupo = async (idGrupo, datosFoto) => {
     if (!usuarioActual) return { exito: false, mensaje: "Debes iniciar sesión para subir una foto." };
-
-    const fotoNueva = {
-      id: "post_" + Date.now(),
-      url: datosFoto.url,
-      pie: datosFoto.pie || "",
-      fecha: new Date().toISOString(),
-      autor: usuarioActual.nombre || usuarioActual.documento || "Anónimo",
-      likes: 0,
-      leGusta: false,
-      likesUsers: {},
-      comentarios: []
-    };
-
-    // 1. Actualización optimista: la foto aparece al instante
-    setListaGrupos((prev) =>
-      prev.map((g) => {
-        if (g.idGrupo !== idGrupo) return g;
-        return { ...g, fotos: [...(g.fotos || []), fotoNueva] };
-      })
-    );
-    if (grupoActual && grupoActual.idGrupo === idGrupo) {
-      setGrupoActual((prev) => prev ? { ...prev, fotos: [...(prev.fotos || []), fotoNueva] } : prev);
-    }
-
-    // 2. Guardar en Firebase leyendo, agregando y reescribiendo
+    setCargando(true);
     try {
-      const grupoFirebase = await firebaseLeer("grupos/" + idGrupo);
-      const fotosExistentes = grupoFirebase?.fotos || [];
+      const respuesta = await enviarPeticion("subirFotoGrupo", {
+        idGrupo,
+        foto: {
+          id: "post_" + Date.now(),
+          url: datosFoto.url,
+          pie: datosFoto.pie || "",
+          fecha: "Justo ahora",
+          likes: 0,
+          leGusta: false,
+          likesUsers: {},
+          comentarios: []
+        }
+      });
 
-      // Firebase guarda arrays como objetos con keys numéricas, convertir a array
-      let fotosArray;
-      if (Array.isArray(fotosExistentes)) {
-        fotosArray = fotosExistentes;
-      } else if (typeof fotosExistentes === 'object') {
-        fotosArray = Object.values(fotosExistentes);
-      } else {
-        fotosArray = [];
+      if (respuesta && respuesta.exito && respuesta.grupo) {
+        const grupoMapeado = mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario);
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
+        );
+        if (grupoActual && grupoActual.idGrupo === idGrupo) setGrupoActual(grupoMapeado);
+        return { exito: true, mensaje: respuesta.mensaje || "¡Publicación subida con éxito al feed del estand!" };
       }
 
-      fotosArray.push(fotoNueva);
-      await firebasePATCH("grupos/" + idGrupo, { fotos: fotosArray });
-
-      return { exito: true, mensaje: "¡Publicación subida con éxito!" };
+      return {
+        exito: false,
+        mensaje: (respuesta && respuesta.mensaje) || "Ocurrió un error al intentar almacenar la imagen."
+      };
     } catch (error) {
-      console.error("Error guardando foto en Firebase:", error);
-      return { exito: true, mensaje: "Foto publicada localmente." };
+      setCargando(false);
+      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -416,11 +387,7 @@ export function ProveedorUsuario({ children }) {
         claveAcceso: grupoActual.claveAcceso,
         urlFoto: datos.urlFoto ?? grupoActual.urlFoto ?? "",
         urlVideo: datos.urlVideo ?? grupoActual.urlVideo ?? "",
-        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10),
-        descripcion: datos.descripcion ?? undefined,
-        integrantes: datos.integrantes ?? undefined,
-        nombreGrupo: datos.nombreGrupo ?? undefined,
-        especialidad: datos.especialidad ?? undefined
+        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10)
       });
 
       if (respuesta && respuesta.exito && respuesta.grupo) {
