@@ -15,11 +15,17 @@ const ContextoUsuario = createContext();
  * Adapta un grupo proveniente de Firebase (vía GAS) al formato que usa la interfaz:
  * convierte likesUsers en likes/leGusta y normaliza la carrera.
  */
+const firebaseObjToArray = (valor) => {
+  if (Array.isArray(valor)) return valor;
+  if (valor && typeof valor === 'object') return Object.values(valor);
+  return [];
+};
+
 const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
   const grupoMapeado = { ...grupo };
   grupoMapeado.especialidad = normalizarCarrera(grupoMapeado.especialidad);
   grupoMapeado.handle = grupoMapeado.handle || `@${(grupoMapeado.nombreGrupo || 'estand').toLowerCase().replace(/\s+/g, '.')}`;
-  grupoMapeado.fotos = (grupoMapeado.fotos || []).map((foto) => {
+  grupoMapeado.fotos = firebaseObjToArray(grupoMapeado.fotos).map((foto) => {
     const likesUsuarios = foto.likesUsers || {};
     const nombresLikkes = Object.values(likesUsuarios).filter((v) => typeof v === 'string');
     return {
@@ -29,6 +35,7 @@ const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
       nombresLikkes
     };
   });
+  grupoMapeado.integrantes = firebaseObjToArray(grupoMapeado.integrantes);
   return grupoMapeado;
 };
 
