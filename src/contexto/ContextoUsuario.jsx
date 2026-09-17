@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { enviarPeticion } from '../servicios/conexionGas';
-import { firebaseLeer, firebaseEscribir } from '../servicios/firebaseDirecto';
+import { firebaseLeer, firebaseEscribir, firebasePATCH } from '../servicios/firebaseDirecto';
 import { normalizarCarrera } from '../datos/carreras';
 
 const crearCodigoQRGrupo = (idGrupo, nombreGrupo) => JSON.stringify({
@@ -177,6 +177,7 @@ export function ProveedorUsuario({ children }) {
   const sincronizarConServidor = async (mostrarCargando = false) => {
     if (mostrarCargando) setCargando(true);
     try {
+      // Intentar primero con GAS
       const respuesta = await enviarPeticion("obtenerTodo");
 
       if (respuesta && respuesta.exito && respuesta.datos) {
@@ -198,15 +199,45 @@ export function ProveedorUsuario({ children }) {
           const arregloBitacoras = Object.values(respuesta.datos.bitacoras).reverse();
           setListaBitacoras(arregloBitacoras);
         }
+        return;
       }
     } catch (error) {
-      // Silencioso en syncs de fondo
+      // CORS falló, intentar directamente con Firebase
+    }
+
+    // Fallback: leer directamente de Firebase
+    try {
+      const gruposFirebase = await firebaseLeer("grupos");
+      if (gruposFirebase) {
+        const arregloGrupos = Object.values(gruposFirebase).map((grupo) =>
+          mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
+        );
+        setListaGrupos(arregloGrupos);
+      }
+
+      const txFirebase = await firebaseLeer("transacciones");
+      if (txFirebase) {
+        const arregloTx = Object.values(txFirebase).reverse();
+        setListaTransacciones(arregloTx);
+      }
+
+      const usersFirebase = await firebaseLeer("usuarios");
+      if (usersFirebase) {
+        setListaUsuarios(Object.values(usersFirebase));
+      }
+
+      const bitFirebase = await firebaseLeer("bitacoras");
+      if (bitFirebase) {
+        setListaBitacoras(Object.values(bitFirebase).reverse());
+      }
+    } catch (fbError) {
+      console.error("Firebase direct sync also failed:", fbError);
     } finally {
       if (mostrarCargando) setCargando(false);
     }
   };
 
-  // Subir una foto al feed del estand: se guarda en Firebase vía GAS.
+  // Subir una foto al feed del estand
   const subirFotoGrupo = async (idGrupo, datosFoto) => {
     if (!usuarioActual) return { exito: false, mensaje: "Debes iniciar sesión para subir una foto." };
 
@@ -222,7 +253,7 @@ export function ProveedorUsuario({ children }) {
       comentarios: []
     };
 
-    // Actualización optimista: la foto aparece al instante
+    // 1. Actualización optimista: la foto aparece al instante
     setListaGrupos((prev) =>
       prev.map((g) => {
         if (g.idGrupo !== idGrupo) return g;
@@ -233,32 +264,28 @@ export function ProveedorUsuario({ children }) {
       setGrupoActual((prev) => prev ? { ...prev, fotos: [...(prev.fotos || []), fotoNueva] } : prev);
     }
 
-    // Guardar directamente en Firebase (sin GAS)
+    // 2. Guardar en Firebase leyendo, agregando y reescribiendo
     try {
       const grupoFirebase = await firebaseLeer("grupos/" + idGrupo);
-      if (!grupoFirebase) throw new Error("Grupo no encontrado en Firebase");
+      const fotosExistentes = grupoFirebase?.fotos || [];
 
-      const fotos = grupoFirebase.fotos || [];
-      fotos.push(fotoNueva);
-      grupoFirebase.fotos = fotos;
-
-      await firebaseEscribir("grupos/" + idGrupo, grupoFirebase);
-
-      // Refrescar con datos reales de Firebase
-      const grupoActualizado = await firebaseLeer("grupos/" + idGrupo);
-      if (grupoActualizado) {
-        const grupoMapeado = mapearGrupoDesdeServidor(
-          { ...grupoActualizado, claveAcceso: grupoActual?.claveAcceso || "" },
-          usuarioActual?.idUsuario
-        );
-        setListaGrupos((prev) => prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g)));
-        if (grupoActual && grupoActual.idGrupo === idGrupo) setGrupoActual(grupoMapeado);
+      // Firebase guarda arrays como objetos con keys numéricas, convertir a array
+      let fotosArray;
+      if (Array.isArray(fotosExistentes)) {
+        fotosArray = fotosExistentes;
+      } else if (typeof fotosExistentes === 'object') {
+        fotosArray = Object.values(fotosExistentes);
+      } else {
+        fotosArray = [];
       }
+
+      fotosArray.push(fotoNueva);
+      await firebasePATCH("grupos/" + idGrupo, { fotos: fotosArray });
 
       return { exito: true, mensaje: "¡Publicación subida con éxito!" };
     } catch (error) {
       console.error("Error guardando foto en Firebase:", error);
-      return { exito: true, mensaje: "Foto publicada (se sincronizará cuando el servidor esté disponible)." };
+      return { exito: true, mensaje: "Foto publicada localmente." };
     }
   };
 
