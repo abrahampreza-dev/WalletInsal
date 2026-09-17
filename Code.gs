@@ -32,9 +32,18 @@ function doGet(e) {
   return crearRespuestaJson({
     exito: true,
     estado: "operativo",
-    version: "3.1.0",
+    version: "3.2.0",
     fechaServidor: new Date().toISOString()
   });
+}
+
+
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader("Access-Control-Allow-Origin", "*")
+    .setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    .setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 

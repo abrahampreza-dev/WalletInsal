@@ -1,21 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { X, UploadCloud, Image as ImageIcon, Sparkles, Check, Loader2 } from 'lucide-react';
-
-const IMGBB_KEY = import.meta.env.VITE_IMGBB_API_KEY || '';
-
-async function subirAImgBB(base64) {
-  const body = new FormData();
-  body.append('key', IMGBB_KEY);
-  body.append('image', base64.includes(',') ? base64.split(',')[1] : base64);
-
-  const resp = await fetch('https://api.imgbb.com/1/upload', {
-    method: 'POST',
-    body
-  });
-  const data = await resp.json();
-  if (data?.success) return data.data.url;
-  throw new Error(data?.error?.message || 'Error al subir a imgBB');
-}
+import { X, UploadCloud, Image as ImageIcon, Sparkles, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { enviarPeticion } from '../../servicios/conexionGas';
 
 export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreGrupo }) {
   const [pieDeFoto, setPieDeFoto] = useState('');
@@ -64,12 +49,22 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
       setVistaPrevia(base64);
       setEstado('subiendo');
 
-      const url = await subirAImgBB(base64);
-      setUrlSubida(url);
-      setVistaPrevia(url);
-      setEstado('listo');
+      const respuesta = await enviarPeticion('subirImagen', { imagenBase64: base64 });
+
+      if (respuesta?.exito && respuesta.urlImagen) {
+        setUrlSubida(respuesta.urlImagen);
+        setVistaPrevia(respuesta.urlImagen);
+        setEstado('listo');
+      } else {
+        const msg = respuesta?.mensaje || 'Error al subir imagen. Verifica que GAS esté redeployado y la IMGBB_API_KEY configurada.';
+        console.error('[ModalSubirFoto] Error subirImagen:', respuesta);
+        setMensajeError(msg);
+        setEstado('error');
+        setVistaPrevia('');
+      }
     } catch (err) {
-      setMensajeError(err.message || 'Error al subir la imagen.');
+      console.error('[ModalSubirFoto] Error de red:', err);
+      setMensajeError('Error de conexión con el servidor. Verifica tu conexión a Internet.');
       setEstado('error');
       setVistaPrevia('');
     }
@@ -110,8 +105,9 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
         <form onSubmit={manejarEnvio} className="p-6 overflow-y-auto space-y-5">
           
           {mensajeError && (
-            <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/45 text-red-300 text-xs font-semibold text-center">
-              {mensajeError}
+            <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/45 text-red-300 text-xs font-semibold text-center flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{mensajeError}</span>
             </div>
           )}
 
