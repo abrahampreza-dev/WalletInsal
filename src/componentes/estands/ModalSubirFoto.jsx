@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, UploadCloud, Image as ImageIcon, Sparkles, Plus, Check } from 'lucide-react';
+import { X, UploadCloud, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react';
+
+const IMGBB_KEY = import.meta.env.VITE_IMGBB_API_KEY;
 
 export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreGrupo }) {
   const [urlImagen, setUrlImagen] = useState('');
@@ -7,38 +9,57 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
   const [vistaPrevia, setVistaPrevia] = useState('');
   const [etiquetaSugerida, setEtiquetaSugerida] = useState('#Expotecnia2026 #SanLuis');
   const [cargandoArchivo, setCargandoArchivo] = useState(false);
+  const [subiendoImgbb, setSubiendoImgbb] = useState(false);
 
   if (!estaAbierto) return null;
 
-  // Manejador de archivo local subido desde la computadora o teléfono
-  const manejarArchivoLocal = (e) => {
+  const manejarArchivoLocal = async (e) => {
     const archivo = e.target.files?.[0];
     if (!archivo) return;
 
     setCargandoArchivo(true);
-    const lector = new FileReader();
-    lector.onload = (eventoCarga) => {
-      const resultado = eventoCarga.target?.result;
-      if (typeof resultado === 'string') {
-        setVistaPrevia(resultado);
-        setUrlImagen(resultado);
-      }
-      setCargandoArchivo(false);
-    };
-    lector.readAsDataURL(archivo);
-  };
+    setVistaPrevia(URL.createObjectURL(archivo));
 
-  const manejarUrlDirecta = (valor) => {
-    setUrlImagen(valor);
-    setVistaPrevia(valor);
+    if (!IMGBB_KEY) {
+      console.error("VITE_IMGBB_API_KEY no configurada");
+      setCargandoArchivo(false);
+      return;
+    }
+
+    try {
+      setSubiendoImgbb(true);
+      const formData = new FormData();
+      formData.append('image', archivo);
+
+      const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await resp.json();
+      if (data.success) {
+        setUrlImagen(data.data.url);
+      } else {
+        console.error("imgBB error:", data);
+        alert("Error subiendo imagen. Intenta con otra imagen.");
+        setVistaPrevia('');
+      }
+    } catch (err) {
+      console.error("Error subiendo a imgBB:", err);
+      alert("Error de conexión al subir imagen.");
+      setVistaPrevia('');
+    } finally {
+      setSubiendoImgbb(false);
+      setCargandoArchivo(false);
+    }
   };
 
   const manejarEnvio = (e) => {
     e.preventDefault();
     if (!urlImagen.trim()) return;
 
-    const textoCompleto = pieDeFoto.trim() 
-      ? `${pieDeFoto.trim()} ${etiquetaSugerida}` 
+    const textoCompleto = pieDeFoto.trim()
+      ? `${pieDeFoto.trim()} ${etiquetaSugerida}`
       : `Proyecto ${nombreGrupo} ⚡ ${etiquetaSugerida}`;
 
     alSubir({
@@ -81,7 +102,7 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
           {/* Opciones de carga */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Paso 1: Selecciona o arrastra tu imagen
+              Paso 1: Selecciona tu imagen
             </label>
             
             <div className="border-2 border-dashed border-slate-200 hover:border-[#E67A15]/80 rounded-2xl p-4 text-center bg-slate-50 hover:bg-white transition-colors relative cursor-pointer group">
@@ -90,28 +111,37 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
                 accept="image/*"
                 onChange={manejarArchivoLocal}
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                disabled={subiendoImgbb}
               />
-              <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-[#E67A15] mx-auto mb-1.5 transition-colors" />
-              <p className="text-xs font-semibold text-slate-800">
-                {cargandoArchivo ? "Cargando imagen..." : "Haz clic para subir desde tu dispositivo"}
-              </p>
-              <p className="text-[11px] text-slate-400">JPG, PNG, WEBP</p>
+              {subiendoImgbb ? (
+                <>
+                  <Loader2 className="w-8 h-8 text-[#E67A15] mx-auto mb-1.5 animate-spin" />
+                  <p className="text-xs font-semibold text-[#E67A15]">Subiendo imagen a imgBB...</p>
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-[#E67A15] mx-auto mb-1.5 transition-colors" />
+                  <p className="text-xs font-semibold text-slate-800">Haz clic para subir desde tu dispositivo</p>
+                  <p className="text-[11px] text-slate-400">JPG, PNG, WEBP</p>
+                </>
+              )}
             </div>
           </div>
 
-          {/* O ingresar URL directa */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-              O ingresa la URL de la imagen:
-            </label>
-            <input
-              type="url"
-              value={urlImagen}
-              onChange={(e) => manejarUrlDirecta(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
-            />
-          </div>
+          {urlImagen && !vistaPrevia && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                O ingresa la URL de la imagen:
+              </label>
+              <input
+                type="url"
+                value={urlImagen}
+                onChange={(e) => { setUrlImagen(e.target.value); setVistaPrevia(e.target.value); }}
+                placeholder="https://..."
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs placeholder-slate-400 focus:outline-none focus:border-[#E67A15]"
+              />
+            </div>
+          )}
 
           {/* Vista previa si existe */}
           {vistaPrevia && (
@@ -148,11 +178,14 @@ export default function ModalSubirFoto({ estaAbierto, alCerrar, alSubir, nombreG
             </button>
             <button
               type="submit"
-              disabled={!urlImagen.trim()}
+              disabled={!urlImagen.trim() || subiendoImgbb}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E67A15] to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white text-xs font-extrabold shadow-lg shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Sparkles className="w-4 h-4" />
-              Comentar en Explorar INSALSPACE
+              {subiendoImgbb ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo...</>
+              ) : (
+                <><Sparkles className="w-4 h-4" /> Comentar en Explorar INSALSPACE</>
+              )}
             </button>
           </div>
 
