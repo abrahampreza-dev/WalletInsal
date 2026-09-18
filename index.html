@@ -89,6 +89,14 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      // Limpiar cache viejo cuando cambia la versión
+      var APP_VERSION = 'v2-walletinsals';
+      var storedVersion = localStorage.getItem('app_version');
+      if (storedVersion !== APP_VERSION) {
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('app_version', APP_VERSION);
+      }
       // Ocultar splash cuando React monte
       window.addEventListener('load', function() {
         setTimeout(function() {
