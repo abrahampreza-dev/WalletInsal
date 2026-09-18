@@ -136,26 +136,42 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
   // Obtener datos reactivos del grupo
   const grupo = listaGrupos.find((g) => g.idGrupo === idGrupo) || listaGrupos[0];
 
-  if (!grupo) return null;
-
-  const [pestanaActiva, setPestanaActiva] = useState('publicaciones'); // 'publicaciones', 'videoDrive', 'apoyos', 'ficha'
+  const [pestanaActiva, setPestanaActiva] = useState('publicaciones');
   const [modalSubirAbierto, setModalSubirAbierto] = useState(false);
   const [modalDriveAbierto, setModalDriveAbierto] = useState(false);
   const [modalEditarPerfilAbierto, setModalEditarPerfilAbierto] = useState(false);
   const [modalHistoriaAbierto, setModalHistoriaAbierto] = useState(false);
   const [modalAccesoEquipoAbierto, setModalAccesoEquipoAbierto] = useState(false);
-  const [accionPendiente, setAccionPendiente] = useState(null); // 'subirFoto' o 'configDrive'
+  const [accionPendiente, setAccionPendiente] = useState(null);
   const [fotoSeleccionada, setFotoSeleccionada] = useState(null);
   const [mostrarDonarModal, setMostrarDonarModal] = useState(false);
   const [mostrarQRModal, setMostrarQRModal] = useState(false);
   const [copiado, setCopiado] = useState(false);
-
-  // Comprobar si el usuario actual está autenticado como el equipo de este estand o admin
-  const esMiembroEquipo = grupoActual && (grupoActual.idGrupo === grupo.idGrupo || grupoActual.id === grupo.idGrupo);
-  const puedeAdministrar = esMiembroEquipo || Boolean(adminToken);
-
   const [eliminandoFotoId, setEliminandoFotoId] = useState(null);
   const [notificacionFeed, setNotificacionFeed] = useState('');
+  const [segundosRestantes, setSegundosRestantes] = useState(30);
+  const [reproduciendo, setReproduciendo] = useState(false);
+  const [yaInicio, setYaInicio] = useState(false);
+  const [requisitoCumplido, setRequisitoCumplido] = useState(() => {
+    if (haVistoVideo && haVistoVideo(idGrupo)) return true;
+    try { return localStorage.getItem('slbits_video_' + idGrupo) === 'true'; } catch { return false; }
+  });
+  const [timerIniciado, setTimerIniciado] = useState(false);
+  const contenedorVideoRef = useRef(null);
+  const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
+
+  const tieneVideo = !!(grupo && grupo.urlVideo && grupo.urlVideo.trim());
+  const duracionTotal = (grupo && grupo.duracionSegundos) || 30;
+  const tiempoRequerido = Math.max(15, Math.ceil(duracionTotal * 0.5));
+
+  const esMiembroEquipo = grupoActual && grupo && (grupoActual.idGrupo === grupo.idGrupo || grupoActual.id === grupo.idGrupo);
+  const puedeAdministrar = esMiembroEquipo || Boolean(adminToken);
+
+  useEffect(() => {
+    setSegundosRestantes(tiempoRequerido);
+  }, [tiempoRequerido]);
+
+  if (!grupo) return null;
 
   const manejarEliminarFoto = async (idFoto) => {
     if (!window.confirm("¿Confirmas que deseas eliminar esta fotografía del muro del estand? Esta acción no se puede deshacer.")) {
@@ -177,21 +193,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
       setEliminandoFotoId(null);
     }
   };
-
-  // Estados del temporizador de visualización para el video de Drive
-  const tieneVideo = !!(grupo.urlVideo && grupo.urlVideo.trim());
-  const duracionTotal = grupo.duracionSegundos || 30;
-  const tiempoRequerido = Math.max(15, Math.ceil(duracionTotal * 0.5));
-  const [segundosRestantes, setSegundosRestantes] = useState(tiempoRequerido);
-  const [reproduciendo, setReproduciendo] = useState(false);
-  const [yaInicio, setYaInicio] = useState(false);
-  const [requisitoCumplido, setRequisitoCumplido] = useState(() => {
-    if (haVistoVideo && haVistoVideo(idGrupo)) return true;
-    try { return localStorage.getItem('slbits_video_' + idGrupo) === 'true'; } catch { return false; }
-  });
-  const [timerIniciado, setTimerIniciado] = useState(false);
-  const contenedorVideoRef = useRef(null);
-  const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
 
   // Sincronizar estado globalmente si se marca como visto
   useEffect(() => {
