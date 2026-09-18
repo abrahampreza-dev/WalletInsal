@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { enviarPeticion } from '../servicios/conexionGas';
 import { firebaseLeer, firebaseEscribir } from '../servicios/firebaseDirecto';
+import { escucharSaldoUsuario } from '../servicios/firebaseRealtime';
 import { normalizarCarrera } from '../datos/carreras';
 
 const crearCodigoQRGrupo = (idGrupo, nombreGrupo) => JSON.stringify({
@@ -148,85 +149,129 @@ export function ProveedorUsuario({ children }) {
     try { localStorage.setItem('usuarios_sl_bits', JSON.stringify(listaUsuarios)); } catch {}
   }, [listaUsuarios]);
 
-  useEffect(() => {
-    try { localStorage.setItem('bitacoras_sl_bits', JSON.stringify(listaBitacoras)); } catch {}
-  }, [listaBitacoras]);
-
-  // Cargar los datos oficiales desde Firebase vía Apps Script al abrir la app.
+  // Carga inicial: solo grupos + transacciones recientes + usuarios (sin bitácoras)
   useEffect(() => {
     sincronizarConServidor(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll ligero de saldo cada 3 segundos: solo lee 1 usuario en Firebase (casi instantáneo)
+  // FASE 3: Listener real-time del saldo via Firebase SDK
+  // 1 usuario = 1 WebSocket eficiente, actualización instantánea cuando cambia
   useEffect(() => {
-    if (!usuarioActual) return;
-    const intervalo = setInterval(async () => {
-      try {
-        const respuesta = await enviarPeticion("obtenerSaldoUsuario", {
-          idUsuario: usuarioActual.idUsuario
-        });
-        if (respuesta && respuesta.exito && respuesta.saldoActual !== undefined) {
-          setUsuarioActual((prev) => {
-            if (!prev) return prev;
-            if (prev.saldoActual !== respuesta.saldoActual) {
-              return { ...prev, saldoActual: respuesta.saldoActual };
-            }
-            return prev;
-          });
+    if (!usuarioActual?.idUsuario) return;
+    const unsubscribe = escucharSaldoUsuario(usuarioActual.idUsuario, (nuevoSaldo) => {
+      setUsuarioActual((prev) => {
+        if (!prev) return prev;
+        if (prev.saldoActual !== nuevoSaldo) {
+          return { ...prev, saldoActual: nuevoSaldo };
         }
-      } catch (err) {
-        // Silencioso: el sync completo lo cubrirá
-      }
-    }, 3000);
-    return () => clearInterval(intervalo);
+        return prev;
+      });
+    });
+    return unsubscribe;
   }, [usuarioActual?.idUsuario]);
 
-  // Sync completa cada 10 segundos: grupos, transacciones, usuarios, bitácoras (tiempo real)
-  // Para usuarios no logueados, solo sincroniza grupos (página pública)
+  // FASE 2: Sync periódica optimizada (sin GAS, sin bitácoras, sin ledger/auditoría)
+  // Grupos cada 30s (datos públicos que cambian con likes/fotos de otros)
   useEffect(() => {
-    const intervalo = setInterval(() => {
-      sincronizarConServidor();
-    }, 10000);
-    return () => clearInterval(intervalo);
-  }, [usuarioActual]);
-
-  // Sincronizar datos globales (grupos, transacciones, usuarios y bitácoras) con el backend.
-  const sincronizarConServidor = async (mostrarCargando = false) => {
-    if (mostrarCargando) setCargando(true);
-    try {
-      const respuesta = await enviarPeticion("obtenerTodo");
-
-      if (respuesta && respuesta.exito && respuesta.datos) {
-        if (respuesta.datos.grupos && Object.keys(respuesta.datos.grupos).length > 0) {
-          const arregloGrupos = Object.values(respuesta.datos.grupos).map((grupo) =>
+    const intervalo = setInterval(async () => {
+      try {
+        const gruposFirebase = await firebaseLeer("grupos");
+        if (gruposFirebase) {
+          const arregloGrupos = Object.values(gruposFirebase).map((grupo) =>
             mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
           );
           setListaGrupos(arregloGrupos);
         }
-        if (respuesta.datos.transacciones && Object.keys(respuesta.datos.transacciones).length > 0) {
-          const arregloTx = Object.values(respuesta.datos.transacciones).reverse();
-          setListaTransacciones(arregloTx);
-        }
-        if (respuesta.datos.usuarios && Object.keys(respuesta.datos.usuarios).length > 0) {
-          const arregloUsuarios = Object.values(respuesta.datos.usuarios);
-          setListaUsuarios(arregloUsuarios);
-        }
-        if (respuesta.datos.bitacoras && Object.keys(respuesta.datos.bitacoras).length > 0) {
-          const arregloBitacoras = Object.values(respuesta.datos.bitacoras).reverse();
-          setListaBitacoras(arregloBitacoras);
-        }
-      }
-    } catch (error) {
-      // CORS falló, leer directo de Firebase
-    }
+      } catch {}
+    }, 30000);
+    return () => clearInterval(intervalo);
+  }, [usuarioActual?.idUsuario]);
 
+  // FASE 2: Usuarios cada 60s (cambian muy raramente)
+  useEffect(() => {
+    const intervalo = setInterval(async () => {
+      try {
+        const usersFirebase = await firebaseLeer("usuarios");
+        if (usersFirebase) {
+          setListaUsuarios(Object.values(usersFirebase));
+        }
+      } catch {}
+    }, 60000);
+    return () => clearInterval(intervalo);
+  }, []);
+
+  // FASE 6: Bitácoras SOLO cuando hay admin logueado (datos admin-only)
+  useEffect(() => {
+    if (usuarioActual?.rol !== 'admin') return;
+    const cargarBitacoras = async () => {
+      try {
+        const bitFirebase = await firebaseLeer("bitacora_admin");
+        if (bitFirebase) setListaBitacoras(Object.values(bitFirebase));
+      } catch {}
+    };
+    cargarBitacoras();
+    const intervalo = setInterval(cargarBitacoras, 60000);
+    return () => clearInterval(intervalo);
+  }, [usuarioActual?.rol]);
+
+  // FASE 5: Transacciones — SOLO carga inicial (30 más recientes)
+  // No se refresca periódicamente; se actualiza bajo demanda post-mutación
+  const cargarTransaccionesRecientes = useCallback(async (limite = 30) => {
     try {
-      const [gruposFirebase, txFirebase, usersFirebase, bitFirebase] = await Promise.all([
+      const todasLasTx = await firebaseLeer("transacciones");
+      if (todasLasTx) {
+        const arregloTx = Object.values(todasLasTx)
+          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+          .slice(0, limite);
+        setListaTransacciones(arregloTx);
+      }
+    } catch {}
+  }, []);
+
+  // Carga inicial de transacciones recientes
+  useEffect(() => {
+    cargarTransaccionesRecientes(30);
+  }, [cargarTransaccionesRecientes]);
+
+  // Cargar más transacciones (paginación)
+  const cargarMasTransacciones = useCallback(async () => {
+    try {
+      const todasLasTx = await firebaseLeer("transacciones");
+      if (todasLasTx) {
+        const todas = Object.values(todasLasTx)
+          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        // Cargar el siguiente lote: desde la posición actual +30
+        setListaTransacciones((prev) => {
+          const desde = prev.length;
+          const siguienteLote = todas.slice(desde, desde + 30);
+          return [...prev, ...siguienteLote];
+        });
+        return { hayMas: todas.length > listaTransacciones.length + 30 };
+      }
+    } catch {}
+    return { hayMas: false };
+  }, [listaTransacciones.length]);
+
+  // Sincronizar solo grupos (para uso post-mutación de fotos/likes/comentarios)
+  const sincronizarGrupos = useCallback(async () => {
+    try {
+      const gruposFirebase = await firebaseLeer("grupos");
+      if (gruposFirebase) {
+        const arregloGrupos = Object.values(gruposFirebase).map((grupo) =>
+          mapearGrupoDesdeServidor(grupo, usuarioActual?.idUsuario)
+        );
+        setListaGrupos(arregloGrupos);
+      }
+    } catch {}
+  }, [usuarioActual?.idUsuario]);
+
+  // Carga completa inicial (solo en mount)
+  const sincronizarConServidor = async (mostrarCargando = false) => {
+    if (mostrarCargando) setCargando(true);
+    try {
+      const [gruposFirebase, usersFirebase] = await Promise.all([
         firebaseLeer("grupos"),
-        firebaseLeer("transacciones"),
-        firebaseLeer("usuarios"),
-        firebaseLeer("bitacora_admin")
+        firebaseLeer("usuarios")
       ]);
 
       if (gruposFirebase) {
@@ -235,18 +280,11 @@ export function ProveedorUsuario({ children }) {
         );
         setListaGrupos(arregloGrupos);
       }
-      if (txFirebase) {
-        const arregloTx = Object.values(txFirebase).reverse();
-        setListaTransacciones(arregloTx);
-      }
       if (usersFirebase) {
         setListaUsuarios(Object.values(usersFirebase));
       }
-      if (bitFirebase) {
-        setListaBitacoras(Object.values(bitFirebase).reverse());
-      }
     } catch (error) {
-      console.error("Error en sync:", error);
+      // Silencioso
     } finally {
       if (mostrarCargando) setCargando(false);
     }
@@ -483,7 +521,7 @@ export function ProveedorUsuario({ children }) {
           })
         );
       }
-      setTimeout(() => sincronizarConServidor(), 500);
+      // No sync completa — la optimista + confirmación del servidor es suficiente
     } catch (error) {
       // Revertir si falla
       setListaGrupos((prev) =>
@@ -524,7 +562,7 @@ export function ProveedorUsuario({ children }) {
         setListaGrupos((prev) =>
           prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
         );
-        setTimeout(() => sincronizarConServidor(), 500);
+        // No sync completa — el servidor ya devolvió el grupo actualizado
         return { exito: true };
       }
       return { exito: false, mensaje: (respuesta && respuesta.mensaje) || "No se pudo procesar tu comentario. Inténtalo nuevamente." };
@@ -651,8 +689,13 @@ export function ProveedorUsuario({ children }) {
         setUsuarioActual((prev) => ({ ...prev, saldoActual: respuestaServidor.nuevoSaldoUsuario }));
       }
 
-      // Sincronizar para reflejar el nuevo total del grupo.
-      await sincronizarConServidor();
+      // Actualizar total del grupo específico si el servidor lo devuelve
+      if (respuestaServidor.nuevoTotalGrupo !== undefined) {
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === idGrupo ? { ...g, totalRecaudado: respuestaServidor.nuevoTotalGrupo } : g))
+        );
+      }
+      // No sync completa — saldo actualizado por listener + respuesta del servidor
 
       return { exito: true, mensaje: respuestaServidor.mensaje };
     } catch (error) {
@@ -712,7 +755,7 @@ export function ProveedorUsuario({ children }) {
         );
       }
 
-      await sincronizarConServidor();
+      // No sync completa — saldos ya actualizados por listener + respuesta del servidor
       return { exito: true, mensaje: respuesta.mensaje };
     } catch (error) {
       setCargando(false);
@@ -947,7 +990,7 @@ export function ProveedorUsuario({ children }) {
         }
       }
 
-      await sincronizarConServidor();
+      // No sync completa — saldo ya actualizado por listener + respuesta del servidor
       return { exito: true, mensaje: respuesta.mensaje, usuarioActualizado: respuesta.usuarioActualizado };
     } catch (error) {
       setCargando(false);
@@ -1060,6 +1103,8 @@ export function ProveedorUsuario({ children }) {
         listaBitacoras,
         setListaBitacoras,
         listaTransacciones,
+        cargarMasTransacciones,
+        sincronizarGrupos,
         notificaciones,
         setNotificaciones,
         cargando,
