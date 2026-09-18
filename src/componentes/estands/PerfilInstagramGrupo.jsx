@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { 
   Heart, 
   MessageCircle, 
@@ -26,7 +26,10 @@ import {
   KeyRound,
   ShieldCheck,
   Maximize,
-  Minimize
+  Minimize,
+  Trash2,
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import ModalSubirFoto from './ModalSubirFoto';
@@ -38,17 +41,96 @@ import ModalEditarPerfilGrupo from './ModalEditarPerfilGrupo';
 import VentanaDonar from './VentanaDonar';
 import CodigoQRGrupo from './CodigoQRGrupo';
 
+const ItemFotoFeed = memo(function ItemFotoFeed({ foto, onClick, puedeAdministrar, eliminandoFotoId, manejarEliminarFoto }) {
+  const [cargada, setCargada] = useState(false);
+
+  return (
+    <div
+      onClick={onClick}
+      className="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 group cursor-pointer border border-slate-200 shadow-md flex flex-col"
+    >
+      <div className="relative flex-1 overflow-hidden bg-slate-100">
+        {/* Placeholder skeleton mientras carga la imagen */}
+        {!cargada && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100 animate-pulse z-0">
+            <ImageIcon className="w-8 h-8 text-slate-300" />
+          </div>
+        )}
+
+        <img
+          src={foto.url || '/logo.png'}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setCargada(true)}
+          onError={(e) => {
+            setCargada(true);
+            e.target.onerror = null;
+            e.target.src = '/logo.png';
+          }}
+          className={`w-full h-full object-cover group-hover:scale-105 transition-opacity duration-300 ${
+            cargada ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+
+        {/* Overlay estilo Instagram al pasar el cursor */}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white font-bold text-sm z-10">
+          <div className="flex items-center gap-1.5">
+            <Heart className="w-5 h-5 fill-white" />
+            <span>{foto.likes || 0}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MessageCircle className="w-5 h-5 fill-white" />
+            <span>{(foto.comentarios || []).length}</span>
+          </div>
+        </div>
+
+        {/* Botón rápido de eliminar si es equipo o administrador */}
+        {puedeAdministrar && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              manejarEliminarFoto(foto.id);
+            }}
+            disabled={eliminandoFotoId === foto.id}
+            title="Eliminar publicación"
+            className="absolute top-2.5 right-2.5 z-20 p-2 rounded-xl bg-black/70 hover:bg-rose-600 text-white shadow-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Contadores siempre visibles debajo de la foto */}
+      <div className="flex items-center justify-between px-2 py-1.5 bg-white z-10">
+        <div className="flex items-center gap-1">
+          <Heart className={`w-3.5 h-3.5 ${foto.leGusta ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+          <span className="text-[11px] font-bold text-slate-400">{foto.likes || 0}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-[11px] font-bold text-slate-400">{(foto.comentarios || []).length}</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistro }) {
   const { 
     listaGrupos, 
     usuarioActual, 
     grupoActual,
     subirFotoGrupo, 
+    eliminarFotoGrupo,
+    adminToken,
     actualizarVideoDrive, 
     actualizarGrupo,
     listaTransacciones,
     iniciarTimerVideo,
-    verificarRetencionVideo
+    verificarRetencionVideo,
+    haVistoVideo,
+    marcarVideoVisto
   } = usarUsuario();
 
   // Obtener datos reactivos del grupo
@@ -68,8 +150,33 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
   const [mostrarQRModal, setMostrarQRModal] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  // Comprobar si el usuario actual está autenticado como el equipo de este estand
-  const esMiembroEquipo = grupoActual && grupoActual.idGrupo === grupo.idGrupo;
+  // Comprobar si el usuario actual está autenticado como el equipo de este estand o admin
+  const esMiembroEquipo = grupoActual && (grupoActual.idGrupo === grupo.idGrupo || grupoActual.id === grupo.idGrupo);
+  const puedeAdministrar = esMiembroEquipo || Boolean(adminToken);
+
+  const [eliminandoFotoId, setEliminandoFotoId] = useState(null);
+  const [notificacionFeed, setNotificacionFeed] = useState('');
+
+  const manejarEliminarFoto = async (idFoto) => {
+    if (!window.confirm("¿Confirmas que deseas eliminar esta fotografía del muro del estand? Esta acción no se puede deshacer.")) {
+      return;
+    }
+    setEliminandoFotoId(idFoto);
+    try {
+      const res = await eliminarFotoGrupo(grupo.idGrupo, idFoto);
+      if (res && res.exito) {
+        setNotificacionFeed("Publicación eliminada correctamente del estand.");
+        if (fotoSeleccionada && fotoSeleccionada.id === idFoto) {
+          setFotoSeleccionada(null);
+        }
+        setTimeout(() => setNotificacionFeed(""), 4000);
+      } else {
+        alert(res?.mensaje || "No se pudo eliminar la publicación.");
+      }
+    } finally {
+      setEliminandoFotoId(null);
+    }
+  };
 
   // Estados del temporizador de visualización para el video de Drive
   const tieneVideo = !!(grupo.urlVideo && grupo.urlVideo.trim());
@@ -79,11 +186,20 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
   const [reproduciendo, setReproduciendo] = useState(false);
   const [yaInicio, setYaInicio] = useState(false);
   const [requisitoCumplido, setRequisitoCumplido] = useState(() => {
+    if (haVistoVideo && haVistoVideo(idGrupo)) return true;
     try { return localStorage.getItem('slbits_video_' + idGrupo) === 'true'; } catch { return false; }
   });
   const [timerIniciado, setTimerIniciado] = useState(false);
   const contenedorVideoRef = useRef(null);
   const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
+
+  // Sincronizar estado globalmente si se marca como visto
+  useEffect(() => {
+    if (haVistoVideo && haVistoVideo(idGrupo)) {
+      setRequisitoCumplido(true);
+      setSegundosRestantes(0);
+    }
+  }, [haVistoVideo, idGrupo]);
 
   // Detectar cambio de fullscreen
   useEffect(() => {
@@ -112,12 +228,16 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
     else if (document.msExitFullscreen) document.msExitFullscreen();
   }, []);
 
-  // Guardar en localStorage cuando se cumple el requisito del video
+  // Guardar en localStorage y notificar globalmente cuando se cumple el requisito del video
   useEffect(() => {
     if (requisitoCumplido) {
-      try { localStorage.setItem('slbits_video_' + idGrupo, 'true'); } catch {}
+      if (marcarVideoVisto) {
+        marcarVideoVisto(idGrupo);
+      } else {
+        try { localStorage.setItem('slbits_video_' + idGrupo, 'true'); } catch {}
+      }
     }
-  }, [requisitoCumplido, idGrupo]);
+  }, [requisitoCumplido, idGrupo, marcarVideoVisto]);
 
   useEffect(() => {
     if (!tieneVideo || pestanaActiva !== 'videoDrive' || !reproduciendo) return;
@@ -202,9 +322,9 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
     Math.round(((tiempoRequerido - segundosRestantes) / tiempoRequerido) * 100)
   );
 
-  // Solicitar clave de acceso si no está autenticado como el grupo
+  // Solicitar clave de acceso si no está autenticado como el grupo ni es administrador
   const solicitarAccionEquipo = (tipoAccion) => {
-    if (esMiembroEquipo) {
+    if (puedeAdministrar) {
       if (tipoAccion === 'subirFoto') setModalSubirAbierto(true);
       if (tipoAccion === 'configDrive') setModalDriveAbierto(true);
     } else {
@@ -227,10 +347,10 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
         </button>
 
         <div className="flex items-center gap-2">
-          {esMiembroEquipo && (
+          {puedeAdministrar && (
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/45 text-emerald-600 text-xs font-bold">
               <ShieldCheck className="w-3.5 h-3.5" />
-              Modo Edición del Equipo
+              {adminToken ? 'Modo Administrador' : 'Modo Edición del Equipo'}
             </span>
           )}
 
@@ -269,6 +389,10 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
               <img
                 src={grupo.urlFoto || "/logo.png"}
                 alt={grupo.nombreGrupo}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/logo.png';
+                }}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>
@@ -293,15 +417,30 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
 
               {/* Botones de acción principales */}
               <div className="flex items-center justify-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setMostrarDonarModal(true)}
-                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#E67A15] hover:to-[#D19E37] text-white text-xs font-black shadow-lg shadow-orange-500/25 flex items-center gap-2 transform hover:-translate-y-0.5 transition-all"
-                >
-                  <Zap className="w-4 h-4 fill-white" />
-                  Apoyar con SL - BITS
-                </button>
+                {/* El botón de donar SOLO aparece si ya vio el video */}
+                {requisitoCumplido ? (
+                  <button
+                    onClick={() => setMostrarDonarModal(true)}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#d87012] hover:to-[#be8f30] text-white text-xs font-black shadow-lg shadow-orange-500/25 flex items-center gap-2 transform hover:-translate-y-0.5 transition-all"
+                  >
+                    <Zap className="w-4 h-4 fill-white" />
+                    Apoyar con SL - BITS
+                  </button>
+                ) : tieneVideo ? (
+                  <button
+                    onClick={() => {
+                      setPestanaActiva('videoDrive');
+                      setReproduciendo(true);
+                      setYaInicio(true);
+                    }}
+                    className="px-5 py-2.5 rounded-2xl bg-[#0A4D9C] hover:bg-[#07366E] text-white text-xs font-bold shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 transition-all"
+                  >
+                    <Play className="w-4 h-4 fill-white" />
+                    Ver Video ({duracionTotal}s) para Apoyar
+                  </button>
+                ) : null}
 
-                {esMiembroEquipo && (
+                {puedeAdministrar && (
                   <>
                     <button
                       onClick={() => solicitarAccionEquipo('subirFoto')}
@@ -492,6 +631,15 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
       {pestanaActiva === 'publicaciones' && (
         <div className="space-y-6">
           
+          {notificacionFeed && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center justify-between shadow-sm animate-fadeIn">
+              <span>{notificacionFeed}</span>
+              <button onClick={() => setNotificacionFeed('')} className="text-emerald-500 hover:text-emerald-800">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-black text-slate-800">Galería de Publicaciones</h3>
@@ -524,43 +672,14 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {fotos.map((foto) => (
-                <div
+                <ItemFotoFeed
                   key={foto.id}
+                  foto={foto}
                   onClick={() => setFotoSeleccionada(foto)}
-                  className="relative aspect-square rounded-2xl overflow-hidden bg-slate-50 group cursor-pointer border border-slate-200 shadow-md flex flex-col"
-                >
-                  <div className="relative flex-1 overflow-hidden">
-                    <img
-                      src={foto.url}
-                      alt=""
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-
-                    {/* Overlay estilo Instagram al pasar el cursor */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white font-bold text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Heart className="w-5 h-5 fill-white" />
-                        <span>{foto.likes || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <MessageCircle className="w-5 h-5 fill-white" />
-                        <span>{(foto.comentarios || []).length}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contadores siempre visibles debajo de la foto */}
-                  <div className="flex items-center justify-between px-2 py-1.5 bg-white">
-                    <div className="flex items-center gap-1">
-                      <Heart className={`w-3.5 h-3.5 ${foto.leGusta ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
-                      <span className="text-[11px] font-bold text-slate-400">{foto.likes || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-[11px] font-bold text-slate-400">{(foto.comentarios || []).length}</span>
-                    </div>
-                  </div>
-                </div>
+                  puedeAdministrar={puedeAdministrar}
+                  eliminandoFotoId={eliminandoFotoId}
+                  manejarEliminarFoto={manejarEliminarFoto}
+                />
               ))}
             </div>
           )}
@@ -584,7 +703,7 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
               </p>
             </div>
 
-            {esMiembroEquipo && (
+            {puedeAdministrar && (
             <button
               onClick={() => solicitarAccionEquipo('configDrive')}
               className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#0A4D9C] border border-slate-200 text-xs font-bold flex items-center gap-2 self-start sm:self-auto"
@@ -709,36 +828,14 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
             </div>
           )}
 
-          {/* Botón de donación */}
-          {tieneVideo ? (
+          {/* Botón de donación: SOLO aparece una vez cumplido el requisito del video */}
+          {tieneVideo && requisitoCumplido && (
             <button
               onClick={() => setMostrarDonarModal(true)}
-              disabled={!requisitoCumplido}
-              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                requisitoCumplido
-                  ? 'bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#E67A15] hover:to-[#D19E37] text-white shadow-xl shadow-orange-500/30 cursor-pointer transform hover:-translate-y-0.5'
-                  : 'bg-slate-100 text-slate-400 border border-slate-200/50 cursor-not-allowed'
-              }`}
+              className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#d87012] hover:to-[#be8f30] text-white shadow-xl shadow-orange-500/30 cursor-pointer transform hover:-translate-y-0.5"
             >
-              {requisitoCumplido ? (
-                <>
-                  <Zap className="w-4 h-4 fill-white" />
-                  ¡Apoyar a este proyecto con SL - BITS!
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4" />
-                  Mira el video para desbloquear tu apoyo ({segundosRestantes}s)
-                </>
-              )}
-            </button>
-          ) : (
-            <button
-              disabled
-              className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200/50 cursor-not-allowed"
-            >
-              <Lock className="w-4 h-4" />
-              Donación no disponible
+              <Zap className="w-4 h-4 fill-white" />
+              ¡Apoyar a este proyecto con SL - BITS!
             </button>
           )}
 
@@ -755,12 +852,27 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
               <p className="text-xs text-slate-400">Total recaudado: <strong className="text-[#E67A15]">{(grupo.totalRecaudado || 0).toFixed(2)} SL - BITS</strong></p>
             </div>
             
-            <button
-              onClick={() => setMostrarDonarModal(true)}
-              className="px-4 py-2 rounded-2xl bg-[#E67A15] text-white text-xs font-bold shadow-md shadow-orange-500/20"
-            >
-              Realizar una Donación
-            </button>
+            {/* Botón de donar en el muro: SOLO aparece si ya vio el video */}
+            {requisitoCumplido ? (
+              <button
+                onClick={() => setMostrarDonarModal(true)}
+                className="px-4 py-2 rounded-2xl bg-[#E67A15] hover:bg-[#d87012] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-colors"
+              >
+                Realizar una Donación
+              </button>
+            ) : tieneVideo ? (
+              <button
+                onClick={() => {
+                  setPestanaActiva('videoDrive');
+                  setReproduciendo(true);
+                  setYaInicio(true);
+                }}
+                className="px-4 py-2 rounded-2xl bg-[#0A4D9C]/15 hover:bg-[#0A4D9C]/25 text-[#0A4D9C] text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <Play className="w-3.5 h-3.5 fill-[#0A4D9C]" />
+                Ver Video para Apoyar
+              </button>
+            ) : null}
           </div>
 
           {donacionesRecibidas.length === 0 ? (
@@ -853,7 +965,14 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
       <ModalSubirFoto
         estaAbierto={modalSubirAbierto}
         alCerrar={() => setModalSubirAbierto(false)}
-        alSubir={(datos) => subirFotoGrupo(grupo.idGrupo, datos)}
+        alSubir={async (datos) => {
+          const res = await subirFotoGrupo(grupo.idGrupo, datos);
+          if (res?.exito) {
+            setNotificacionFeed("¡Foto publicada con éxito en el feed del estand!");
+            setTimeout(() => setNotificacionFeed(""), 4000);
+          }
+          return res;
+        }}
         nombreGrupo={grupo.nombreGrupo}
       />
 
@@ -889,6 +1008,8 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
         alCerrar={() => setFotoSeleccionada(null)}
         foto={fotoSeleccionada ? (grupo.fotos || []).find(f => f.id === fotoSeleccionada.id) || fotoSeleccionada : null}
         grupo={grupo}
+        esMiembroEquipo={puedeAdministrar}
+        alEliminarFoto={manejarEliminarFoto}
         alAbrirDonacion={() => {
           setFotoSeleccionada(null);
           setMostrarDonarModal(true);

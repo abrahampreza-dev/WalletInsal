@@ -18,6 +18,7 @@ import {
   Camera
 } from 'lucide-react';
 import CamaraSelfie from '../comun/CamaraSelfie';
+import { comprimirImagen } from '../../utilidades/compresionImagen';
 
 export default function RegistroGrupo({ alCompletarRegistro, alIrAEstand }) {
   const { registrarNuevoGrupo, cargando } = usarUsuario();
@@ -37,41 +38,39 @@ export default function RegistroGrupo({ alCompletarRegistro, alIrAEstand }) {
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
 
-  // Subir imagen a ImgBB mediante el backend de Google Apps Script
+  // Subir imagen a ImgBB mediante el backend de Google Apps Script con compresión previa
   const manejarSubidaImagen = async (evento) => {
     const archivo = evento.target.files[0];
     if (!archivo) return;
 
-    if (archivo.size > 5 * 1024 * 1024) {
-      setMensajeError('La imagen no debe superar los 5 MB.');
-      return;
-    }
-
     setSubiendoImagen(true);
     setMensajeError('');
+    setMensajeExito('');
 
-    const lector = new FileReader();
-    lector.onload = async () => {
-      const base64 = lector.result;
-      const respuesta = await enviarPeticion('subirImagen', { imagenBase64: base64 });
+    try {
+      // Compresión inteligente previa
+      const resComp = await comprimirImagen(archivo, {
+        maxAncho: 800,
+        maxAlto: 800,
+        calidad: 0.70,
+        formato: 'image/webp'
+      });
+
+      const respuesta = await enviarPeticion('subirImagen', { imagenBase64: resComp.base64Pura });
 
       if (respuesta && respuesta.exito && respuesta.urlImagen) {
         setUrlFoto(respuesta.urlImagen);
-        setMensajeExito('¡Imagen subida exitosamente a ImgBB!');
+        setMensajeExito(`¡Imagen optimizada (${resComp.pesoOriginal} ➔ ${resComp.pesoComprimido}) y guardada!`);
       } else {
-        // En caso de que falle la API de ImgBB, usamos la vista previa en Base64 localmente
-        setUrlFoto(base64);
-        setMensajeExito('Imagen cargada localmente.');
+        setUrlFoto(resComp.dataUrl);
+        setMensajeExito('Imagen optimizada y cargada.');
       }
+    } catch (err) {
+      console.error("Error al procesar imagen en registro:", err);
+      setMensajeError('Error al procesar el archivo de imagen.');
+    } finally {
       setSubiendoImagen(false);
-    };
-
-    lector.onerror = () => {
-      setMensajeError('Error al leer el archivo de imagen.');
-      setSubiendoImagen(false);
-    };
-
-    lector.readAsDataURL(archivo);
+    }
   };
 
   // Formatear automáticamente enlace de Google Drive

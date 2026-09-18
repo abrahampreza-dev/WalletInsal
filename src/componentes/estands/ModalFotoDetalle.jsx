@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Heart, MessageCircle, Zap, Share2 } from 'lucide-react';
+import { X, Heart, MessageCircle, Zap, Share2, Trash2, Loader2 } from 'lucide-react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 
-export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, alAbrirDonacion, alAbrirRegistro }) {
-  const { toggleLikeFoto, agregarComentarioFoto, usuarioActual } = usarUsuario();
+export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, alAbrirDonacion, alAbrirRegistro, esMiembroEquipo, alEliminarFoto }) {
+  const { toggleLikeFoto, agregarComentarioFoto, usuarioActual, haVistoVideo } = usarUsuario();
   const [comentarioTexto, setComentarioTexto] = useState('');
   const [animacionCorazon, setAnimacionCorazon] = useState(false);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [cargandoImagen, setCargandoImagen] = useState(true);
   const inputRef = useRef(null);
   const comentariosRef = useRef(null);
+
+  const puedeDonar = Boolean(grupo && haVistoVideo && haVistoVideo(grupo.idGrupo));
+
+  // Reiniciar estado de carga al cambiar de foto
+  useEffect(() => {
+    setCargandoImagen(true);
+  }, [foto?.id]);
 
   // Auto-scroll al fondo de comentarios cuando se agrega uno nuevo
   useEffect(() => {
@@ -98,12 +106,41 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
         </div>
 
         {/* Columna Izquierda: Imagen */}
-        <div className="relative sm:w-3/5 bg-black flex items-center justify-center flex-shrink-0" style={{ minHeight: '30vh', maxHeight: '50vh' }}>
+        <div className="relative sm:w-3/5 bg-black flex items-center justify-center flex-shrink-0 group" style={{ minHeight: '30vh', maxHeight: '50vh' }}>
+          {esMiembroEquipo && (
+            <button
+              onClick={() => {
+                if (alEliminarFoto) alEliminarFoto(foto.id);
+              }}
+              title="Eliminar esta publicación"
+              className="absolute top-3 left-3 z-30 p-2 rounded-xl bg-black/60 hover:bg-rose-600 text-white shadow-md transition-colors flex items-center gap-1.5 text-xs font-semibold backdrop-blur-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Eliminar</span>
+            </button>
+          )}
+
+          {/* Indicador de carga mientras descarga la imagen */}
+          {cargandoImagen && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2 bg-slate-900/60 z-10">
+              <Loader2 className="w-8 h-8 animate-spin text-[#E67A15]" />
+              <span className="text-[11px] text-slate-300 font-medium">Cargando fotografía...</span>
+            </div>
+          )}
+
           <img
-            src={foto.url}
+            src={foto.url || '/logo.png'}
             alt=""
+            loading="eager"
+            decoding="async"
+            onLoad={() => setCargandoImagen(false)}
+            onError={(e) => {
+              setCargandoImagen(false);
+              e.target.onerror = null;
+              e.target.src = '/logo.png';
+            }}
             onDoubleClick={manejarLike}
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain transition-opacity duration-300 ${cargandoImagen ? 'opacity-0' : 'opacity-100'}`}
           />
 
           {/* Animación corazón */}
@@ -124,6 +161,10 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
                 <img
                   src={grupo.urlFoto || "/logo.png"}
                   alt={grupo.nombreGrupo}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/logo.png';
+                  }}
                   className="w-full h-full rounded-full object-cover border-2 border-slate-200"
                 />
               </div>
@@ -136,13 +177,30 @@ export default function ModalFotoDetalle({ estaAbierto, alCerrar, foto, grupo, a
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => alAbrirDonacion(grupo)}
-              className="px-3 py-1.5 rounded-xl bg-[#E67A15]/15 hover:bg-[#E67A15]/25 text-[#E67A15] border border-[#E67A15]/50 text-xs font-bold flex items-center gap-1.5"
-            >
-              <Zap className="w-3.5 h-3.5 fill-[#E67A15]" />
-              Apoyar
-            </button>
+            
+            <div className="flex items-center gap-2">
+              {esMiembroEquipo && (
+                <button
+                  onClick={() => {
+                    if (alEliminarFoto) alEliminarFoto(foto.id);
+                  }}
+                  title="Eliminar publicación"
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Eliminar
+                </button>
+              )}
+              {puedeDonar && (
+                <button
+                  onClick={() => alAbrirDonacion(grupo)}
+                  className="px-3 py-1.5 rounded-xl bg-[#E67A15]/15 hover:bg-[#E67A15]/25 text-[#E67A15] border border-[#E67A15]/50 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-[#E67A15]" />
+                  Apoyar
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Lista de comentarios — scrollable */}

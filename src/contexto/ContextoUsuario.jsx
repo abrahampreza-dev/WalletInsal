@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { enviarPeticion } from '../servicios/conexionGas';
-import { firebaseLeer } from '../servicios/firebaseDirecto';
+import { firebaseLeer, firebaseEscribir } from '../servicios/firebaseDirecto';
 import { normalizarCarrera } from '../datos/carreras';
 
 const crearCodigoQRGrupo = (idGrupo, nombreGrupo) => JSON.stringify({
@@ -25,16 +25,20 @@ const mapearGrupoDesdeServidor = (grupo, idUsuarioActual) => {
   const grupoMapeado = { ...grupo };
   grupoMapeado.especialidad = normalizarCarrera(grupoMapeado.especialidad);
   grupoMapeado.handle = grupoMapeado.handle || `@${(grupoMapeado.nombreGrupo || 'estand').toLowerCase().replace(/\s+/g, '.')}`;
-  grupoMapeado.fotos = firebaseObjToArray(grupoMapeado.fotos).map((foto) => {
-    const likesUsuarios = foto.likesUsers || {};
-    const nombresLikkes = Object.values(likesUsuarios).filter((v) => typeof v === 'string');
-    return {
-      ...foto,
-      likes: typeof foto.likes === 'number' ? foto.likes : Object.keys(likesUsuarios).length,
-      leGusta: Boolean(idUsuarioActual && likesUsuarios[idUsuarioActual]),
-      nombresLikkes
-    };
-  });
+  grupoMapeado.fotos = firebaseObjToArray(grupoMapeado.fotos)
+    .filter(Boolean)
+    .map((foto) => {
+      if (typeof foto !== 'object') return null;
+      const likesUsuarios = foto.likesUsers || {};
+      const nombresLikkes = Object.values(likesUsuarios).filter((v) => typeof v === 'string');
+      return {
+        ...foto,
+        likes: typeof foto.likes === 'number' ? foto.likes : Object.keys(likesUsuarios).length,
+        leGusta: Boolean(idUsuarioActual && likesUsuarios[idUsuarioActual]),
+        nombresLikkes
+      };
+    })
+    .filter(Boolean);
   const integrantesRaw = grupoMapeado.integrantes;
   if (Array.isArray(integrantesRaw)) {
     grupoMapeado.integrantes = integrantesRaw.filter(Boolean).join(', ');
@@ -248,23 +252,43 @@ export function ProveedorUsuario({ children }) {
     }
   };
 
-  // Subir una foto al feed del estand: se guarda en Firebase vía GAS.
+  // Subir una foto al feed del estand: se guarda en Firebase vía GAS con respaldo directo.
   const subirFotoGrupo = async (idGrupo, datosFoto) => {
-    if (!usuarioActual) return { exito: false, mensaje: "Debes iniciar sesión para subir una foto." };
+    // Permitir subida solo si está autenticado el equipo propietario del estand o un administrador.
+    // Un visitante/alumno logueado NO puede subir fotos a estands que no son suyos.
+    const esEquipoDelGrupo = grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo);
+    const tienePermiso = esEquipoDelGrupo || Boolean(adminToken);
+
+    if (!tienePermiso) {
+      return { exito: false, mensaje: "Debes ingresar con las credenciales del equipo propietario de este estand para publicar." };
+    }
+
+    if (!datosFoto || !datosFoto.url) {
+      return { exito: false, mensaje: "No se proporcionó una imagen válida para la publicación." };
+    }
+
     setCargando(true);
+    const idFotoNueva = "post_" + Date.now();
+    const nombreAutor = datosFoto.autor || (grupoActual?.nombreGrupo ? `Equipo ${grupoActual.nombreGrupo}` : (usuarioActual?.nombreCompleto || usuarioActual?.documento || "Equipo"));
+    
+    const nuevaFotoObj = {
+      id: idFotoNueva,
+      url: datosFoto.url,
+      pie: datosFoto.pie || "",
+      autor: nombreAutor,
+      fecha: "Justo ahora",
+      likes: 0,
+      leGusta: false,
+      likesUsers: {},
+      comentarios: []
+    };
+
     try {
       const respuesta = await enviarPeticion("subirFotoGrupo", {
         idGrupo,
-        foto: {
-          id: "post_" + Date.now(),
-          url: datosFoto.url,
-          pie: datosFoto.pie || "",
-          fecha: "Justo ahora",
-          likes: 0,
-          leGusta: false,
-          likesUsers: {},
-          comentarios: []
-        }
+        foto: nuevaFotoObj,
+        claveAcceso: grupoActual?.claveAcceso || '',
+        adminToken: adminToken || ''
       });
 
       if (respuesta && respuesta.exito && respuesta.grupo) {
@@ -272,17 +296,138 @@ export function ProveedorUsuario({ children }) {
         setListaGrupos((prev) =>
           prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g))
         );
-        if (grupoActual && grupoActual.idGrupo === idGrupo) setGrupoActual(grupoMapeado);
+        if (grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo)) {
+          setGrupoActual(grupoMapeado);
+        }
         return { exito: true, mensaje: respuesta.mensaje || "¡Publicación subida con éxito al feed del estand!" };
       }
 
-      return {
-        exito: false,
-        mensaje: (respuesta && respuesta.mensaje) || "Ocurrió un error al intentar almacenar la imagen."
-      };
+      // Si el servidor rechazó expresamente por credenciales o autorización, no intentar fallback
+      if (respuesta && !respuesta.exito && (respuesta.codigo === "SIN_AUTORIZACION" || respuesta.mensaje?.toLowerCase().includes("credencial") || respuesta.mensaje?.toLowerCase().includes("autoriz") || respuesta.mensaje?.toLowerCase().includes("clave"))) {
+        return {
+          exito: false,
+          mensaje: respuesta.mensaje || "No tienes autorización para publicar en este estand."
+        };
+      }
+
+      // Si GAS responde con error técnico o no tiene la función, respaldo en Firebase directo
+      try {
+        const grupoExistente = listaGrupos.find((g) => g.idGrupo === idGrupo);
+        const fotosActuales = [nuevaFotoObj, ...(grupoExistente?.fotos || [])];
+
+        await firebaseEscribir(`grupos/${idGrupo}/fotos`, fotosActuales);
+        const grupoActualizado = { ...grupoExistente, fotos: fotosActuales };
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === idGrupo ? grupoActualizado : g))
+        );
+        if (grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo)) {
+          setGrupoActual(grupoActualizado);
+        }
+        return { exito: true, mensaje: "¡Publicación subida con éxito!" };
+      } catch (fbErr) {
+        console.error("Error en fallback directo de foto:", fbErr);
+        return {
+          exito: false,
+          mensaje: (respuesta && respuesta.mensaje) || "No fue posible guardar la publicación en el servidor."
+        };
+      }
     } catch (error) {
+      console.error("Error al subir foto:", error);
+      // Respaldo en Firebase directo si falla la petición GAS
+      try {
+        const grupoExistente = listaGrupos.find((g) => g.idGrupo === idGrupo);
+        const fotosActuales = [nuevaFotoObj, ...(grupoExistente?.fotos || [])];
+
+        await firebaseEscribir(`grupos/${idGrupo}/fotos`, fotosActuales);
+        const grupoActualizado = { ...grupoExistente, fotos: fotosActuales };
+        setListaGrupos((prev) =>
+          prev.map((g) => (g.idGrupo === idGrupo ? grupoActualizado : g))
+        );
+        if (grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo)) {
+          setGrupoActual(grupoActualizado);
+        }
+        return { exito: true, mensaje: "¡Publicación subida con éxito!" };
+      } catch (fbErr2) {
+        return { exito: false, mensaje: 'Error de conexión al procesar la publicación.' };
+      }
+    } finally {
       setCargando(false);
-      return { exito: false, mensaje: 'Error inesperado al procesar la operación.' };
+    }
+  };
+
+  // Eliminar una foto del feed del estand: persiste en Firebase vía GAS y respaldo directo.
+  const eliminarFotoGrupo = async (idGrupo, idFoto) => {
+    const esEquipoDelGrupo = grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo);
+    const tienePermiso = esEquipoDelGrupo || Boolean(adminToken);
+
+    if (!tienePermiso) {
+      return { exito: false, mensaje: "Se requiere autorización del equipo o administrador para eliminar publicaciones." };
+    }
+
+    setCargando(true);
+    try {
+      const respuesta = await enviarPeticion("eliminarFotoGrupo", {
+        idGrupo,
+        idFoto,
+        claveAcceso: grupoActual?.claveAcceso,
+        adminToken
+      });
+
+      // Preparar fotos filtradas para actualización reactiva
+      const grupoExistente = listaGrupos.find((g) => g.idGrupo === idGrupo);
+      const fotosFiltradas = (grupoExistente?.fotos || []).filter((f) => f.id !== idFoto);
+
+      if (respuesta && respuesta.exito) {
+        const grupoMapeado = respuesta.grupo
+          ? mapearGrupoDesdeServidor(respuesta.grupo, usuarioActual?.idUsuario)
+          : { ...grupoExistente, fotos: fotosFiltradas };
+
+        setListaGrupos((prev) => prev.map((g) => (g.idGrupo === idGrupo ? grupoMapeado : g)));
+        if (grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo)) {
+          setGrupoActual((prev) => ({ ...prev, fotos: fotosFiltradas }));
+        }
+        return { exito: true, mensaje: respuesta.mensaje || "Publicación eliminada exitosamente." };
+      }
+
+      // Si el servidor rechazó expresamente por credenciales o autorización, no intentar fallback
+      if (respuesta && !respuesta.exito && (respuesta.codigo === "SIN_AUTORIZACION" || respuesta.mensaje?.toLowerCase().includes("credencial") || respuesta.mensaje?.toLowerCase().includes("autoriz") || respuesta.mensaje?.toLowerCase().includes("clave"))) {
+        return {
+          exito: false,
+          mensaje: respuesta.mensaje || "No tienes autorización para eliminar publicaciones en este estand."
+        };
+      }
+
+      // Si GAS falló por red o no implementa la acción aún, aplicamos Firebase directo
+      try {
+        await firebaseEscribir(`grupos/${idGrupo}/fotos`, fotosFiltradas);
+        const grupoActualizado = { ...grupoExistente, fotos: fotosFiltradas };
+        setListaGrupos((prev) => prev.map((g) => (g.idGrupo === idGrupo ? grupoActualizado : g)));
+        if (grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo)) {
+          setGrupoActual((prev) => ({ ...prev, fotos: fotosFiltradas }));
+        }
+        return { exito: true, mensaje: "Publicación eliminada correctamente." };
+      } catch (fbErr) {
+        console.error("Error en eliminación directa:", fbErr);
+        return {
+          exito: false,
+          mensaje: (respuesta && respuesta.mensaje) || "No se pudo eliminar la publicación."
+        };
+      }
+    } catch (error) {
+      console.error("Error al eliminar foto:", error);
+      try {
+        const grupoExistente = listaGrupos.find((g) => g.idGrupo === idGrupo);
+        const fotosFiltradas = (grupoExistente?.fotos || []).filter((f) => f.id !== idFoto);
+        await firebaseEscribir(`grupos/${idGrupo}/fotos`, fotosFiltradas);
+        const grupoActualizado = { ...grupoExistente, fotos: fotosFiltradas };
+        setListaGrupos((prev) => prev.map((g) => (g.idGrupo === idGrupo ? grupoActualizado : g)));
+        if (grupoActual && (grupoActual.idGrupo === idGrupo || grupoActual.id === idGrupo)) {
+          setGrupoActual((prev) => ({ ...prev, fotos: fotosFiltradas }));
+        }
+        return { exito: true, mensaje: "Publicación eliminada correctamente." };
+      } catch (fbErr2) {
+        return { exito: false, mensaje: "Error inesperado al eliminar la publicación." };
+      }
     } finally {
       setCargando(false);
     }
@@ -417,9 +562,12 @@ export function ProveedorUsuario({ children }) {
     return { exito: true, urlNormalizada };
   };
 
-  // Actualiza la configuración multimedia de un grupo (requiere la clave del equipo).
+  // Actualiza la configuración multimedia de un grupo (requiere la clave del equipo o ser admin).
   const actualizarGrupo = async (datos) => {
-    if (!grupoActual || grupoActual.idGrupo !== datos.idGrupo || !grupoActual.claveAcceso) {
+    const esEquipoDelGrupo = grupoActual && (grupoActual.idGrupo === datos.idGrupo || grupoActual.id === datos.idGrupo) && Boolean(grupoActual.claveAcceso);
+    const esAdmin = Boolean(adminToken);
+
+    if (!esEquipoDelGrupo && !esAdmin) {
       return { exito: false, mensaje: "No tienes una sesión de equipo autorizada para editar este estand." };
     }
 
@@ -427,23 +575,27 @@ export function ProveedorUsuario({ children }) {
     try {
       const respuesta = await enviarPeticion("actualizarGrupo", {
         idGrupo: datos.idGrupo,
-        claveAcceso: grupoActual.claveAcceso,
-        nombreGrupo: datos.nombreGrupo ?? grupoActual.nombreGrupo ?? "",
-        especialidad: datos.especialidad ?? grupoActual.especialidad ?? "",
-        descripcion: datos.descripcion ?? grupoActual.descripcion ?? "",
-        integrantes: datos.integrantes ?? grupoActual.integrantes ?? "",
-        urlFoto: datos.urlFoto ?? grupoActual.urlFoto ?? "",
-        urlVideo: datos.urlVideo ?? grupoActual.urlVideo ?? "",
-        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual.duracionSegundos ?? 30, 10)
+        claveAcceso: grupoActual?.claveAcceso || '',
+        adminToken: adminToken || '',
+        nombreGrupo: datos.nombreGrupo ?? grupoActual?.nombreGrupo ?? "",
+        especialidad: datos.especialidad ?? grupoActual?.especialidad ?? "",
+        descripcion: datos.descripcion ?? grupoActual?.descripcion ?? "",
+        integrantes: datos.integrantes ?? grupoActual?.integrantes ?? "",
+        urlFoto: datos.urlFoto ?? grupoActual?.urlFoto ?? "",
+        urlVideo: datos.urlVideo ?? grupoActual?.urlVideo ?? "",
+        duracionSegundos: parseInt(datos.duracionSegundos ?? grupoActual?.duracionSegundos ?? 30, 10)
       });
 
       if (respuesta && respuesta.exito && respuesta.grupo) {
+        const claveSesion = grupoActual?.claveAcceso || '';
         const grupoMapeado = mapearGrupoDesdeServidor(
-          { ...respuesta.grupo, claveAcceso: grupoActual.claveAcceso },
+          { ...respuesta.grupo, claveAcceso: claveSesion },
           usuarioActual?.idUsuario
         );
         setListaGrupos((prev) => prev.map((g) => (g.idGrupo === datos.idGrupo ? grupoMapeado : g)));
-        setGrupoActual(grupoMapeado);
+        if (esEquipoDelGrupo) {
+          setGrupoActual(grupoMapeado);
+        }
         return { exito: true, grupo: grupoMapeado };
       }
 
@@ -833,6 +985,55 @@ export function ProveedorUsuario({ children }) {
     }
   };
 
+  // Estado reactivo para rastrear videos vistos en la sesión/localStorage
+  const [videosVistos, setVideosVistos] = useState(() => {
+    const mapa = {};
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const clave = localStorage.key(i);
+        if (clave && clave.startsWith('slbits_video_')) {
+          const idGrupo = clave.replace('slbits_video_', '');
+          if (localStorage.getItem(clave) === 'true') {
+            mapa[idGrupo] = true;
+          }
+        }
+      }
+    } catch {}
+    return mapa;
+  });
+
+  const haVistoVideo = useCallback((idGrupo) => {
+    if (!idGrupo) return false;
+    if (videosVistos[idGrupo]) return true;
+    try {
+      return localStorage.getItem('slbits_video_' + idGrupo) === 'true';
+    } catch {
+      return false;
+    }
+  }, [videosVistos]);
+
+  const marcarVideoVisto = useCallback((idGrupo) => {
+    if (!idGrupo) return;
+    try {
+      localStorage.setItem('slbits_video_' + idGrupo, 'true');
+    } catch {}
+    setVideosVistos((prev) => ({ ...prev, [idGrupo]: true }));
+    try {
+      window.dispatchEvent(new CustomEvent('slbits_video_visto', { detail: { idGrupo } }));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const manejarEventoVideo = (e) => {
+      const id = e?.detail?.idGrupo;
+      if (id) {
+        setVideosVistos((prev) => ({ ...prev, [id]: true }));
+      }
+    };
+    window.addEventListener('slbits_video_visto', manejarEventoVideo);
+    return () => window.removeEventListener('slbits_video_visto', manejarEventoVideo);
+  }, []);
+
   const cerrarSesion = () => {
     setUsuarioActual(null);
     localStorage.removeItem('usuario_sl_bits');
@@ -865,6 +1066,7 @@ export function ProveedorUsuario({ children }) {
         mensajeAlerta,
         setMensajeAlerta,
         subirFotoGrupo,
+        eliminarFotoGrupo,
         toggleLikeFoto,
         agregarComentarioFoto,
         actualizarVideoDrive,
@@ -882,6 +1084,9 @@ export function ProveedorUsuario({ children }) {
         sincronizarConServidor,
         iniciarTimerVideo,
         verificarRetencionVideo,
+        videosVistos,
+        haVistoVideo,
+        marcarVideoVisto,
         cerrarSesion
       }}
     >

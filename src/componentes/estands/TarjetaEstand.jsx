@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { 
   Zap, 
   Play, 
@@ -17,10 +17,11 @@ import {
   X
 } from 'lucide-react';
 import CodigoQRGrupo from './CodigoQRGrupo';
+import ImagenOptimizada from '../comun/ImagenOptimizada';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 
-export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilInstagram }) {
-  const { usuarioActual, iniciarTimerVideo, verificarRetencionVideo } = usarUsuario();
+function TarjetaEstandComponente({ estand, alAbrirDonacion, alAbrirPerfilInstagram }) {
+  const { usuarioActual, iniciarTimerVideo, verificarRetencionVideo, haVistoVideo, marcarVideoVisto } = usarUsuario();
   const tieneVideo = !!(estand.urlVideo && estand.urlVideo.trim());
   const duracionTotal = estand.duracionSegundos || 30;
   const tiempoRequeridoSegundos = Math.max(15, Math.ceil(duracionTotal * 0.5));
@@ -29,6 +30,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const [reproduciendo, setReproduciendo] = useState(false);
   const [yaInicio, setYaInicio] = useState(false);
   const [requisitoCumplido, setRequisitoCumplido] = useState(() => {
+    if (haVistoVideo && haVistoVideo(estand.idGrupo)) return true;
     try { return localStorage.getItem('slbits_video_' + estand.idGrupo) === 'true'; } catch { return false; }
   });
   const [mostrarVideoModal, setMostrarVideoModal] = useState(false);
@@ -36,6 +38,14 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const [timerIniciado, setTimerIniciado] = useState(false);
   const contenedorVideoRef = useRef(null);
   const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
+
+  // Sincronizar estado si cambia globalmente
+  useEffect(() => {
+    if (haVistoVideo && haVistoVideo(estand.idGrupo)) {
+      setRequisitoCumplido(true);
+      setSegundosRestantes(0);
+    }
+  }, [haVistoVideo, estand.idGrupo]);
 
   useEffect(() => {
     const manejarCambio = () => {
@@ -65,9 +75,13 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
 
   useEffect(() => {
     if (requisitoCumplido) {
-      try { localStorage.setItem('slbits_video_' + estand.idGrupo, 'true'); } catch {}
+      if (marcarVideoVisto) {
+        marcarVideoVisto(estand.idGrupo);
+      } else {
+        try { localStorage.setItem('slbits_video_' + estand.idGrupo, 'true'); } catch {}
+      }
     }
-  }, [requisitoCumplido, estand.idGrupo]);
+  }, [requisitoCumplido, estand.idGrupo, marcarVideoVisto]);
 
   useEffect(() => {
     if (!tieneVideo || !mostrarVideoModal || !reproduciendo) return;
@@ -127,14 +141,16 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
   const cantidadFotos = (estand.fotos || []).length;
 
   return (
-    <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl overflow-hidden shadow-xl hover:border-slate-200 transition-all duration-300 flex flex-col justify-between group">
+    <div className="bg-[#FFFFFF] border border-slate-200 rounded-3xl overflow-hidden shadow-xl hover:border-slate-200 transition-all duration-300 flex flex-col justify-between group content-auto">
       
       {/* Contenedor de Imagen de Portada y Video */}
       <div className="relative aspect-video w-full bg-slate-50 overflow-hidden">
-        <img
-          src={estand.urlFoto || "/logo.png"}
+        <ImagenOptimizada
+          src={estand.urlFoto}
           alt={estand.nombreGrupo}
+          fallbackSrc="/logo.png"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          contenedorClassName="w-full h-full"
         />
 
         {/* Capa de degradado */}
@@ -262,37 +278,35 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
           </div>
         )}
 
-        {/* Botones: Ver Perfil Instagram + Realizar una Donación */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        {/* Botones de acción: Donar SOLO aparece si ya vio el video */}
+        <div className={`grid ${requisitoCumplido || tieneVideo ? 'grid-cols-2' : 'grid-cols-1'} gap-2 pt-1`}>
           <button
             onClick={() => alAbrirPerfilInstagram(estand.idGrupo)}
             className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
           >
-<Grid className="w-3.5 h-3.5 text-pink-400" />
+            <Grid className="w-3.5 h-3.5 text-pink-500" />
             Explorar INSALSPACE
           </button>
 
-          <button
-            onClick={() => alAbrirDonacion(estand)}
-            disabled={!requisitoCumplido}
-            className={`py-2.5 px-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
-              requisitoCumplido
-                ? 'bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#E67A15] hover:to-[#D19E37] text-white shadow-lg shadow-orange-500/25 cursor-pointer'
-                : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed text-[11px]'
-            }`}
-          >
-            {requisitoCumplido ? (
-              <>
-                <Heart className="w-3.5 h-3.5 fill-white" />
-                Realizar una Donación
-              </>
-            ) : (
-              <>
-                <Lock className="w-3 h-3" />
-                {tieneVideo ? `Ver video (${segundosRestantes}s)` : 'Video no disponible'}
-              </>
-            )}
-          </button>
+          {/* El botón de donar NO APARECE si el usuario no ha visto el video */}
+          {requisitoCumplido ? (
+            <button
+              onClick={() => alAbrirDonacion(estand)}
+              className="py-2.5 px-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#d87012] hover:to-[#be8f30] text-white shadow-lg shadow-orange-500/25 cursor-pointer transform hover:-translate-y-0.5"
+            >
+              <Heart className="w-3.5 h-3.5 fill-white" />
+              Realizar una Donación
+            </button>
+          ) : tieneVideo ? (
+            <button
+              onClick={iniciarReproduccion}
+              title="Mira el video para desbloquear la donación"
+              className="py-2.5 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all bg-[#0A4D9C]/10 hover:bg-[#0A4D9C]/20 text-[#0A4D9C] border border-[#0A4D9C]/30 hover:border-[#0A4D9C]/50"
+            >
+              <Play className="w-3.5 h-3.5 fill-[#0A4D9C]" />
+              Ver Video ({duracionTotal}s)
+            </button>
+          ) : null}
         </div>
 
       </div>
@@ -432,6 +446,22 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
                       style={{ width: `${porcentajeProgreso}%` }}
                     />
                   </div>
+                  {/* Botón directo de donar cuando se desbloquea dentro del modal */}
+                  {requisitoCumplido && (
+                    <div className="pt-2">
+                      <button
+                        onClick={() => {
+                          setMostrarVideoModal(false);
+                          setReproduciendo(false);
+                          alAbrirDonacion(estand);
+                        }}
+                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#E67A15] to-[#D19E37] hover:from-[#d87012] hover:to-[#be8f30] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition-all"
+                      >
+                        <Heart className="w-4 h-4 fill-white" />
+                        ¡Apoyo desbloqueado! Donar SL - BITS ahora
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -453,4 +483,7 @@ export default function TarjetaEstand({ estand, alAbrirDonacion, alAbrirPerfilIn
     </div>
   );
 }
+
+export const TarjetaEstand = memo(TarjetaEstandComponente);
+export default TarjetaEstand;
 

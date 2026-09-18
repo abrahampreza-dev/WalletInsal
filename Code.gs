@@ -28,6 +28,15 @@ var CONFIG = {
 };
 
 
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader("Access-Control-Allow-Origin", "*")
+    .setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    .setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+
 function doGet(e) {
   return crearRespuestaJson({
     exito: true,
@@ -93,6 +102,8 @@ function doPost(e) {
         return actualizarGrupo(datos);
       case "subirFotoGrupo":
         return subirFotoGrupo(datos);
+      case "eliminarFotoGrupo":
+        return eliminarFotoGrupo(datos);
       case "toggleLikeFoto":
         return toggleLikeFoto(datos);
       case "agregarComentarioFoto":
@@ -1410,10 +1421,23 @@ function iniciarSesionGrupo(datos) {
 
 
 function actualizarGrupo(datos) {
+  var idGrupo = textoSeguro(datos && datos.idGrupo);
+  if (!idGrupo) return crearRespuestaJson({ exito: false, mensaje: "ID de estand requerido." });
+
   var grupos = leerDeFirebase("grupos") || {};
-  var grupo = grupos[datos.idGrupo];
-  if (!grupo || !grupo.claveAcceso || grupo.claveAcceso !== datos.claveAcceso) {
-    return crearRespuestaJson({ exito: false, mensaje: "No tienes autorización para editar este grupo." });
+  var grupo = grupos[idGrupo];
+  if (!grupo) return crearRespuestaJson({ exito: false, mensaje: "Estand no encontrado en el sistema." });
+
+  var esAdmin = validarAdminToken(datos && datos.adminToken);
+  var claveEnviada = (datos && datos.claveAcceso || "").trim();
+  var claveCorrecta = grupo.claveAcceso && claveEnviada && grupo.claveAcceso === claveEnviada;
+
+  if (!esAdmin && !claveCorrecta) {
+    return crearRespuestaJson({
+      exito: false,
+      codigo: "SIN_AUTORIZACION",
+      mensaje: "No tienes autorización para editar la información de este estand."
+    });
   }
   if (datos.nombreGrupo !== undefined) grupo.nombreGrupo = datos.nombreGrupo.trim();
   if (datos.especialidad !== undefined) grupo.especialidad = datos.especialidad.trim();
@@ -1483,26 +1507,82 @@ function registrarGrupo(datos) {
 
 
 function subirFotoGrupo(datos) {
-  var grupo = leerDeFirebase("grupos/" + datos.idGrupo);
-  if (!grupo) return crearRespuestaJson({ exito: false, mensaje: "Grupo no encontrado." });
+  var idGrupo = textoSeguro(datos && datos.idGrupo);
+  if (!idGrupo) return crearRespuestaJson({ exito: false, mensaje: "ID de estand requerido." });
+
+  var grupo = leerDeFirebase("grupos/" + idGrupo);
+  if (!grupo) return crearRespuestaJson({ exito: false, mensaje: "Estand no encontrado." });
   if (!datos.foto || !datos.foto.url) return crearRespuestaJson({ exito: false, mensaje: "URL de foto inválida." });
 
-  var fotos = grupo.fotos || [];
+  // Verificar autorización: debe ser admin o el equipo propietario del estand.
+  var esAdmin = validarAdminToken(datos && datos.adminToken);
+  var claveEnviada = (datos && datos.claveAcceso || "").trim();
+  var claveCorrecta = grupo.claveAcceso && claveEnviada && grupo.claveAcceso === claveEnviada;
+
+  if (!esAdmin && !claveCorrecta) {
+    return crearRespuestaJson({
+      exito: false,
+      codigo: "SIN_AUTORIZACION",
+      mensaje: "Se requiere la credencial del equipo para publicar en este estand."
+    });
+  }
+
+  var fotos = Array.isArray(grupo.fotos) ? grupo.fotos : (grupo.fotos && typeof grupo.fotos === 'object' ? Object.values(grupo.fotos) : []);
   var nuevaFoto = {
-    id: "FOTO_" + new Date().getTime(),
+    id: datos.foto.id || ("FOTO_" + new Date().getTime()),
     url: datos.foto.url,
     pie: datos.foto.pie || "",
-    autor: datos.foto.autor || ("Equipo " + grupo.nombreGrupo),
-    fecha: new Date().toISOString(),
+    autor: datos.foto.autor || ("Equipo " + (grupo.nombreGrupo || "")),
+    fecha: datos.foto.fecha || new Date().toISOString(),
     likes: 0,
     likesUsers: {},
     comentarios: []
   };
-  fotos.push(nuevaFoto);
+  fotos.unshift(nuevaFoto);
   grupo.fotos = fotos;
-  escribirEnFirebase("grupos/" + datos.idGrupo, grupo);
+  escribirEnFirebase("grupos/" + idGrupo, grupo);
   delete grupo.claveAcceso;
   return crearRespuestaJson({ exito: true, mensaje: "Foto publicada correctamente.", grupo: grupo });
+}
+
+
+function eliminarFotoGrupo(datos) {
+  var idGrupo = textoSeguro(datos && datos.idGrupo);
+  var idFoto = textoSeguro(datos && datos.idFoto);
+  if (!idGrupo || !idFoto) {
+    return crearRespuestaJson({ exito: false, mensaje: "ID de estand e ID de publicación requeridos." });
+  }
+
+  var grupo = leerDeFirebase("grupos/" + idGrupo);
+  if (!grupo) return crearRespuestaJson({ exito: false, mensaje: "Estand no encontrado." });
+
+  var esAdmin = validarAdminToken(datos && datos.adminToken);
+  var claveEnviada = (datos && datos.claveAcceso || "").trim();
+  var claveCorrecta = grupo.claveAcceso && claveEnviada && grupo.claveAcceso === claveEnviada;
+
+  // Siempre se requiere ser admin O tener la clave correcta. Sin clave y sin admin: rechazado.
+  if (!esAdmin && !claveCorrecta) {
+    return crearRespuestaJson({
+      exito: false,
+      codigo: "SIN_AUTORIZACION",
+      mensaje: "Se requiere la credencial del equipo o acceso administrativo para eliminar publicaciones."
+    });
+  }
+
+  var fotos = Array.isArray(grupo.fotos) ? grupo.fotos : (grupo.fotos && typeof grupo.fotos === 'object' ? Object.values(grupo.fotos) : []);
+  var longitudInicial = fotos.length;
+  fotos = fotos.filter(function(f) {
+    return f && f.id !== idFoto;
+  });
+
+  if (fotos.length === longitudInicial) {
+    return crearRespuestaJson({ exito: false, mensaje: "La publicación no fue encontrada en este estand." });
+  }
+
+  grupo.fotos = fotos;
+  escribirEnFirebase("grupos/" + idGrupo, grupo);
+  delete grupo.claveAcceso;
+  return crearRespuestaJson({ exito: true, mensaje: "Publicación eliminada correctamente.", grupo: grupo });
 }
 
 
@@ -1511,7 +1591,7 @@ function toggleLikeFoto(datos) {
   if (!grupo || !datos.idUsuario || !datos.idFoto) {
     return crearRespuestaJson({ exito: false, mensaje: "Parámetros incompletos." });
   }
-  var fotos = grupo.fotos || [];
+  var fotos = Array.isArray(grupo.fotos) ? grupo.fotos : (grupo.fotos && typeof grupo.fotos === 'object' ? Object.values(grupo.fotos) : []);
   var likes = 0;
   var leGusta = false;
   for (var i = 0; i < fotos.length; i++) {
@@ -1540,7 +1620,7 @@ function agregarComentarioFoto(datos) {
   if (!grupo || !datos.comentario || !datos.comentario.texto) {
     return crearRespuestaJson({ exito: false, mensaje: "Comentario inválido." });
   }
-  var fotos = grupo.fotos || [];
+  var fotos = Array.isArray(grupo.fotos) ? grupo.fotos : (grupo.fotos && typeof grupo.fotos === 'object' ? Object.values(grupo.fotos) : []);
   for (var i = 0; i < fotos.length; i++) {
     if (fotos[i].id === datos.idFoto) {
       if (!fotos[i].comentarios) fotos[i].comentarios = [];

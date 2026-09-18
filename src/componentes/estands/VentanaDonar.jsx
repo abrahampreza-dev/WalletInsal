@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { usarUsuario } from '../../contexto/ContextoUsuario';
 import { 
-  Zap, Heart, X, CheckCircle2, AlertCircle, Loader2, Wallet, Sparkles, ArrowRight, Lock
+  Zap, Heart, X, CheckCircle2, AlertCircle, Loader2, Wallet, Sparkles, ArrowRight, Lock, Play
 } from 'lucide-react';
 
 const MONTOS_RAPIDOS = [0.01, 0.25, 0.50, 1.00];
 
-export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirRegistro }) {
-  const { usuarioActual, realizarDonacion } = usarUsuario();
+export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirRegistro, alVerVideo }) {
+  const { usuarioActual, realizarDonacion, haVistoVideo } = usarUsuario();
 
   const [montoSeleccionado, setMontoSeleccionado] = useState(0.50);
   const [montoPersonalizado, setMontoPersonalizado] = useState('');
@@ -18,6 +18,8 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
   const [contrasena, setContrasena] = useState('');
 
   if (!estaAbierto || !estand) return null;
+
+  const videoVisto = Boolean(haVistoVideo && haVistoVideo(estand.idGrupo));
 
   const montoFinal = esPersonalizado 
     ? parseFloat(montoPersonalizado || 0) 
@@ -101,23 +103,6 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
           <p className="text-xs text-slate-500 font-medium">{estand.especialidad}</p>
         </div>
 
-        {/* Si no hay sesión, mostrar prompt de login */}
-        {!usuarioActual && !mensajeExito && (
-          <div className="text-center space-y-3 animate-fadeIn">
-            <div className="p-4 rounded-2xl bg-[#0A4D9C]/10 border border-[#0A4D9C]/30">
-              <Lock className="w-8 h-8 text-[#0A4D9C] mx-auto mb-2" />
-              <p className="text-sm font-bold text-slate-800">Necesitas iniciar sesión</p>
-              <p className="text-xs text-slate-500 mt-1">Regístrate o inicia sesión para donar SL-BITS a este proyecto.</p>
-            </div>
-            <button
-              onClick={() => { alCerrar(); if (alAbrirRegistro) alAbrirRegistro(); }}
-              className="w-full py-3 rounded-xl bg-[#0A4D9C] hover:bg-[#07366E] text-white text-xs font-bold shadow-lg transition-colors"
-            >
-              Iniciar Sesión / Registrarse
-            </button>
-          </div>
-        )}
-
         {/* MODAL DE ÉXITO - persistente */}
         {mensajeExito && (
           <div className="space-y-4 animate-fadeIn">
@@ -161,8 +146,34 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
           </div>
         )}
 
+        {/* Bloqueo si no vio el video del estand */}
+        {!videoVisto && !mensajeExito && (
+          <div className="text-center space-y-3 animate-fadeIn">
+            <div className="p-5 rounded-2xl bg-[#0A4D9C]/10 border border-[#0A4D9C]/30">
+              <Play className="w-10 h-10 text-[#0A4D9C] mx-auto mb-3 opacity-80" />
+              <p className="text-sm font-black text-slate-800">Primero mira el video del estand</p>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Para poder apoyar a <strong>{estand.nombreGrupo}</strong>, necesitas ver al menos el 50% de su video de presentación.
+              </p>
+            </div>
+            <button
+              onClick={() => { alCerrar(); if (alVerVideo) alVerVideo(); }}
+              className="w-full py-3 rounded-xl bg-[#0A4D9C] hover:bg-[#07366E] text-white text-xs font-bold shadow-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              Ver Video del Estand
+            </button>
+            <button
+              onClick={alCerrar}
+              className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs hover:bg-slate-200 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
+
         {/* Si no ha iniciado sesión */}
-        {!usuarioActual ? (
+        {videoVisto && !usuarioActual ? (
           <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center space-y-3">
             <p className="text-xs text-slate-400">
               Para transferir SL - BITS es necesario identificarte con tu NIE o DUI. ¡Recibirás un bono de bienvenida de 1.00 SL - BITS!
@@ -174,8 +185,9 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
               Crear Cuenta / Iniciar Sesión
             </button>
           </div>
-        ) : (
+        ) : videoVisto ? (
           /* FORMULARIO - solo si no hay éxito */
+
           !mensajeExito && (
             <form onSubmit={manejarEnvioDonacion} className="space-y-5">
               
@@ -284,7 +296,7 @@ export default function VentanaDonar({ estand, estaAbierto, alCerrar, alAbrirReg
 
             </form>
           )
-        )}
+        ) : null}
 
       </div>
     </div>
