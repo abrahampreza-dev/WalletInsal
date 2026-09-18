@@ -171,29 +171,6 @@ export default function PerfilInstagramGrupo({ idGrupo, alVolver, alAbrirRegistr
     setSegundosRestantes(tiempoRequerido);
   }, [tiempoRequerido]);
 
-  if (!grupo) return null;
-
-  const manejarEliminarFoto = async (idFoto) => {
-    if (!window.confirm("¿Confirmas que deseas eliminar esta fotografía del muro del estand? Esta acción no se puede deshacer.")) {
-      return;
-    }
-    setEliminandoFotoId(idFoto);
-    try {
-      const res = await eliminarFotoGrupo(grupo.idGrupo, idFoto);
-      if (res && res.exito) {
-        setNotificacionFeed("Publicación eliminada correctamente del estand.");
-        if (fotoSeleccionada && fotoSeleccionada.id === idFoto) {
-          setFotoSeleccionada(null);
-        }
-        setTimeout(() => setNotificacionFeed(""), 4000);
-      } else {
-        alert(res?.mensaje || "No se pudo eliminar la publicación.");
-      }
-    } finally {
-      setEliminandoFotoId(null);
-    }
-  };
-
   // Sincronizar estado globalmente si se marca como visto
   useEffect(() => {
     if (haVistoVideo && haVistoVideo(idGrupo)) {
